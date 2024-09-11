@@ -21,6 +21,10 @@ def api_get_user(username):
 
 @api.route('/users', methods = ['POST'])
 def api_create_user():
+    required_fields = ['username', 'first_name', 'last_name', 'division_id', 'role', 'email', 'password']
+    if not all([ field in request.form for field in required_fields ]):
+        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
+
     username = request.form.get('username')
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
