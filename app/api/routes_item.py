@@ -44,6 +44,10 @@ def api_create_item():
     category_id = request.form.get('category_id')
     qty_unit_id = request.form.get('qty_unit_id')
 
+    check_item = Items.query.filter_by(brand = brand, name = name, variant = variant).first()
+    if check_item:
+        return jsonify({ 'error': 'Item already exists' }), 400
+
     id = generate_item_id(brand, name, variant)
 
     item = Items(id = id, 
