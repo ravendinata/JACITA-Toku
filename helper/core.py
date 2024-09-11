@@ -1,6 +1,23 @@
 import random
 
 from app.models.items import Items, NonvalItems
+# ============
+# Enumerations
+# ============
+
+class OrderStatus:
+    PENDING = 0             # Order is pending submission i.e. draft.
+    SUBMITTED = 1           # Order has been submitted. Pending approval on division level.
+    DIVISION_REJECTED = 2   # Order has been rejected on division level i.e. not approved. Submitter must revise and resubmit or cancel the order.
+    DIVISION_APPROVED = 3   # Order has been approved on division level. Pending approval on finance level.
+    FINANCE_REJECTED = 5    # Order has been rejected on finance level i.e. not approved. Division must revise and resubmit or cancel the order.
+    FINANCE_APPROVED = 6    # Order has been approved on finance level. Pending fulfillment.
+    FULFILLED = 10          # Order has been fulfilled by procurement. No further action required.
+    CANCELLED = 99          # Order has been cancelled and is no longer valid.
+
+# ===============
+# GENERIC METHODS
+# ===============
 
 def is_a_number(value):
     """
@@ -108,6 +125,10 @@ def jumble_string(string):
     """
 
     return ''.join(random.sample(string, len(string)))
+
+# =====================
+# ITEM SPECIFIC METHODS
+# =====================
     
 def generate_item_id(brand, name, variant):
     """
