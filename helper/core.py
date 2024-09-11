@@ -1,6 +1,9 @@
 import random
+import uuid
 
 from app.models.items import Items, NonvalItems
+from app.models.user import Division
+
 # ============
 # Enumerations
 # ============
@@ -125,6 +128,32 @@ def jumble_string(string):
     """
 
     return ''.join(random.sample(string, len(string)))
+
+# ======================
+# ORDER SPECIFIC METHODS
+# ======================
+
+def generate_order_id(period, division_id):
+    """
+    Generate an order ID from the period and division.
+
+    Parameters:
+    period : str
+        The period of the order.
+
+    division : str
+        The division of the order.
+
+    Returns:
+    str
+        The generated order ID.
+    """
+
+    period_formatted = period.replace("/", ".")
+    division_abbreviation = Division.query.get(division_id).abbreviation
+    random_id = str(uuid.uuid4().int)[:6].upper()
+
+    return f"{period_formatted}-{division_abbreviation}-{random_id}"
 
 # =====================
 # ITEM SPECIFIC METHODS
