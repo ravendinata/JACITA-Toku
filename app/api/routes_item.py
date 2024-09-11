@@ -2,7 +2,7 @@ from flask import jsonify, request
 
 from app.api import api
 from app.extensions import db
-from app.models.items import Items, ViewItems, NonvalItems
+from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
 from helper.core import generate_item_id
 
 # =====================
@@ -23,7 +23,6 @@ def api_get_items():
 @api.route('/items/validated/<string:item_id>', methods = ['GET'])
 def api_get_item(item_id):
     human_readable = request.args.get('human_readable')
-    item = None
 
     if human_readable == 'true':
         item = ViewItems.query.get(item_id)
@@ -125,11 +124,23 @@ def api_delete_item(item_id):
 
 @api.route('/items/nonvalidated', methods = ['GET'])
 def api_get_nonval_items():
-    return jsonify([ item.to_dict() for item in NonvalItems.query.all() ])
+    human_readable = request.args.get('human_readable')
+
+    if human_readable == 'true':
+        items = ViewNonvalItems.query.all()
+    else:
+        items = NonvalItems.query.all()
+
+    return jsonify([ item.to_dict() for item in items ])
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['GET'])
 def api_get_nonval_item(item_id):
-    item = NonvalItems.query.get(item_id)
+    human_readable = request.args.get('human_readable')
+
+    if human_readable == 'true':
+        item = ViewNonvalItems.query.get(item_id)
+    else:
+        item = NonvalItems.query.get(item_id)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), 404

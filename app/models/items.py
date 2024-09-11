@@ -66,3 +66,22 @@ class NonvalItems(db.Model):
     
     def to_dict(self):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
+    
+class ViewNonvalItems(db.Model):
+    __tablename__ = 'view_nonval_items'
+    __table_args__ = { 'schema': 'toku' }
+
+    id = db.Column(db.String, primary_key = True)
+    category = db.Column(db.String, nullable = False, default = 0)
+    brand = db.Column(db.String, nullable = False)
+    name = db.Column(db.String, nullable = False)
+    variant = db.Column(db.String, nullable = True)
+    base_price = db.Column(db.Float, nullable = False)
+    created_date = db.Column(db.DateTime, nullable = False, default = func.current_timestamp())
+    created_by = db.Column(db.String, nullable = False)
+
+    def __repr__(self):
+        return f'<ViewNonvalItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
+    
+    def to_dict(self):
+        return { c.name: getattr(self, c.name) for c in self.__table__.columns }
