@@ -60,6 +60,6 @@ def api_create_item():
         db.session.commit()
     except Exception as e:
         print(f"Error while creating item: {e}")
-        return jsonify({ 'error': 'Error while creating item' }), 500
+        return jsonify({ 'error': 'Error while creating item', 'details': f"{e}" }), 500
 
     return jsonify({ 'message': 'Item created successfully' })
