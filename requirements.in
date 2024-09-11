@@ -1,4 +1,4 @@
-cryptography
+bcrypt
 Flask
 Flask-SQLAlchemy
 psycopg2

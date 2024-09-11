@@ -4,16 +4,14 @@
 #
 #    pip-compile
 #
+bcrypt==4.2.0
+    # via -r requirements.in
 blinker==1.8.2
     # via flask
-cffi==1.17.1
-    # via cryptography
 click==8.1.7
     # via flask
 colorama==0.4.6
     # via click
-cryptography==43.0.1
-    # via -r requirements.in
 flask==3.0.3
     # via
     #   -r requirements.in
@@ -32,8 +30,6 @@ markupsafe==2.1.5
     #   werkzeug
 psycopg2==2.9.9
     # via -r requirements.in
-pycparser==2.22
-    # via cffi
 sqlalchemy==2.0.34
     # via flask-sqlalchemy
 typing-extensions==4.12.2
