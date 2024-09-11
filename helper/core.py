@@ -1,3 +1,7 @@
+import random
+
+from app.models.items import Items, NonvalItems
+
 def is_a_number(value):
     """
     Check if a value is a number.
@@ -70,6 +74,41 @@ def zero_pad(string, length, direction = 'right'):
     else:
         return string.ljust(length, '0')
     
+def replace_start_end_dot(string: str):
+    """
+    Replace the starting and ending dot of a string with a zero.
+
+    Parameters:
+    string : str
+        The string to replace the starting and ending dot.
+
+    Returns:
+    str
+        The string with the starting and ending dot replaced.
+    """
+
+    if string[0] == '.':
+        string = '0' + string[1:]
+    if string[-1] == '.':
+        string = string[:-1] + '0'
+
+    return string
+
+def jumble_string(string):
+    """
+    Jumble a string.
+
+    Parameters:
+    string : str
+        The string to jumble.
+
+    Returns:
+    str
+        The jumbled string.
+    """
+
+    return ''.join(random.sample(string, len(string)))
+    
 def generate_item_id(brand, name, variant):
     """
     Generate an item ID from the brand, name, and variant.
@@ -89,20 +128,23 @@ def generate_item_id(brand, name, variant):
         The generated item ID.
     """
 
-    t9_brand = zero_pad(convert_t9(brand), 5) if brand else 99
+    t9_brand = zero_pad(convert_t9(brand), 5) if brand else "99"
     t9_name = zero_pad(convert_t9(name), 8)
-    t9_variant = zero_pad(convert_t9(variant), 7) if variant else 0
+    t9_variant = zero_pad(convert_t9(variant), 7) if variant else "0"
 
-    # If any of the fields end with a dot, replace it with a zero
-    if is_a_number(t9_brand):
-        if t9_brand[-1] == '.':
-            t9_brand = t9_brand[:-1] + '0'
+    # If any of the fields end or start with a dot, replace it with a zero
+    t9_brand = replace_start_end_dot(t9_brand)
+    t9_name = replace_start_end_dot(t9_name)
+    t9_variant = replace_start_end_dot(t9_variant)
 
-    if t9_name[-1] == '.':
-        t9_name = t9_name[:-1] + '0'
+    result = f"{t9_brand}-{t9_name}-{t9_variant}"
 
-    if is_a_number(t9_variant):
-        if t9_variant[-1] == '.':
-            t9_variant = t9_variant[:-1] + '0'
+    check_item = Items.query.get(result)
+    if not check_item:
+        check_item = NonvalItems.query.get(result)
 
-    return f"{t9_brand}-{t9_name}-{t9_variant}"
+    if check_item:
+        print(f"Item ID {result} already exists but item is different, jumbling the variant to generate a new ID.")
+        result = generate_item_id(brand, name, jumble_string(variant))
+
+    return result
