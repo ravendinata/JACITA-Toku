@@ -10,13 +10,25 @@ from helper.core import generate_item_id
 # =====================
 
 @api.route('/items/validated', methods = ['GET'])
-    items = ViewItems.query.all()
 def api_get_items():
+    human_readable = request.args.get('human_readable')
+
+    if human_readable == 'true':
+        items = ViewItems.query.all()
+    else:
+        items = Items.query.all()
+    
     return jsonify([ item.to_dict() for item in items ])
 
 @api.route('/items/validated/<string:item_id>', methods = ['GET'])
-    item = ViewItems.query.get(item_id)
 def api_get_item(item_id):
+    human_readable = request.args.get('human_readable')
+    item = None
+
+    if human_readable == 'true':
+        item = ViewItems.query.get(item_id)
+    else:
+        item = Items.query.get(item_id)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), 404
