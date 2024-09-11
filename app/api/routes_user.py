@@ -24,7 +24,7 @@ def api_create_user():
     username = request.form.get('username')
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
-    division = request.form.get('division')
+    division_id = request.form.get('division_id')
     role = request.form.get('role')
     email = request.form.get('email')
 
@@ -37,7 +37,7 @@ def api_create_user():
 
     user = User(username = username, password = password, 
                 first_name = first_name, last_name = last_name, 
-                division = division, role = role,
+                division_id = division_id, role = role,
                 email = email)
     
     try:
@@ -56,14 +56,14 @@ def api_update_user(username):
     if user is None:
         return jsonify({ 'error': 'User not found' }), 404
     
-    modifiable_fields = ['first_name', 'last_name', 'email', 'division']
+    modifiable_fields = ['first_name', 'last_name', 'email', 'division_id']
     if not any([ request.form.get(field) for field in modifiable_fields ]):
         return jsonify({ 'error': 'No modifiable fields provided' }), 400
 
     user.first_name = request.form.get('first_name', user.first_name)
     user.last_name = request.form.get('last_name', user.last_name)
     user.email = request.form.get('email', user.email)
-    user.division = request.form.get('division', user.division)
+    user.division_id = request.form.get('division_id', user.division_id)
 
     db.session.commit()
 

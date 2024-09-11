@@ -1,6 +1,20 @@
 from app.extensions import db
 from helper.auth import generate_password_hash, check_password_hash
 
+class Division(db.Model):
+    __tablename__ = 'division'
+    __table_args__ = { 'schema': 'toku' }
+
+    id = db.Column(db.Integer, nullable = False, primary_key = True)
+    abbreviation = db.Column(db.String(3), nullable = False)
+    full_name = db.Column(db.String, nullable = False)
+    
+    def __repr__(self):
+        return f'<Division: {self.full_name} [{self.id}]>'
+    
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class User(db.Model):
     __tablename__ = 'user'
     __table_args__ = { 'schema': 'toku' }
@@ -8,7 +22,7 @@ class User(db.Model):
     username = db.Column(db.String(12), nullable = False, primary_key = True)
     first_name = db.Column(db.String, nullable = False)
     last_name = db.Column(db.String, nullable = True)
-    division = db.Column(db.String, nullable = False)
+    division_id = db.Column(db.Integer, db.ForeignKey(Division.id), nullable = False, default = 0)
     role = db.Column(db.Integer, nullable = False, default = 0)
     password = db.Column(db.String, nullable = False)
     email = db.Column(db.String, nullable = False)
