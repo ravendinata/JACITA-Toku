@@ -10,13 +10,13 @@ from helper.core import generate_item_id
 # =====================
 
 @api.route('/items/validated', methods = ['GET'])
-def get_items():
     items = ViewItems.query.all()
+def api_get_items():
     return jsonify([ item.to_dict() for item in items ])
 
 @api.route('/items/validated/<string:item_id>', methods = ['GET'])
-def get_item(item_id):
     item = ViewItems.query.get(item_id)
+def api_get_item(item_id):
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), 404
@@ -24,7 +24,7 @@ def get_item(item_id):
     return jsonify(item.to_dict())
 
 @api.route('/items/validated', methods = ['POST'])
-def create_item():
+def api_create_item():
     brand = request.form.get('brand')
     name = request.form.get('name')
     variant = request.form.get('variant')
