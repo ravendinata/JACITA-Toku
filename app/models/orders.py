@@ -2,7 +2,7 @@ from sqlalchemy.sql import func
 
 from app.extensions import db
 from app.models.user import User, Division
-from helper.core import OrderStatus
+from helper.status import OrderStatus, OrderStatusTransitionException, can_transition, get_order_status_text
 
 class Orders(db.Model):
     __tablename__ = 'orders'
