@@ -4,6 +4,11 @@ from app.api import api
 from app.extensions import db
 from app.models.orders import Orders
 from helper.core import generate_order_id
+from helper.status import OrderStatus
+
+# =================================
+# STANDARD CRUD OPERATION ENDPOINTS
+# =================================
 
 @api.route('/orders', methods = ['GET'])
 def api_get_orders():
@@ -76,3 +81,96 @@ def api_delete_order(order_id):
         return jsonify({ 'error': 'Error while deleting order', 'details': f"{e}" }), 500
     
     return jsonify({ 'message': 'Order deleted successfully' })
+
+# ==================================
+# ORDER-SPECIFIC OPERATION ENDPOINTS
+# ==================================
+
+@api.route('/order/<string:order_id>/submit', methods = ['POST'])
+def api_submit_order(order_id):
+    order = Orders.query.get(order_id)
+    
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), 404
+    
+    try:
+        order.submit()
+        db.session.commit()
+    except Exception as e:
+        return jsonify({ 'error': 'Error while submitting order', 'details': f"{e}" }), 500
+    
+    return jsonify({ 'message': 'Order submitted successfully' })
+
+@api.route('/order/<string:order_id>/cancel', methods = ['POST'])
+def api_cancel_order(order_id):
+    order = Orders.query.get(order_id)
+    
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), 404
+    
+    try:
+        order.cancel()
+        db.session.commit()
+    except Exception as e:
+        return jsonify({ 'error': 'Error while cancelling order', 'details': f"{e}" }), 500
+    
+    return jsonify({ 'message': 'Order cancelled successfully', 'order_details': order.to_dict() })
+
+@api.route('/order/<string:order_id>/approve/<string:by>', methods = ['POST'])
+def api_approve_order(order_id, by):
+    order = Orders.query.get(order_id)
+    
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), 404
+    
+    if order.is_approved(by):
+        return jsonify({ 'error': 'Approval denied', 'details': f"Order has already been approved at {by} level." }), 400
+
+    required_fields = ['username']
+    if not all([ field in request.form for field in required_fields ]):
+        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
+
+    try:
+        order.approve(by, request.form.get('username'))
+        db.session.commit()
+    except Exception as e:
+        return jsonify({ 'error': 'Error while approving order', 'details': f"{e}" }), 500
+    
+    return jsonify({ 'message': 'Order approved successfully' })
+
+@api.route('/order/<string:order_id>/reject/<string:by>', methods = ['POST'])
+def api_reject_order(order_id, by):
+    order = Orders.query.get(order_id)
+    
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), 404
+
+    required_fields = ['username']
+    if not all([ field in request.form for field in required_fields ]):
+        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
+
+    try:
+        order.reject(by, request.form.get('username'))
+        db.session.commit()
+    except Exception as e:
+        return jsonify({ 'error': 'Error while rejecting order', 'details': f"{e}" }), 500
+    
+    return jsonify({ 'message': 'Order rejected successfully' })
+
+@api.route('/order/<string:order_id>/fulfill', methods = ['POST'])
+def api_fulfill_order(order_id):
+    order = Orders.query.get(order_id)
+    
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), 404
+
+    if order.is_fulfilled():
+        return jsonify({ 'error': 'Fulfillment denied', 'details': 'Order has already been fulfilled.'}), 400
+    
+    try:
+        order.fulfill()
+        db.session.commit()
+    except Exception as e:
+        return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), 500
+    
+    return jsonify({ 'message': 'Order fulfilled successfully' })
