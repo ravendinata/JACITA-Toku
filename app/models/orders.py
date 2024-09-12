@@ -33,7 +33,9 @@ class Orders(db.Model):
         return f'<Order: {self.id} @ {self.created_date} by {self.created_by}>'
 
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        data = { c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'status' }
+        data['status'] = { 'code': self.status, 'text': get_order_status_text(self.status) }
+        return data
 
     def is_approved(self, by):
         if by == 'division':
