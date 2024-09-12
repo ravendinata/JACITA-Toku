@@ -4,6 +4,7 @@ from app.api import api
 from app.extensions import db
 from app.models.user import User
 from helper.auth import generate_password_hash
+from helper.endpoint import check_fields
 
 @api.route('/users', methods = ['GET'])
 def api_get_users():
@@ -21,9 +22,9 @@ def api_get_user(username):
 
 @api.route('/users', methods = ['POST'])
 def api_create_user():
-    required_fields = ['username', 'first_name', 'last_name', 'division_id', 'role', 'email', 'password']
-    if not all([ field in request.form for field in required_fields ]):
-        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
+    check_field = check_fields(request, 'user/create')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
 
     username = request.form.get('username')
     first_name = request.form.get('first_name')
@@ -55,14 +56,14 @@ def api_create_user():
 
 @api.route('/user/<string:username>', methods = ['PATCH'])
 def api_update_user(username):
+    check_field = check_fields(request, 'user/update')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+
     user = User.query.get(username)
 
     if user is None:
         return jsonify({ 'error': 'User not found' }), 404
-    
-    modifiable_fields = ['first_name', 'last_name', 'email', 'division_id']
-    if not any([ request.form.get(field) for field in modifiable_fields ]):
-        return jsonify({ 'error': 'No modifiable fields provided' }), 400
 
     user.first_name = request.form.get('first_name', user.first_name)
     user.last_name = request.form.get('last_name', user.last_name)

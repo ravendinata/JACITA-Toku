@@ -4,6 +4,7 @@ from app.api import api
 from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
 from helper.core import generate_item_id
+from helper.endpoint import check_fields
 
 # =====================
 # VALIDATED ITEM ROUTES
@@ -65,14 +66,14 @@ def api_create_item():
 
 @api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
 def api_update_item(item_id):
+    check_field = check_fields(request, 'item_validated/update')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+    
     item = Items.query.get(item_id)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), 404
-    
-    modifiable_fields = ['brand', 'name', 'variant', 'base_price', 'category_id', 'qty_unit_id']
-    if not any([ request.form.get(field) for field in modifiable_fields ]):
-        return jsonify({ 'error': 'No modifiable fields provided' }), 400
 
     brand = request.form.get('brand')
     name = request.form.get('name')
@@ -178,14 +179,14 @@ def api_create_nonval_item():
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['PATCH'])
 def api_update_nonval_item(item_id):
+    check_field = check_fields(request, 'item_nonvalidated/update')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+    
     item = NonvalItems.query.get(item_id)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), 404
-    
-    modifiable_fields = [ 'brand', 'name', 'variant', 'base_price', 'category_id' ]
-    if not any([ request.form.get(field) for field in modifiable_fields ]):
-        return jsonify({ 'error': 'No modifiable fields provided' }), 400
 
     brand = request.form.get('brand')
     name = request.form.get('name')

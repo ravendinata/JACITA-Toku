@@ -4,7 +4,7 @@ from app.api import api
 from app.extensions import db
 from app.models.orders import Orders
 from helper.core import generate_order_id
-from helper.status import OrderStatus
+from helper.endpoint import check_fields
 
 # =================================
 # STANDARD CRUD OPERATION ENDPOINTS
@@ -26,9 +26,9 @@ def api_get_order(order_id):
 
 @api.route('/order', methods = ['POST'])
 def api_create_order():
-    required_fields = ['period', 'division_id', 'created_by']
-    if not all([ field in request.form for field in required_fields ]):
-        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
+    check_field = check_fields(request, 'order/create')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
     
     period = request.form.get('period')
     division_id = request.form.get('division_id')
@@ -48,14 +48,14 @@ def api_create_order():
 
 @api.route('/order/<string:order_id>', methods = ['PATCH'])
 def api_update_order(order_id):
+    check_field = check_fields(request, 'order/update')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+
     order = Orders.query.get(order_id)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), 404
-    
-    modifiable_fields = ['period', 'division_id']
-    if not any([ field in request.form for field in modifiable_fields ]):
-        return jsonify({ 'error': 'No modifiable fields provided', 'modifiable_fields': modifiable_fields }), 400
     
     order.period = request.form.get('period', order.period)
     order.division_id = request.form.get('division_id', order.division_id)
@@ -118,6 +118,10 @@ def api_cancel_order(order_id):
 
 @api.route('/order/<string:order_id>/approve/<string:by>', methods = ['POST'])
 def api_approve_order(order_id, by):
+    check_field = check_fields(request, 'order/approve')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+    
     order = Orders.query.get(order_id)
     
     if order is None:
@@ -125,10 +129,6 @@ def api_approve_order(order_id, by):
     
     if order.is_approved(by):
         return jsonify({ 'error': 'Approval denied', 'details': f"Order has already been approved at {by} level." }), 400
-
-    required_fields = ['username']
-    if not all([ field in request.form for field in required_fields ]):
-        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
 
     try:
         order.approve(by, request.form.get('username'))
@@ -140,14 +140,14 @@ def api_approve_order(order_id, by):
 
 @api.route('/order/<string:order_id>/reject/<string:by>', methods = ['POST'])
 def api_reject_order(order_id, by):
+    check_field = check_fields(request, 'order/reject')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+    
     order = Orders.query.get(order_id)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), 404
-
-    required_fields = ['username']
-    if not all([ field in request.form for field in required_fields ]):
-        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
 
     try:
         order.reject(by, request.form.get('username'))

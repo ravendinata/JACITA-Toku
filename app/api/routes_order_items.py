@@ -5,6 +5,7 @@ from app.extensions import db
 from app.models.orders import Orders
 from app.models.items import Items, NonvalItems
 from app.models.order_items import OrderItems, OrderNonvalItems
+from helper.endpoint import check_fields
 
 @api.route('/order/<string:order_id>/items', methods = ['GET'])
 def api_get_order_items(order_id):
@@ -29,12 +30,12 @@ def api_get_order_item(order_id, item_id):
 
 @api.route('/order/<string:order_id>/item', methods = ['POST'])
 def api_add_order_item(order_id):
+    check_field = check_fields(request, 'order_item/create')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
+
     if Orders.query.get(order_id) is None:
         return jsonify({ 'error': 'Order not found' }), 404
-    
-    required_fields = ['item_id', 'quantity']
-    if not all([ field in request.form for field in required_fields ]):
-        return jsonify({ 'error': 'Missing required fields', 'required_fields': required_fields }), 400
     
     item_type = 'validated'
     item_id = request.form.get('item_id')
@@ -65,16 +66,15 @@ def api_add_order_item(order_id):
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['PATCH'])
 def api_update_order_item(order_id, item_id):
+    check_field = check_fields(request, 'order_item/update')
+    if not check_field['pass']:
+        return jsonify(check_field), 400
 
     item = OrderItems.query.get((order_id, item_id))
     if item is None:
         item = OrderNonvalItems.query.get((order_id, item_id))
         if item is None:
             return jsonify({ 'error': 'Item not found in order' }), 404
-    
-    modifiable_fields = ['quantity', 'remarks']
-    if not any([ field in request.form for field in modifiable_fields ]):
-        return jsonify({ 'error': 'No modifiable fields provided', 'modifiable_fields': modifiable_fields }), 400
     
     item.quantity = request.form.get('quantity', item.quantity)
     item.remarks = request.form.get('remarks', item.remarks)
