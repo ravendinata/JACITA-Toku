@@ -49,32 +49,45 @@ class Orders(db.Model):
     def get_status(self):
         return OrderStatus(self.status)
     
+    def clear_approval(self):
+            self.approval_division_date = None
+            self.approval_division_by = None
+            self.approval_finance_date = None
+            self.approval_finance_by = None
+    
+    def transition(self, new):
+        if can_transition(self.status, new):
+            self.status = new
+        else:
+            raise OrderStatusTransitionException(self.status, new)
+    
     def submit(self):
-        self.status = OrderStatus.SUBMITTED
+        self.clear_approval()
+        self.transition(OrderStatus.SUBMITTED)
     
     def cancel(self):
-        self.status = OrderStatus.CANCELLED
-    
+        self.transition(OrderStatus.CANCELLED)
+        
     def approve(self, by, username):
         if by == 'division':
+            self.transition(OrderStatus.DIVISION_APPROVED)
             self.approval_division_date = func.current_timestamp()
             self.approval_division_by = username
-            self.status = OrderStatus.DIVISION_APPROVED
         elif by == 'finance':
+            self.transition(OrderStatus.FINANCE_APPROVED)
             self.approval_finance_date = func.current_timestamp()
             self.approval_finance_by = username
-            self.status = OrderStatus.FINANCE_APPROVED
 
     def reject(self, by, username):
         if by == 'division':
+            self.transition(OrderStatus.DIVISION_REJECTED)
             self.approval_division_date = func.current_timestamp()
             self.approval_division_by = username
-            self.status = OrderStatus.DIVISION_REJECTED
         elif by == 'finance':
+            self.transition(OrderStatus.FINANCE_REJECTED)
             self.approval_finance_date = func.current_timestamp()
             self.approval_finance_by = username
-            self.status = OrderStatus.FINANCE_REJECTED
     
     def fulfill(self):
+        self.transition(OrderStatus.FULFILLED)
         self.fulfillment_date = func.current_timestamp()
-        self.status = OrderStatus.FULFILLED
