@@ -13,7 +13,7 @@ class Orders(db.Model):
     # Meta Attributes
     created_date = db.Column(db.DateTime, nullable = False, default = func.current_timestamp())
     created_by = db.Column(db.String, db.ForeignKey(User.username), nullable = False)
-    last_modification_date = db.Column(db.DateTime, nullable = False, default = db.func.current_timestamp(), on_update = func.current_timestamp())
+    last_modification_date = db.Column(db.DateTime, nullable = False, default = db.func.current_timestamp(), onupdate = func.current_timestamp())
 
     # Order Attributes
     period = db.Column(db.String(7), nullable = False)
