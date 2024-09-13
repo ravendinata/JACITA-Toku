@@ -2,7 +2,7 @@ from sqlalchemy.sql import func
 
 from app.extensions import db
 from app.models.user import User, Division
-from helper.status import OrderStatus, OrderStatusTransitionException, can_transition, get_order_status_text
+from helper.status import OrderStatus, OrderStatusTransitionError, can_transition, get_order_status_text
 
 class Orders(db.Model):
     __tablename__ = 'orders'
@@ -61,7 +61,7 @@ class Orders(db.Model):
         if can_transition(self.status, new):
             self.status = new
         else:
-            raise OrderStatusTransitionException(self.status, new)
+            raise OrderStatusTransitionError(self.status, new)
     
     def submit(self):
         self.clear_approval()

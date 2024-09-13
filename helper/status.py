@@ -18,7 +18,7 @@ class OrderStatusText:
     FULFILLED = 'Fulfilled'
     CANCELLED = 'Cancelled'
 
-class OrderStatusTransitionException(Exception):
+class OrderStatusTransitionError(Exception):
     def __init__(self, current, new):
         self.message = get_status_error_message(current, new)
         super().__init__(self.message)

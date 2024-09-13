@@ -5,6 +5,7 @@ from app.extensions import db
 from app.models.orders import Orders
 from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields
+from helper.status import OrderStatusTransitionError
 
 # =================================
 # STANDARD CRUD OPERATION ENDPOINTS
@@ -96,6 +97,8 @@ def api_submit_order(order_id):
     try:
         order.submit()
         db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
     except Exception as e:
         return jsonify({ 'error': 'Error while submitting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
@@ -111,6 +114,8 @@ def api_cancel_order(order_id):
     try:
         order.cancel()
         db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
     except Exception as e:
         return jsonify({ 'error': 'Error while cancelling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
@@ -133,6 +138,8 @@ def api_approve_order(order_id, by):
     try:
         order.approve(by, request.form.get('username'))
         db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
     except Exception as e:
         return jsonify({ 'error': 'Error while approving order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
@@ -152,6 +159,8 @@ def api_reject_order(order_id, by):
     try:
         order.reject(by, request.form.get('username'))
         db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
     except Exception as e:
         return jsonify({ 'error': 'Error while rejecting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
@@ -170,6 +179,8 @@ def api_fulfill_order(order_id):
     try:
         order.fulfill()
         db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
     except Exception as e:
         return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
