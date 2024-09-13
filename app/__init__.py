@@ -1,8 +1,7 @@
 import json
+from datetime import timedelta
 
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import func
+from flask import Flask
 
 from app.extensions import db
 
@@ -11,7 +10,9 @@ def create_app():
         config = json.load(config_file)
 
     app = Flask(__name__)
+    app.secret_key = config['app_secret_key']
     app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{config["db_user"]}:{config["db_pass"]}@{config["db_host"]}:{config["db_port"]}/{config["db_name"]}?sslmode=require'
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes = 60)
 
     # ==========
     # Extensions

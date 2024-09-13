@@ -16,6 +16,7 @@ required_fields = {
     'order/reject': [ 'username' ],
     'user/create': [ 'username', 'first_name', 'division_id', 'role', 'password' ],
     'orderitem/create': [ 'item_id', 'quantity' ],
+    'auth/login': [ 'username', 'password' ],
 }
 
 modifiable_fields = {

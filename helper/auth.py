@@ -38,3 +38,18 @@ def check_password_hash(hashed_password, raw_password):
     raw_password = raw_password.encode('utf-8')
     
     return bcrypt.checkpw(raw_password, hashed_password)
+
+def is_authenticated(session):
+    """
+    Check if a user is authenticated.
+
+    Parameters:
+    session : dict
+        The session object.
+
+    Returns:
+    bool
+        True if the user is authenticated, False otherwise.
+    """
+
+    return 'user' in session and session['user'] is not None

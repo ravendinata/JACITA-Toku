@@ -1,9 +1,9 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from app.api import api
 from app.extensions import db
 from app.models.user import User
-from helper.auth import generate_password_hash
+from helper.auth import generate_password_hash, is_authenticated
 from helper.endpoint import HTTPStatus, check_fields
 
 @api.route('/users', methods = ['GET'])
@@ -106,8 +106,15 @@ def api_change_password(username):
 
 @api.route('/auth/login', methods = ['POST'])
 def api_login_user():
+    check_field = check_fields(request, 'auth/login')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+
     username = request.form.get('username')
     password = request.form.get('password')
+
+    if is_authenticated(session):
+        return jsonify({ 'success': False, 'error': 'User already logged in', 'session': session['user'] }), HTTPStatus.CONFLICT
 
     user = User.query.get(username)
 
@@ -116,5 +123,7 @@ def api_login_user():
 
     if user.check_password(password) is False:
         return jsonify({ 'success': False, 'error': 'Invalid password' }), HTTPStatus.UNAUTHORIZED
+    
+    session['user'] = user.username
 
     return jsonify({ 'success': True, 'message': 'Login successful' }), HTTPStatus.OK
