@@ -37,3 +37,7 @@ def api_generate_item_id():
     id = generate_item_id(brand, name, variant)
 
     return jsonify({ 'id': id, 'brand': brand, 'name': name, 'variant': variant }), HTTPStatus.OK
+
+@api.route('helper/test_cookies', methods = ['GET'])
+def api_test_cookies():
+    return jsonify({ 'cookies': request.cookies }), HTTPStatus.OK
