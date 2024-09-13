@@ -4,7 +4,7 @@ from app.api import api
 from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
 from helper.core import generate_item_id
-from helper.endpoint import check_fields
+from helper.endpoint import HTTPStatus, check_fields
 
 # =====================
 # VALIDATED ITEM ROUTES
@@ -19,7 +19,7 @@ def api_get_items():
     else:
         items = Items.query.all()
     
-    return jsonify([ item.to_dict() for item in items ])
+    return jsonify([ item.to_dict() for item in items ]), HTTPStatus.OK
 
 @api.route('/items/validated/<string:item_id>', methods = ['GET'])
 def api_get_item(item_id):
@@ -31,9 +31,9 @@ def api_get_item(item_id):
         item = Items.query.get(item_id)
 
     if item is None:
-        return jsonify({ 'error': 'Item not found' }), 404
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
     
-    return jsonify(item.to_dict())
+    return jsonify(item.to_dict()), HTTPStatus.OK
 
 @api.route('/items/validated', methods = ['POST'])
 def api_create_item():
@@ -46,7 +46,7 @@ def api_create_item():
 
     check_item = Items.query.filter_by(brand = brand, name = name, variant = variant).first()
     if check_item:
-        return jsonify({ 'error': 'Item already exists' }), 400
+        return jsonify({ 'error': 'Item already exists' }), HTTPStatus.CONFLICT
 
     id = generate_item_id(brand, name, variant)
 
@@ -60,20 +60,20 @@ def api_create_item():
         db.session.commit()
     except Exception as e:
         print(f"Error while creating item: {e}")
-        return jsonify({ 'error': 'Error while creating item', 'details': f"{e}" }), 500
+        return jsonify({ 'error': 'Error while creating item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return jsonify({ 'message': 'Item created successfully' })
+    return jsonify({ 'message': 'Item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
 def api_update_item(item_id):
     check_field = check_fields(request, 'item_validated/update')
     if not check_field['pass']:
-        return jsonify(check_field), 400
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
     item = Items.query.get(item_id)
 
     if item is None:
-        return jsonify({ 'error': 'Item not found' }), 404
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
 
     brand = request.form.get('brand')
     name = request.form.get('name')
@@ -99,25 +99,25 @@ def api_update_item(item_id):
         db.session.commit()
     except Exception as e:
         print(f"Error while updating item: {e}")
-        return jsonify({ 'error': 'Error while updating item', 'details': f"{e}" }), 500
+        return jsonify({ 'error': 'Error while updating item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Item updated successfully' })
+    return jsonify({ 'message': 'Item updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/validated/<string:item_id>', methods = ['DELETE'])
 def api_delete_item(item_id):
     item = Items.query.get(item_id)
 
     if item is None:
-        return jsonify({ 'error': 'Item not found' }), 404
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
 
     try:
         db.session.delete(item)
         db.session.commit()
     except Exception as e:
         print(f"Error while deleting item: {e}")
-        return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), 500
+        return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Item deleted successfully' })
+    return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.NO_CONTENT
 
 # =========================
 # NON-VALIDATED ITEM ROUTES
@@ -132,7 +132,7 @@ def api_get_nonval_items():
     else:
         items = NonvalItems.query.all()
 
-    return jsonify([ item.to_dict() for item in items ])
+    return jsonify([ item.to_dict() for item in items ]), HTTPStatus.OK
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['GET'])
 def api_get_nonval_item(item_id):
@@ -144,9 +144,9 @@ def api_get_nonval_item(item_id):
         item = NonvalItems.query.get(item_id)
 
     if item is None:
-        return jsonify({ 'error': 'Item not found' }), 404
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
     
-    return jsonify(item.to_dict())
+    return jsonify(item.to_dict()), HTTPStatus.OK
 
 @api.route('/items/nonvalidated', methods = ['POST'])
 def api_create_nonval_item():
@@ -159,7 +159,7 @@ def api_create_nonval_item():
 
     check_item = NonvalItems.query.filter_by(brand = brand, name = name, variant = variant).first()
     if check_item:
-        return jsonify({ 'error': 'Item already exists' }), 400
+        return jsonify({ 'error': 'Item already exists' }), HTTPStatus.CONFLICT
 
     id = generate_item_id(brand, name, variant)
 
@@ -173,20 +173,20 @@ def api_create_nonval_item():
         db.session.commit()
     except Exception as e:
         print(f"Error while creating non-validated item: {e}")
-        return jsonify({ 'error': 'Error while creating non-validated item', 'details': f"{e}" }), 500
+        return jsonify({ 'error': 'Error while creating non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Non-validated item created successfully' })
+    return jsonify({ 'message': 'Non-validated item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['PATCH'])
 def api_update_nonval_item(item_id):
     check_field = check_fields(request, 'item_nonvalidated/update')
     if not check_field['pass']:
-        return jsonify(check_field), 400
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
     item = NonvalItems.query.get(item_id)
 
     if item is None:
-        return jsonify({ 'error': 'Item not found' }), 404
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
 
     brand = request.form.get('brand')
     name = request.form.get('name')
@@ -209,22 +209,22 @@ def api_update_nonval_item(item_id):
         db.session.commit()
     except Exception as e:
         print(f"Error while updating non-validated item: {e}")
-        return jsonify({ 'error': 'Error while updating non-validated item', 'details': f"{e}" }), 500
+        return jsonify({ 'error': 'Error while updating non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Non-validated item updated successfully' })
+    return jsonify({ 'message': 'Non-validated item updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['DELETE'])
 def api_delete_nonval_item(item_id):
     item = NonvalItems.query.get(item_id)
 
     if item is None:
-        return jsonify({ 'error': 'Item not found' }), 404
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
 
     try:
         db.session.delete(item)
         db.session.commit()
     except Exception as e:
         print(f"Error while deleting non-validated item: {e}")
-        return jsonify({ 'error': 'Error while deleting non-validated item', 'details': f"{e}" }), 500
+        return jsonify({ 'error': 'Error while deleting non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Non-validated item deleted successfully' })
+    return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.NO_CONTENT
