@@ -127,3 +127,12 @@ def api_login_user():
     session['user'] = user.username
 
     return jsonify({ 'success': True, 'message': 'Login successful' }), HTTPStatus.OK
+
+@api.route('/auth/logout', methods = ['POST'])
+def api_logout_user():
+    if not is_authenticated(session):
+        return jsonify({ 'success': False, 'error': 'User not logged in' }), HTTPStatus.UNAUTHORIZED
+
+    session.pop('user')
+
+    return jsonify({ 'success': True, 'message': 'Logout successful' }), HTTPStatus.OK
