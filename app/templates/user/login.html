@@ -1,0 +1,79 @@
+{% extends 'user/base.html' %}
+
+{% block content %}
+<div class="login-page">
+    <h1>Login</h1>
+    <form method="POST" action="/api/auth/login">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group">
+                <input type="password" class="form-control border-end-0" id="password" name="password" required>
+                <span class="input-group-text bg-transparent" id="passwordToggle">
+                    <i class="fa-solid fa-eye-slash" style="cursor: pointer;"></i>
+                </span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary float-end" id="btnSubmit">Login</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const btnSubmit = document.getElementById('btnSubmit');
+const btnPasswordToggle = document.getElementById('passwordToggle');
+const inputPassword = document.getElementById('password');
+
+document.querySelector('form').addEventListener('submit', async (event) => 
+{
+    event.preventDefault();
+
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const username = formData.get('username');
+
+    const response = await fetch(form.action, 
+    {
+        method: form.method,
+        body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success === true) 
+    {
+        window.location.href = "{{ url_for('web.index') }}";
+    } 
+    else 
+    {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = 'Login';
+        
+        alert(data.message);
+    }
+
+});
+
+/* Listeners */
+btnPasswordToggle.addEventListener('click', () => 
+{
+    if (inputPassword.type === 'password') 
+    {
+        inputPassword.type = 'text';
+        btnPasswordToggle.innerHTML = '<i class="fa-solid fa-eye" style="cursor: pointer;"></i>';
+    } 
+    else 
+    {
+        inputPassword.type = 'password';
+        btnPasswordToggle.innerHTML = '<i class="fa-solid fa-eye-slash" style="cursor: pointer;"></i>';
+    }
+});
+</script>
+{% endblock %}
