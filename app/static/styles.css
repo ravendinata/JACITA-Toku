@@ -1,0 +1,70 @@
+.header {
+    text-align: left; 
+    padding-bottom: 6px; 
+    padding-top: 12px; 
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.subheader {
+    text-align: left; 
+    padding-bottom: 6px; 
+    padding-top: 12px; 
+    padding-left: 32px;
+    padding-right: 32px;
+
+}
+
+.about-page {
+    width: 60%;
+    margin: 20px auto;
+}
+
+.login-page {
+    width: 40vw;
+    margin: 20px auto;
+}
+
+.container {
+    width: 100%;
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.dt-buttons {
+    padding: 10px 0px 5px;
+}
+
+.dt-button .dropdown-item {
+    background-color: #fff;
+}
+
+.buttons-colvis {
+    color: white;
+    background: #2236eb;
+    border: white;
+}
+
+.buttons-colvis:hover {
+    background: #240fad;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+/* Responsive layout - makes the two columns stack on top of each other instead of next to each other */
+
+@media (max-aspect-ratio: 1/1) {
+    .login-page {
+        width: 100%;
+    }
+}
