@@ -228,3 +228,32 @@ def api_delete_nonval_item(item_id):
         return jsonify({ 'error': 'Error while deleting non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.NO_CONTENT
+
+# ======================
+# AGGREGATED ITEM ROUTES
+# ======================
+
+@api.route('/items', methods = ['GET'])
+def api_get_all_items():
+    human_readable = request.args.get('human_readable')
+
+    if human_readable == 'true':
+        items_val = ViewItems.query.all()
+        items_nonval = ViewNonvalItems.query.all()
+    else:
+        items_val = Items.query.all()
+        items_nonval = NonvalItems.query.all()
+
+    data = []
+    for item in items_val:
+        obj = item.to_dict()
+        obj['validated'] = True
+        data.append(obj)
+
+    for item in items_nonval:
+        obj = item.to_dict()
+        obj['validated'] = False
+        obj['qty_unit'] = None
+        data.append(obj)
+
+    return jsonify(data), HTTPStatus.OK
