@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<span class="float-end"><a class="btn btn-primary" href="/items/add"><i class="fa-solid fa-plus"></i> Add New Item</a></span>
+<h2>All Items</h2>
+<hr>
+<div class="container-fluid" style="padding-bottom: 48px;">
+    <table id="data" class="table table-striped" style="width: 100%;">
+        <thead style="vertical-align: middle;">
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Name</th>
+                <th>Variant</th>
+                <th>Price</th>
+                <th>Qty. Unit</th>
+                <th>Actions</th>
+                <th>Validated</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+<!-- Add to Cart Modal -->
+<div class="modal fade" id="modalAddToCart" tabindex="-1" aria-labelledby="modalAddToCartLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAddToCartLabel">Add to Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formAddToCart" action="#" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="cart_item_id">
+                    <div class="mb-3">
+                        <label for="cart_item" class="form-label">Item</label>
+                        <input type="text" class="form-control" id="cart_item" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cart_price" class="form-label">Price</label>
+                        <input type="text" class="form-control" id="cart_price" readonly>
+                    </div>
+                    <div class="input-group mb-3">
+                        <label class="input-group-text" for="cart_qty">Quantity</label>
+                        <input type="number" class="form-control" id="cart_qty" value="1" min="1" max="100">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Remarks</span>
+                        <textarea class="form-control" id="cart_remarks" aria-label="Remarks"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="resetForm($(cart_item_id).val())">Reset</button>
+                    <button type="submit" class="btn btn-primary" id="btnAddToCartFinal">Add to Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() 
+    {
+        $('#data').DataTable(
+        {
+            ajax: 
+            {
+                url: "/api/items?human_readable=true",
+                dataSrc: "",
+                type: "GET"
+            },
+            columns: 
+            [
+                { 
+                    data: "id", // 0
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display') 
+                        {
+                            if (row.validated == 1)
+                                return `<span class="badge bg-success">Validated Item</span> ${data}`;
+                            else
+                                return `<span class="badge bg-danger">Unvalidated Item</span> ${data}`;
+                        }
+
+                        return data;
+                    }
+                },
+                { data: "category" }, // 1
+                { data: "brand" }, // 2
+                { data: "name" }, // 3
+                { data: "variant" }, // 4
+                { 
+                    data: "base_price", // 5
+                    render: function(data, type, row, meta) 
+                        {
+                            if (type === 'display')
+                                return formatCurrency(data);
+
+                            return data;
+                        }
+                },
+                { 
+                    data: "qty_unit",// 6
+                    render: function(data, type, row, meta) 
+                        {
+                            if (type === 'display') 
+                            {
+                                if (data == null)
+                                    return '-';
+                                else
+                                    return `/${data}`;
+                            }
+
+                            return data;
+                        }
+                },
+                {
+                    data: null, // 7
+                    render: function(data, type, row, meta) 
+                    {
+                        // Add to cart button
+                        return `
+                        <button class="btn btn-primary btn-sm" id="btnAddToCart_${row.id}"><i class="fas fa-cart-plus"></i> Add to Order</button>
+                        <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.id}"><i class="fas fa-info-circle"></i></button>
+                        `;
+                    }
+                },
+                { 
+                    data: "validated", // 8
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display') 
+                        {
+                            if (data == 1)
+                                return "Validated Item";
+                            else
+                                return "Unvalidated Item";
+                        }
+
+                        return data;
+                    }
+                }
+            ],
+            columnDefs: 
+            [
+                { visible: false, targets: [1, 8] },
+                { searchPanes: { show: true }, targets: [1, 2, 6] },
+                { searchPanes: { show: false }, targets: [0, 3, 4, 5] }
+            ],
+            order: [[0, 'asc']],
+            fixedHeader: true,
+            language: 
+            {
+                searchBuilder: 
+                {
+                    button: 
+                    {
+                        0: 'Advanced Search',
+                        _: 'Advanced Search (%d)'
+                    },
+                    title:
+                    {
+                        _: 'Advanced Search (%d)',
+                        0: 'Advanced Search'
+                    },
+                    data: 'Item'
+                }
+            },
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            layout: 
+            {
+                top2Start: 'info',
+                top2End: 
+                {
+                    buttons: 
+                    [
+                        {
+                            extend: 'colvis',
+                            text: 'Columns',
+                            columns: [0, 1, 2, 3, 4, 5, 6],
+                        },
+                        {
+                            extend: 'collection',
+                            text: 'Export…',
+                            buttons:
+                            [
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    sheetName: 'Network Clients',
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7] }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
+                                    download: 'open',
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    pageSize: 'A4',
+                                    orientation: 'landscape',
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                }
+                            ]
+                        },
+                        {
+                            extend: 'searchBuilder',
+                            config: 
+                            {
+                                columns: 
+                                {
+                                    0: { type: 'string' },
+                                    1: { type: 'string' },
+                                    2: { type: 'string' },
+                                    3: { type: 'string' },
+                                    4: { type: 'string' },
+                                    5: { type: 'num-fmt' },
+                                    6: { type: 'string' },
+                                }
+                            }
+                        },
+                        {
+                            text: 'Refresh',
+                            attr:  { id: 'btnRefresh' },
+                            action: function (e, dt, node, config) 
+                            {
+                                const btnRefresh = document.getElementById('btnRefresh');
+                                btnRefresh.disabled = true;
+                                btnRefresh.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+
+                                displayToast('Data Refresh', 'Refreshing data from the server...', 'info');
+                                dt.searchPanes.clearSelections();
+                                
+                                dt.ajax.reload(function() 
+                                {
+                                    setTimeout(() => dt.searchPanes.rebuildPane(), 2000);
+
+                                    btnRefresh.disabled = false;
+                                    btnRefresh.innerHTML = 'Refresh';
+
+                                    displayToast('Data Refresh', 'Data refreshed successfully.');
+                                });
+                            }
+                        }              
+                    ]
+                },
+                top1: { searchPanes: { show: true, initCollapsed: true, cascadePanes: true } },
+                bottomStart: null,
+                bottomEnd: 'paging',
+            }
+        });
+    });
+
+    const btnAddToCart = document.getElementById('btnAddToCartFinal');
+    const formAddToCart = document.getElementById('formAddToCart');
+
+    function resetForm(item_id = null)
+    {
+        $('#cart_qty').val(1);
+        $('#cart_remarks').val('');
+
+        if (item_id != null)
+            sessionStorage.removeItem(`cart_item_${item_id}`);
+    }
+
+    // Add to cart button handler
+    $('#data').on('click', 'button', function() 
+    {
+        if (this.id.startsWith('btnAddToCart_') == false)
+            return;
+
+        const id = this.id.split('_')[1];
+        const item = $('#data').DataTable().row((idx, data) => data.id == id).data();
+        
+        $('#cart_item_id').val(item.id);
+        $('#cart_item').val(`${item.brand} ${item.name} ${item.variant}`);
+        $('#cart_price').val(formatCurrency(item.base_price));
+
+        // Load the quantity and remarks from the local storage
+        const cart_item = JSON.parse(sessionStorage.getItem(`cart_item_${item.id}`));
+        if (cart_item != null)
+        {
+            $('#cart_qty').val(cart_item.qty);
+            $('#cart_remarks').val(cart_item.remarks);
+        }
+        
+        $('#modalAddToCart').modal('show');
+    });
+
+    // Add to cart close event handler
+    $('#modalAddToCart').on('hidden.bs.modal', function() 
+    {
+        // Store the remarks and quantity in the local storage per item
+        const item_id = $('#cart_item_id').val();
+        const qty = $('#cart_qty').val();
+        const remarks = $('#cart_remarks').val();
+
+        if (qty > 1 || remarks != '')
+            sessionStorage.setItem(`cart_item_${item_id}`, JSON.stringify({ qty: qty, remarks: remarks }));
+
+        resetForm();
+    });
+
+    // Add to cart finalizer button handler
+    formAddToCart.addEventListener('submit', async (event) =>
+    {
+        event.preventDefault();
+        
+        const order_id = getCookie('order_id');
+        const item_id = $('#cart_item_id').val();
+        const qty = parseInt($('#cart_qty').val());
+        const remarks = $('#cart_remarks').val();
+
+        if (isNaN(qty))
+        {
+            displayPopupAlert('Quantity error', 'Quantity must be a number.', 'error');            
+            return;
+        }
+
+        if (order_id == null)
+        {
+            displayPopupAlert('Operation error', 'No active order found. Please create a new order.', 'error');
+            return;
+        }
+
+        btnAddToCart.disabled = true;
+        btnAddToCart.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding to Cart...';
+
+        // Convert the collected variables into a Form Data object
+        const formData = new FormData();
+        formData.append('item_id', item_id);
+        formData.append('quantity', qty);
+        formData.append('remarks', remarks);
+
+        const response = await fetch(`/api/order/${order_id}/item`, 
+        {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok)
+        {
+            displayToast('Operation success', data.message);
+            $('#modalAddToCart').modal('hide');
+            resetForm(item_id);
+            updateCartItemsCount();
+            updateCartTopItems();
+        }
+        else
+        {
+            displayPopupAlert(data.error, data.details, 'error');
+        }
+    
+        btnAddToCart.disabled = false;
+        btnAddToCart.innerHTML = 'Add to Order';
+});
+</script>
+{% endblock %}

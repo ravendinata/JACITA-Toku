@@ -76,3 +76,53 @@ function removeCookie(name)
 }
 
 function wipeCookie(name) { document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; }
+
+function formatCurrency(value, rounding = 2, symbol = 'IDR')
+{
+    stringified = value.toFixed(rounding).toString();
+    formatted = stringified.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    return `${symbol} ${formatted}`;
+}
+
+function displayToast(title, message, type = 'success', timer = 5000)
+{
+    const background = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#343a40' : '#f8f9fa';
+    const forecolor = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#f8f9fa' : '#343a40';
+
+    Swal.fire(
+    {
+        title: title,
+        text: message,
+        icon: type,
+        toast: true,
+        position: 'bottom-end',
+        showConfirmButton: false,
+        timer: timer,
+        timerProgressBar: true,
+        background: background,
+        color: forecolor
+    });
+}
+
+function displayPopupAlert(title, message, type = 'success')
+{
+    const background = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#343a40' : '#f8f9fa';
+    const forecolor = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#f8f9fa' : '#343a40';
+
+    Swal.fire(
+    {
+        title: title,
+        text: message,
+        icon: type,
+        buttonsStyling: false,
+        customClass: 
+        {
+            popUp: 'container',
+            confirmButton: 'btn btn-primary mr-2',
+            cancelButton: 'btn btn-danger'
+        },
+        background: background,
+        color: forecolor
+    });
+}
