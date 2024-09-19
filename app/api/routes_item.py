@@ -47,6 +47,7 @@ def api_create_item():
     base_price = request.form.get('base_price')
     category_id = request.form.get('category_id')
     qty_unit_id = request.form.get('qty_unit_id')
+    created_by = request.form.get('created_by')
 
     check_item = Items.query.filter_by(brand = brand, name = name, variant = variant).first()
     if check_item:
@@ -54,7 +55,7 @@ def api_create_item():
 
     id = generate_item_id(brand, name, variant)
 
-    item = Items(id = id, 
+    item = Items(id = id, created_by = created_by,
                  brand = brand, name = name, variant = variant, 
                  base_price = base_price, 
                  category_id = category_id, qty_unit_id = qty_unit_id)
