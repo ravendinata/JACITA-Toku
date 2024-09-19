@@ -85,6 +85,53 @@ function formatCurrency(value, rounding = 2, symbol = 'IDR')
     return `${symbol} ${formatted}`;
 }
 
+function updateCartItemsCount()
+{
+    const order_id = getCookie('order_id');
+    if (order_id === '') return;
+    
+    fetch(`/api/order/${order_id}/items/count`)
+    .then(response => response.json())
+    .then(data => 
+    {
+        const badge = document.getElementById('cartCount');
+        badge.innerHTML = data.total;
+    });
+}
+
+function updateCartTopItems()
+{
+    const order_id = getCookie('order_id');
+    if (order_id === '') return;
+
+    fetch(`/api/order/${order_id}/items/top`)
+    .then(response => response.json())
+    .then(data => 
+    {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+
+        
+        data.forEach(item =>
+        {
+            const variant = item.variant == '' ? '<i>n/a</i>' : item.variant;
+            const cartItem = document.createElement('li');
+            cartItem.classList.add('dropdown-item', 'd-flex', 'justify-content-between', 'lh-sm');
+            cartItem.innerHTML = 
+            `
+                <div>
+                    <p class="my-0"><strong>${item.brand} ${item.name}</strong></p>
+                    <small>Variant: ${variant}</small>
+                </div>
+                <span><small class="text-muted float-end">x ${item.quantity} ${item.qty_unit}</small></span>
+            `;
+            cartItems.appendChild(cartItem);
+        }
+        );
+    }
+    );
+}
+
 function displayToast(title, message, type = 'success', timer = 5000)
 {
     const background = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#343a40' : '#f8f9fa';

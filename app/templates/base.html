@@ -32,21 +32,38 @@
             <div class="collapse navbar-collapse" id="navbarNav" style="padding: 0 10px;">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="#"></a>
+                        <a class="nav-link" href="/items">Item Catalogue</a>
+                    </li>
+                    <li class="nav-item"></li>
+                        <a class="nav-link" href="#">My Orders</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0 float-end">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navUsername" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ data.username }}</a>
-                        <ul class="dropdown-menu">
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#">Profile</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" id="kanriLogout" href="#">Logout</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown ms-3 me-3">
+                        <a class="btn btn-outline-secondary position-relative" href="#" id="btnToggleCart" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-shopping-cart"></i>
+                            Current Order
+                            <span id="cartCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" style="width: 300px;">
+                            <li id="cartItems"></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">View Order Detail</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-secondary float-end shadow" id="btnToggleColorMode"><i class="fa-solid fa-circle-half-stroke"></i></button>
+                    </li>
                 </ul>
             </div>
-            <button class="btn btn-secondary float-end shadow" id="btnToggleColorMode"><i class="fa-solid fa-circle-half-stroke"></i></button>
         </div>
     </nav>
     <div class="container" style="max-width: inherit">
@@ -69,6 +86,9 @@
             else 
                 alert(data.message);
         });
+
+        updateCartItemsCount();
+        updateCartTopItems();
     });
     </script>
     {% block scripts %}{% endblock %}
