@@ -30,7 +30,7 @@ def api_get_order_item(order_id, item_id):
 
 @api.route('/order/<string:order_id>/item', methods = ['POST'])
 def api_add_order_item(order_id):
-    check_field = check_fields(request, 'order_item/create')
+    check_field = check_fields(request, 'orderitem/create')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
@@ -66,7 +66,7 @@ def api_add_order_item(order_id):
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['PATCH'])
 def api_update_order_item(order_id, item_id):
-    check_field = check_fields(request, 'order_item/update')
+    check_field = check_fields(request, 'orderitem/update')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
