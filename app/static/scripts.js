@@ -123,7 +123,7 @@ function updateCartTopItems()
                     <p class="my-0"><strong>${item.brand} ${item.name}</strong></p>
                     <small>Variant: ${variant}</small>
                 </div>
-                <span><small class="text-muted float-end">x ${item.quantity} ${item.qty_unit}</small></span>
+                <span><small class="text-muted float-end ms-2">x ${item.quantity} ${item.qty_unit}</small></span>
             `;
             cartItems.appendChild(cartItem);
         }
