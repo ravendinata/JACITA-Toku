@@ -19,6 +19,8 @@ class Items(db.Model):
     variant = db.Column(db.String, nullable = True)
     base_price = db.Column(db.Float, nullable = False)
     qty_unit_id = db.Column(db.Integer, db.ForeignKey(QuantityUnit.id), nullable = False, default = 0)
+    created_date = db.Column(db.DateTime, nullable = False, default = func.current_timestamp())
+    created_by = db.Column(db.String, db.ForeignKey(User.username), nullable = False)
 
     def __repr__(self):
         return f'<Items: {self.brand} {self.name} {self.variant} [{self.id}]>'
@@ -37,6 +39,8 @@ class ViewItems(db.Model):
     variant = db.Column(db.String, nullable = True)
     base_price = db.Column(db.Float, nullable = False)
     qty_unit = db.Column(db.String, nullable = False, default = 0)
+    created_date = db.Column(db.DateTime, nullable = False, default = func.current_timestamp())
+    created_by = db.Column(db.String, db.ForeignKey(User.username), nullable = False)
 
     def __repr__(self):
         return f'<ViewItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
