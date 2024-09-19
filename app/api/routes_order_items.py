@@ -2,6 +2,7 @@ from flask import jsonify, request
 
 from app.api import api
 from app.extensions import db
+from app.models.misc import QuantityUnit
 from app.models.orders import Orders
 from app.models.items import Items, NonvalItems
 from app.models.order_items import OrderItems, OrderNonvalItems
@@ -116,3 +117,51 @@ def api_remove_order_item(order_id, item_id):
         return jsonify({ 'error': 'Error while removing item from order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Item removed from order successfully' }), HTTPStatus.NO_CONTENT
+
+@api.route('/order/<string:order_id>/items/count', methods = ['GET'])
+def api_get_order_item_count(order_id):
+    if Orders.query.get(order_id) is None:
+        return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
+
+    items = OrderItems.query.filter_by(order_id = order_id).all()
+    nonval_items = OrderNonvalItems.query.filter_by(order_id = order_id).all()
+
+    total = 0
+    for item in items:
+        total += item.quantity
+    for item in nonval_items:
+        total += item.quantity
+    
+    return jsonify({ 'total': total }), HTTPStatus.OK
+
+@api.route('/order/<string:order_id>/items/top', methods = ['GET'])
+def api_get_order_top_items(order_id):
+    if Orders.query.get(order_id) is None:
+        return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
+
+    items = OrderItems.query.filter_by(order_id = order_id).all()
+    nonval_items = OrderNonvalItems.query.filter_by(order_id = order_id).all()
+
+    top_items = []
+    for item in items:
+        top_items.append({ 'item_id': item.item_id, 'quantity': item.quantity })
+    for item in nonval_items:
+        top_items.append({ 'item_id': item.item_id, 'quantity': item.quantity })
+    
+    top_items.sort(key = lambda x: x['quantity'], reverse = True)
+    top_items = top_items[:5] # Get top 5 items only
+
+    for order_item in top_items:
+        item = Items.query.get(order_item['item_id'])
+        if item is None:
+            item = NonvalItems.query.get(order_item['item_id'])
+            qty_unit = QuantityUnit.query.get(0)
+        else:
+            qty_unit = QuantityUnit.query.get(item.qty_unit_id)
+
+        order_item['brand'] = item.brand
+        order_item['name'] = item.name
+        order_item['variant'] = item.variant
+        order_item['qty_unit'] = qty_unit.unit
+    
+    return top_items, HTTPStatus.OK
