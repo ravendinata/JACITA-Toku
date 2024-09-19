@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="width: 80%; padding-top: 28px; padding-bottom: 48px;">
+    <span><a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
+    <h1>Add Item</h1>
+    </span>
+    <form>
+        <input type="hidden" name="created_by" value="{{ data.username }}">
+        <div class="row mb-3">
+            <div class="col">
+                <label for="brand">Brand <small class="text-muted"><i>(Required)</i></small></label>
+                <input type="text" class="form-control" id="brand" name="brand" required>
+            </div>
+            <div class="col">
+                <label for="name">Item Name <small class="text-muted"><i>(Required)</i></small></label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="col">
+                <label for="variant">Variant</label>
+                <input type="text" class="form-control" id="variant" name="variant">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="category_id">Category <small class="text-muted"><i>(Required)</i></small></label>
+                <select class="form-select" id="category_id" name="category_id" required>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.id }} - {{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col">
+                <label for="base_price">Price <small class="text-muted"><i>(Required)</i></small></label>
+                <div class="input-group">
+                    <span class="input-group-text">IDR</span>
+                    <input type="number" class="form-control" id="base_price" name="base_price" required>
+                </div>
+            </div>
+            <div class="col">
+                <label for="qty_unit_id">Quantity <small class="text-muted"><i>(Required)</i></small></label>
+                <select class="form-select" id="qty_unit_id" name="qty_unit_id" required>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}">{{ unit.unit }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary float-end">Add Item</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const form = document.querySelector('form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const response = await fetch('/api/items/validated', 
+        {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) 
+        {
+            displayToast('Operation success', 'Item added successfully!');
+            setTimeout(() => window.location.href = '/items', 3000);
+        } 
+        else 
+        {
+            displayPopupAlert(data.error, data.details, 'error');
+        }
+    });
+</script>
+{% endblock %}
