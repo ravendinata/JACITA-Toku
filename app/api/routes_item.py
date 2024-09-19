@@ -37,6 +37,10 @@ def api_get_item(item_id):
 
 @api.route('/items/validated', methods = ['POST'])
 def api_create_item():
+    check_field = check_fields(request, 'item/create')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+
     brand = request.form.get('brand')
     name = request.form.get('name')
     variant = request.form.get('variant')
@@ -150,6 +154,10 @@ def api_get_nonval_item(item_id):
 
 @api.route('/items/nonvalidated', methods = ['POST'])
 def api_create_nonval_item():
+    check_field = check_fields(request, 'nonvalitem/create')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+    
     brand = request.form.get('brand')
     name = request.form.get('name')
     variant = request.form.get('variant')
