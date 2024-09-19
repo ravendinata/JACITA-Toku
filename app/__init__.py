@@ -12,7 +12,7 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = config['app_secret_key']
     app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{config["db_user"]}:{config["db_pass"]}@{config["db_host"]}:{config["db_port"]}/{config["db_name"]}?sslmode=require'
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes = 60)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours = 8)
 
     # ==========
     # Extensions
