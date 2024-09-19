@@ -50,6 +50,21 @@ def api_add_order_item(order_id):
         else:
             item_type = 'nonvalidated'
 
+    # Check if item already exists in order
+    check_order_item = OrderItems.query.get((order_id, item_id))
+    if check_order_item is None:
+        check_order_item = OrderNonvalItems.query.get((order_id, item_id))
+
+    # If item already exists, update the quantity instead of adding a new item
+    if check_order_item is not None:
+        try:
+            check_order_item.quantity += int(quantity)
+            db.session.commit()
+        except Exception as e:
+            return jsonify({ 'error': 'Error while updating order item quantity', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        return jsonify({ 'message': 'Item quantity updated instead of adding a new item' }), HTTPStatus.OK
+
     item = None
     if item_type == 'validated':
         item = OrderItems(order_id = order_id, item_id = item_id, quantity = quantity, remarks = remarks)
