@@ -169,9 +169,9 @@
                         if (type === 'display') 
                         {
                             if (row.validated == 1)
-                                return `<span class="badge bg-success"><i class="fa-solid fa-check-double"></i></span> ${data}`;
+                                return `<span class="text-success"><i class="fa-solid fa-check-double"></i></span> ${data}`;
                             else
-                                return `<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i></span> ${data}`;
+                                return `<span class="text-danger"><i class="fa-solid fa-xmark"></i></span> ${data}`;
                         }
 
                         return data;
@@ -419,9 +419,21 @@
         $('#item_brand').val(data.brand);
         $('#item_name').val(data.name);
         $('#item_variant').val(data.variant);
-        $('#item_description').val(data.description);
         $('#item_base_price').val(formatCurrency(data.base_price));
         $('#item_qty_unit').val(data.qty_unit);
+
+        if (data.description == null || data.description == '')
+        {
+            $('#item_description').val('No description provided.');
+            $('#item_description').addClass('text-muted');
+            $('#item_description').attr('rows', 1);
+        }
+        else
+        {
+            $('#item_description').val(data.description);
+            $('#item_description').removeClass('text-muted');
+            $('#item_description').attr('rows', 3);
+        }
 
         $('#modalItemDetails').modal('show');
     });
