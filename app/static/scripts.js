@@ -88,29 +88,51 @@ function formatCurrency(value, rounding = 2, symbol = 'IDR')
 function updateCartItemsCount()
 {
     const order_id = getCookie('order_id');
-    if (order_id === '') return;
+    const badge = document.getElementById('cartCount');
+
+    if (order_id === '' || order_id == null) 
+    {
+        badge.hidden = true;
+        return;
+    }
     
     fetch(`/api/order/${order_id}/items/count`)
     .then(response => response.json())
     .then(data => 
     {
-        const badge = document.getElementById('cartCount');
         badge.innerHTML = data.total;
+        badge.hidden = false;
     });
 }
 
 function updateCartTopItems()
 {
     const order_id = getCookie('order_id');
-    if (order_id === '') return;
+    const cartItems = document.getElementById('cartItems');
+    const btnOrderDetails = document.getElementById('btnOrderDetails');
+
+    if (order_id === '' || order_id == null) 
+    {
+        cartItems.innerHTML = '';
+
+        const cartItem = document.createElement('li');
+        cartItem.classList.add('dropdown-item', 'd-flex', 'justify-content-between', 'lh-sm');
+        cartItem.innerHTML = '<small class="text-muted">No active order</small>';
+        cartItems.appendChild(cartItem);
+
+        btnOrderDetails.hidden = true;
+
+        return;
+    }
+
+    btnOrderDetails.hidden = false;
+    btnOrderDetails.href = `/order/${order_id}`;
 
     fetch(`/api/order/${order_id}/items/top`)
     .then(response => response.json())
     .then(data => 
     {
-        const cartItems = document.getElementById('cartItems');
         cartItems.innerHTML = '';
-
         
         data.forEach(item =>
         {
