@@ -195,3 +195,34 @@ function displayPopupAlert(title, message, type = 'success')
         color: forecolor
     });
 }
+
+function displayPopupConfirm(title, message, confirmCallback = null, denyCallback = null, confirmText = 'Yes', denyText = 'No')
+{
+    const background = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#343a40' : '#f8f9fa';
+    const forecolor = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#f8f9fa' : '#343a40';
+
+    Swal.fire(
+    {
+        title: title,
+        text: message,
+        icon: 'warning',
+        confirmButtonText: confirmText,
+        denyButtonText: denyText,
+        showDenyButton: true,
+        buttonsStyling: false,
+        customClass: 
+        {
+            popUp: 'container',
+            confirmButton: 'btn btn-primary mx-2',
+            denyButton: 'btn btn-danger mx-2'
+        },
+        background: background,
+        color: forecolor
+    }).then((result) => 
+    {
+        if (result.isConfirmed && confirmCallback != null) 
+            confirmCallback();
+        else if (result.isDenied && denyCallback != null)
+            denyCallback();
+    });
+}
