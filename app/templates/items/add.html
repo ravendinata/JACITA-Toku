@@ -1,24 +1,40 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-fluid" style="width: 80%; padding-top: 28px; padding-bottom: 48px;">
-    <span><a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
+<div class="container-fluid" style="width: 75%; padding-top: 28px; padding-bottom: 48px;">
+    <span><a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a></span>
     <h1>Add Item</h1>
-    </span>
+    <hr class="mb-3">
     <form>
         <input type="hidden" name="created_by" value="{{ data.username }}">
         <div class="row mb-3">
             <div class="col">
                 <label for="brand">Brand <small class="text-muted"><i>(Required)</i></small></label>
-                <input type="text" class="form-control" id="brand" name="brand" required>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="brand" name="brand" required>
+                    <button class="btn btn-secondary" type="button" id="brand-default">Set Default</button>
+                </div>
+                <p class="form-text text-muted">
+                    <b>Brand name or manufacturer.</b><br>
+                    <i>Example: "Snowman", "Glade", "Faber Castell", etc.</i><br>
+                    Set this to "Any Brand" if there is no specifc brand.
+                </p>
             </div>
             <div class="col">
                 <label for="name">Item Name <small class="text-muted"><i>(Required)</i></small></label>
                 <input type="text" class="form-control" id="name" name="name" required>
+                <p class="form-text text-muted">
+                    <b>Descriptive name of the item.</b><br>
+                    <i>Example: "Whiteboard Marker", "Air Freshener Aerosol", "Pensil 2B", etc.</i>
+                </p>
             </div>
             <div class="col">
                 <label for="variant">Variant</label>
                 <input type="text" class="form-control" id="variant" name="variant">
+                <p class="form-text text-muted">
+                    <b>The variant of the item if applicable.</b><br>
+                    <i>Example based on Whiteboard Marker: "Red", "Black", "Blue", "Green", etc.</i>
+                </p>
             </div>
         </div>
         <div class="row mb-3">
@@ -29,6 +45,10 @@
                     <option value="{{ category.id }}">{{ category.id }} - {{ category.name }}</option>
                     {% endfor %}
                 </select>
+                <p class="form-text text-muted">
+                    <b>Category where the item belongs to.</b><br>
+                    Please set this properly to help categorize the item. This is helpful for searching and filtering.
+                </p>
             </div>
             <div class="col">
                 <label for="base_price">Price <small class="text-muted"><i>(Required)</i></small></label>
@@ -36,25 +56,53 @@
                     <span class="input-group-text">IDR</span>
                     <input type="number" class="form-control" id="base_price" name="base_price" required>
                 </div>
+                <p class="form-text text-muted">
+                    <b>Base price of the item.</b><br>
+                    Set the price according to the quantity unit you set. This is the base price for each unit.<br>
+                    <i>For example, if you set the unit to "grams" and the price is 1500, then the price is IDR 1500 per gram.</i>
+                </p>
             </div>
             <div class="col">
-                <label for="qty_unit_id">Quantity <small class="text-muted"><i>(Required)</i></small></label>
+                <label for="qty_unit_id">Quantity Unit <small class="text-muted"><i>(Required)</i></small></label>
                 <select class="form-select" id="qty_unit_id" name="qty_unit_id" required>
                     {% for unit in units %}
                     <option value="{{ unit.id }}">{{ unit.unit }}</option>
                     {% endfor %}
                 </select>
+                <p class="form-text text-muted">
+                    <b>The unit in which the item is offered in.</b><br>
+                    If you are not sure what to set, set this to "pieces".<br>
+                    <i>Example: "sheets" for things like paper, "pieces" for most items, "grams" for weighable items, etc.</i>
+                </p>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row mb-3">
+            <div class="col-md-4 text-end">
+                <label for="description">Item Description</label>
+                <p class="form-text text-muted">
+                    <b>Additional information about the item.</b><br>
+                    <i>Example: "This item is refillable", "This item is made of recycled materials", etc.</i>
+                </p>
+            </div>
+            <div class="col-md-8">
+                <textarea class="form-control" id="description" name="description" rows="4"></textarea>
             </div>
         </div>
         <button type="submit" class="btn btn-primary float-end">Add Item</button>
+        <button type="button" class="btn btn-secondary float-end me-2" onclick="form.reset();">Reset Form</button>
     </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    const btnDefault = document.querySelector('#brand-default');
     const form = document.querySelector('form');
+
     form.addEventListener('submit', async (e) => {
+        displayToast('Submitting item', 'Please wait while we process your item...', 'info');
+
         e.preventDefault();
 
         const formData = new FormData(form);
@@ -68,13 +116,17 @@
         
         if (response.ok) 
         {
-            displayToast('Operation success', 'Item added successfully!');
-            setTimeout(() => window.location.href = '/items', 3000);
+            setTimeout(() => displayToast('Operation success', 'Item added successfully!'), 1000);
+            setTimeout(() => window.location.href = '/items', 2000);
         } 
         else 
         {
             displayPopupAlert(data.error, data.details, 'error');
         }
+    });
+
+    btnDefault.addEventListener('click', () => {
+        document.querySelector('#brand').value = 'Any Brand';
     });
 </script>
 {% endblock %}
