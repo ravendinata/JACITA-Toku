@@ -80,9 +80,7 @@
                     </div>
                 </div>
                 <a class="text-muted my-3" data-bs-toggle="collapse" href="#item_metadata" role="button" aria-expanded="false" aria-controls="item_metadata">
-                    <small>
-                        Show/Hide Metadata
-                    </small>
+                    <small>Show/Hide Metadata</small>
                 </a>
                 <div class="collapse my-3" id="item_metadata">
                     <div class="row mb-3">
@@ -216,6 +214,7 @@
                         return `
                         <button class="btn btn-primary btn-sm" id="btnAddToCart_${row.id}"><i class="fas fa-cart-plus"></i> Add to Order</button>
                         <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.id}"><i class="fas fa-info-circle"></i></button>
+                        <button class="btn btn-secondary btn-sm" id="btnEditItem_${row.id}"><i class="fas fa-edit"></i></button>
                         `;
                     }
                 },
@@ -228,7 +227,7 @@
                             if (data == 1)
                                 return "Validated Item";
                             else
-                                return "Unvalidated Item";
+                                return "Non-validated Item";
                         }
 
                         return data;
@@ -338,6 +337,7 @@
 
     const btnAddToCart = document.getElementById('btnAddToCartFinal');
     const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
+    const btnEditItem = document.getElementById('btnEditItem');
     const formAddToCart = document.getElementById('formAddToCart');
 
     function resetForm(item_id = null)
@@ -396,7 +396,7 @@
         // Item Validation
         if (data.validated == false)
         {
-            $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Unvalidated`);
+            $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Non-validated`);
             $('#item_validated').removeClass('bg-success');
             $('#item_validated').addClass('bg-danger');
         }
@@ -406,8 +406,6 @@
             $('#item_validated').removeClass('bg-danger');
             $('#item_validated').addClass('bg-success');
         }
-        
-        console.log(data);
 
         // Item Metadata
         $('#item_id').val(data.id);
@@ -426,6 +424,23 @@
         $('#item_qty_unit').val(data.qty_unit);
 
         $('#modalItemDetails').modal('show');
+    });
+
+    // Edit item button handler
+    $('#data').on('click', 'button', function() 
+    {
+        if (this.id.startsWith('btnEditItem_') == false)
+            return;
+
+        const id = this.id.split('_')[1];
+        window.location.href = `/item/${id}/edit`;
+    });
+
+    // Edit item button handler in details modal
+    $('#btnEditItem').on('click', function() 
+    {
+        const item_id = $('#item_id').val();
+        window.location.href = `/item/${item_id}/edit`;
     });
 
     // Add to cart button in details modal handler
