@@ -46,6 +46,7 @@ class ViewItems(db.Model):
     created_by = db.Column(db.String, db.ForeignKey(User.username), nullable = False)
     modification_date = db.Column(db.DateTime, nullable = True)
     modification_by = db.Column(db.String, db.ForeignKey(User.username), nullable = True)
+    description = db.Column(db.String, nullable = True)
 
     def __repr__(self):
         return f'<ViewItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
@@ -93,6 +94,7 @@ class ViewNonvalItems(db.Model):
     created_by = db.Column(db.String, nullable = False)
     modification_date = db.Column(db.DateTime, nullable = True)
     modification_by = db.Column(db.String, nullable = True)
+    description = db.Column(db.String, nullable = True)
 
     def __repr__(self):
         return f'<ViewNonvalItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
