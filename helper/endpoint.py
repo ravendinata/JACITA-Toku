@@ -24,8 +24,8 @@ required_fields = {
 modifiable_fields = {
     'order/update': [ 'period', 'division_id' ],
     'user/update': [ 'first_name', 'last_name', 'email', 'division_id' ],
-    'item_validated/update': [ 'brand', 'name', 'variant', 'base_price', 'category_id', 'qty_unit_id' ],
-    'item_nonvalidated/update': [ 'brand', 'name', 'variant', 'base_price', 'category_id' ],
+    'item_validated/update': [ 'brand', 'name', 'variant', 'base_price', 'category_id', 'qty_unit_id', 'description' ],
+    'item_nonvalidated/update': [ 'brand', 'name', 'variant', 'base_price', 'category_id', 'description' ],
     'orderitem/update': [ 'quantity', 'remarks' ],
 }
 

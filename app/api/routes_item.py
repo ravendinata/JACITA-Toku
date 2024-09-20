@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from app.api import api
 from app.extensions import db
@@ -48,6 +48,7 @@ def api_create_item():
     category_id = request.form.get('category_id')
     qty_unit_id = request.form.get('qty_unit_id')
     created_by = request.form.get('created_by')
+    description = request.form.get('description')
 
     check_item = Items.query.filter_by(brand = brand, name = name, variant = variant).first()
     if check_item:
@@ -57,7 +58,7 @@ def api_create_item():
 
     item = Items(id = id, created_by = created_by,
                  brand = brand, name = name, variant = variant, 
-                 base_price = base_price, 
+                 base_price = base_price, description = description,
                  category_id = category_id, qty_unit_id = qty_unit_id)
     
     try:
@@ -75,30 +76,22 @@ def api_update_item(item_id):
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
+    username = session.get('user')
+    
     item = Items.query.get(item_id)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+    
+    item.brand = request.form.get('brand', item.brand)
+    item.name = request.form.get('name', item.name)
+    item.variant = request.form.get('variant', item.variant)
+    item.base_price = request.form.get('base_price', item.base_price)
+    item.category_id = request.form.get('category_id', item.category_id)
+    item.qty_unit_id = request.form.get('qty_unit_id', item.qty_unit_id)
+    item.description = request.form.get('description', item.description)
 
-    brand = request.form.get('brand')
-    name = request.form.get('name')
-    variant = request.form.get('variant')
-    base_price = request.form.get('base_price')
-    category_id = request.form.get('category_id')
-    qty_unit_id = request.form.get('qty_unit_id')
-
-    if brand is not None:
-        item.brand = brand
-    if name is not None:
-        item.name = name
-    if variant is not None:
-        item.variant = variant
-    if base_price is not None:
-        item.base_price = base_price
-    if category_id is not None:
-        item.category_id = category_id
-    if qty_unit_id is not None:
-        item.qty_unit_id = qty_unit_id
+    item.modification_by = username
 
     try:
         db.session.commit()
@@ -165,6 +158,7 @@ def api_create_nonval_item():
     base_price = request.form.get('base_price')
     category_id = request.form.get('category_id')
     created_by = request.form.get('created_by')
+    description = request.form.get('description')
 
     check_item = NonvalItems.query.filter_by(brand = brand, name = name, variant = variant).first()
     if check_item:
@@ -174,7 +168,7 @@ def api_create_nonval_item():
 
     item = NonvalItems(id = id, 
                        brand = brand, name = name, variant = variant, 
-                       base_price = base_price, 
+                       base_price = base_price, description = description,
                        category_id = category_id, created_by = created_by)
     
     try:
@@ -192,27 +186,21 @@ def api_update_nonval_item(item_id):
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
+    username = session.get('user')
+    
     item = NonvalItems.query.get(item_id)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+    
+    item.brand = request.form.get('brand', item.brand)
+    item.name = request.form.get('name', item.name)
+    item.variant = request.form.get('variant', item.variant)
+    item.base_price = request.form.get('base_price', item.base_price)
+    item.category_id = request.form.get('category_id', item.category_id)
+    item.description = request.form.get('description', item.description)        
 
-    brand = request.form.get('brand')
-    name = request.form.get('name')
-    variant = request.form.get('variant')
-    base_price = request.form.get('base_price')
-    category_id = request.form.get('category_id')
-
-    if brand is not None:
-        item.brand = brand
-    if name is not None:
-        item.name = name
-    if variant is not None:
-        item.variant = variant
-    if base_price is not None:
-        item.base_price = base_price
-    if category_id is not None:
-        item.category_id = category_id
+    item.modification_by = username
 
     try:
         db.session.commit()
@@ -256,11 +244,13 @@ def api_get_all_items():
     data = []
     for item in items_val:
         obj = item.to_dict()
+        obj.pop('description')
         obj['validated'] = True
         data.append(obj)
 
     for item in items_nonval:
         obj = item.to_dict()
+        obj.pop('description')
         obj['validated'] = False
         obj['qty_unit'] = None
         data.append(obj)
