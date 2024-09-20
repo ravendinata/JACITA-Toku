@@ -21,20 +21,6 @@ def api_get_items():
     
     return jsonify([ item.to_dict() for item in items ]), HTTPStatus.OK
 
-@api.route('/items/validated/<string:item_id>', methods = ['GET'])
-def api_get_item(item_id):
-    human_readable = request.args.get('human_readable')
-
-    if human_readable == 'true':
-        item = ViewItems.query.get(item_id)
-    else:
-        item = Items.query.get(item_id)
-
-    if item is None:
-        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
-    
-    return jsonify(item.to_dict()), HTTPStatus.OK
-
 @api.route('/items/validated', methods = ['POST'])
 def api_create_item():
     check_field = check_fields(request, 'item/create')
@@ -131,20 +117,6 @@ def api_get_nonval_items():
         items = NonvalItems.query.all()
 
     return jsonify([ item.to_dict() for item in items ]), HTTPStatus.OK
-
-@api.route('/items/nonvalidated/<string:item_id>', methods = ['GET'])
-def api_get_nonval_item(item_id):
-    human_readable = request.args.get('human_readable')
-
-    if human_readable == 'true':
-        item = ViewNonvalItems.query.get(item_id)
-    else:
-        item = NonvalItems.query.get(item_id)
-
-    if item is None:
-        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
-    
-    return jsonify(item.to_dict()), HTTPStatus.OK
 
 @api.route('/items/nonvalidated', methods = ['POST'])
 def api_create_nonval_item():
@@ -256,3 +228,24 @@ def api_get_all_items():
         data.append(obj)
 
     return jsonify(data), HTTPStatus.OK
+
+@api.route('/item/<string:item_id>', methods = ['GET'])
+def api_get_item(item_id):
+    human_readable = request.args.get('human_readable')
+
+    if human_readable == 'true':
+        item_val = ViewItems.query.get(item_id)
+        item_nonval = ViewNonvalItems.query.get(item_id)
+    else:
+        item_val = Items.query.get(item_id)
+        item_nonval = NonvalItems.query.get(item_id)
+
+    if item_val is None and item_nonval is None:
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+    
+    if item_val is not None:
+        return jsonify(item_val.to_dict()), HTTPStatus.OK
+    else:
+        obj = item_nonval.to_dict()
+        obj['qty_unit'] = None
+        return jsonify(obj), HTTPStatus.OK
