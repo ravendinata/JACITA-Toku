@@ -116,7 +116,7 @@
         
         if (response.ok) 
         {
-            setTimeout(() => displayToast('Operation success', 'Item added successfully!'), 1000);
+            setTimeout(() => displayToast('Operation success', data.message), 1000);
             setTimeout(() => window.location.href = '/items', 2000);
         } 
         else 
