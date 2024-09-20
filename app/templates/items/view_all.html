@@ -394,7 +394,7 @@
         data.modification_date = new Date(data.modification_date).toLocaleString("en-GB", DATE_OPTIONS);
 
         // Item Validation
-        if (data.category == "Unvalidated")
+        if (data.validated == false)
         {
             $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Unvalidated`);
             $('#item_validated').removeClass('bg-success');
