@@ -59,6 +59,95 @@
         </div>
     </div>
 </div>
+<!-- Item Details Modal -->
+<div class="modal fade" id="modalItemDetails" tabindex="-1" aria-labelledby="modalItemDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalItemDetailsLabel"><i class="fas fa-info-circle"></i> Item Details</h5>
+                <span class="badge bg-secondary mx-2" id="item_validated"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_id" class="form-label"><i class="fas fa-qrcode"></i> Item ID (SKU)</label>
+                        <input type="text" class="form-control" id="item_id" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="item_category" readonly>
+                    </div>
+                </div>
+                <a class="text-muted my-3" data-bs-toggle="collapse" href="#item_metadata" role="button" aria-expanded="false" aria-controls="item_metadata">
+                    <small>
+                        Show/Hide Metadata
+                    </small>
+                </a>
+                <div class="collapse my-3" id="item_metadata">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_created_at" class="form-label">Created At</label>
+                            <input type="text" class="form-control" id="item_created_at" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_created_by" class="form-label">Created By</label>
+                            <input type="text" class="form-control" id="item_created_by" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_modification_at" class="form-label">Last Modified At</label>
+                            <input type="text" class="form-control" id="item_modification_at" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_modified_by" class="form-label">Last Modified By</label>
+                            <input type="text" class="form-control" id="item_modified_by" readonly>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_brand" class="form-label">Brand</label>
+                        <input type="text" class="form-control" id="item_brand" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="item_name" readonly>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_variant" class="form-label">Variant</label>
+                        <input type="text" class="form-control" id="item_variant" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="item_description" rows="3" readonly></textarea>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_base_price" class="form-label">Base Price</label>
+                        <input type="text" class="form-control" id="item_base_price" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_qty_unit" class="form-label">Quantity Unit</label>
+                        <input type="text" class="form-control" id="item_qty_unit" readonly>
+                    </div>
+                </div>                
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button id="btnEditItem" type="button" class="btn btn-outline-secondary"><i class="fas fa-edit"></i> Edit Item</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button id="btnDetailAddToCart" type="button" class="btn btn-primary"><i class="fas fa-cart-plus"></i> Add to Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -82,9 +171,9 @@
                         if (type === 'display') 
                         {
                             if (row.validated == 1)
-                                return `<span class="badge bg-success">Validated Item</span> ${data}`;
+                                return `<span class="badge bg-success"><i class="fa-solid fa-check-double"></i></span> ${data}`;
                             else
-                                return `<span class="badge bg-danger">Unvalidated Item</span> ${data}`;
+                                return `<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i></span> ${data}`;
                         }
 
                         return data;
@@ -149,8 +238,8 @@
             columnDefs: 
             [
                 { visible: false, targets: [1, 8] },
-                { searchPanes: { show: true }, targets: [1, 2, 6] },
-                { searchPanes: { show: false }, targets: [0, 3, 4, 5] }
+                { searchPanes: { show: true }, targets: [1, 2, 6, 8] },
+                { searchPanes: { show: false }, targets: [0, 3, 4, 5, 7] },
             ],
             order: [[0, 'asc']],
             fixedHeader: true,
@@ -197,7 +286,7 @@
                                     filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
                                     messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
                                     sheetName: 'Network Clients',
-                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7] }
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
                                 },
                                 {
                                     extend: 'pdfHtml5',
@@ -213,19 +302,7 @@
                         },
                         {
                             extend: 'searchBuilder',
-                            config: 
-                            {
-                                columns: 
-                                {
-                                    0: { type: 'string' },
-                                    1: { type: 'string' },
-                                    2: { type: 'string' },
-                                    3: { type: 'string' },
-                                    4: { type: 'string' },
-                                    5: { type: 'num-fmt' },
-                                    6: { type: 'string' },
-                                }
-                            }
+                            config: { columns: [1, 2, 3, 4, 5] }
                         },
                         {
                             text: 'Refresh',
@@ -260,6 +337,7 @@
     });
 
     const btnAddToCart = document.getElementById('btnAddToCartFinal');
+    const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
     const formAddToCart = document.getElementById('formAddToCart');
 
     function resetForm(item_id = null)
@@ -271,6 +349,21 @@
             sessionStorage.removeItem(`cart_item_${item_id}`);
     }
 
+    function populateAddToCartModal(item_id, item_name, item_price)
+    {
+        $('#cart_item_id').val(item_id);
+        $('#cart_item').val(item_name);
+        $('#cart_price').val(item_price);
+
+        // Load the quantity and remarks from the local storage
+        const cart_item = JSON.parse(sessionStorage.getItem(`cart_item_${item_id}`));
+        if (cart_item != null)
+        {
+            $('#cart_qty').val(cart_item.qty);
+            $('#cart_remarks').val(cart_item.remarks);
+        }
+    }
+
     // Add to cart button handler
     $('#data').on('click', 'button', function() 
     {
@@ -280,18 +373,71 @@
         const id = this.id.split('_')[1];
         const item = $('#data').DataTable().row((idx, data) => data.id == id).data();
         
-        $('#cart_item_id').val(item.id);
-        $('#cart_item').val(`${item.brand} ${item.name} ${item.variant}`);
-        $('#cart_price').val(formatCurrency(item.base_price));
+        populateAddToCartModal(item.id, `${item.brand} ${item.name} ${item.variant}`, formatCurrency(item.base_price));
+        
+        $('#modalAddToCart').modal('show');
+    });
 
-        // Load the quantity and remarks from the local storage
-        const cart_item = JSON.parse(sessionStorage.getItem(`cart_item_${item.id}`));
-        if (cart_item != null)
+    // View details button handler
+    $('#data').on('click', 'button', async function() 
+    {
+        if (this.id.startsWith('btnViewDetails_') == false)
+            return;
+
+        const id = this.id.split('_')[1];
+        const response = await fetch(`/api/item/${id}?human_readable=true`, { method: 'GET' });
+        const data = await response.json();
+
+        // Preformat Date
+        const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        data.created_date = new Date(data.created_date).toLocaleString("en-GB", DATE_OPTIONS);
+        data.modification_date = new Date(data.modification_date).toLocaleString("en-GB", DATE_OPTIONS);
+
+        // Item Validation
+        if (data.category == "Unvalidated")
         {
-            $('#cart_qty').val(cart_item.qty);
-            $('#cart_remarks').val(cart_item.remarks);
+            $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Unvalidated`);
+            $('#item_validated').removeClass('bg-success');
+            $('#item_validated').addClass('bg-danger');
+        }
+        else
+        {
+            $('#item_validated').html(`<i class="fa-solid fa-check-double"></i> Validated`);
+            $('#item_validated').removeClass('bg-danger');
+            $('#item_validated').addClass('bg-success');
         }
         
+        console.log(data);
+
+        // Item Metadata
+        $('#item_id').val(data.id);
+        $('#item_category').val(data.category);
+        $('#item_created_at').val(data.created_date);
+        $('#item_created_by').val(data.created_by);
+        $('#item_modification_at').val(data.modification_date);
+        $('#item_modified_by').val(data.modification_by);
+
+        // Item Information
+        $('#item_brand').val(data.brand);
+        $('#item_name').val(data.name);
+        $('#item_variant').val(data.variant);
+        $('#item_description').val(data.description);
+        $('#item_base_price').val(formatCurrency(data.base_price));
+        $('#item_qty_unit').val(data.qty_unit);
+
+        $('#modalItemDetails').modal('show');
+    });
+
+    // Add to cart button in details modal handler
+    $('#btnDetailAddToCart').on('click', function() 
+    {
+        const item_id = $('#item_id').val();
+        const item_name = $('#item_brand').val() + ' ' + $('#item_name').val() + ' ' + $('#item_variant').val();
+        const item_price = $('#item_base_price').val();
+
+        populateAddToCartModal(item_id, item_name, item_price);
+        
+        $('#modalItemDetails').modal('hide');
         $('#modalAddToCart').modal('show');
     });
 
