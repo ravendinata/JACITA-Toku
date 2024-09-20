@@ -204,14 +204,8 @@ def api_delete_nonval_item(item_id):
 
 @api.route('/items', methods = ['GET'])
 def api_get_all_items():
-    human_readable = request.args.get('human_readable')
-
-    if human_readable == 'true':
-        items_val = ViewItems.query.all()
-        items_nonval = ViewNonvalItems.query.all()
-    else:
-        items_val = Items.query.all()
-        items_nonval = NonvalItems.query.all()
+    items_val = ViewItems.query.all()
+    items_nonval = ViewNonvalItems.query.all()
 
     data = []
     for item in items_val:
