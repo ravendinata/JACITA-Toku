@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="width: 75%; padding-top: 28px; padding-bottom: 48px;">
+    <span><a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a></span>
+    <h1>Edit Item</h1>
+    <p class="text-muted">
+        Item ID: {{ item.id }}
+        <span class="badge ms-1" id="validated-badge"></span>
+    </p>
+    <hr class="mb-3">
+    <form>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="brand">Brand <small class="text-muted"><i>(Required)</i></small></label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="brand" name="brand" required>
+                    <button class="btn btn-secondary" type="button" id="brand-default">Set Default</button>
+                </div>
+                <p class="form-text text-muted">
+                    <b>Brand name or manufacturer.</b><br>
+                    <i>Example: "Snowman", "Glade", "Faber Castell", etc.</i><br>
+                    Set this to "Any Brand" if there is no specifc brand.
+                </p>
+            </div>
+            <div class="col">
+                <label for="name">Item Name <small class="text-muted"><i>(Required)</i></small></label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                <p class="form-text text-muted">
+                    <b>Descriptive name of the item.</b><br>
+                    <i>Example: "Whiteboard Marker", "Air Freshener Aerosol", "Pensil 2B", etc.</i>
+                </p>
+            </div>
+            <div class="col">
+                <label for="variant">Variant</label>
+                <input type="text" class="form-control" id="variant" name="variant">
+                <p class="form-text text-muted">
+                    <b>The variant of the item if applicable.</b><br>
+                    <i>Example based on Whiteboard Marker: "Red", "Black", "Blue", "Green", etc.</i>
+                </p>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="category_id">Category <small class="text-muted"><i>(Required)</i></small></label>
+                <select class="form-select" id="category_id" name="category_id" required>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.id }} - {{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                <p class="form-text text-muted">
+                    <b>Category where the item belongs to.</b><br>
+                    Please set this properly to help categorize the item. This is helpful for searching and filtering.
+                </p>
+            </div>
+            <div class="col">
+                <label for="base_price">Price <small class="text-muted"><i>(Required)</i></small></label>
+                <div class="input-group">
+                    <span class="input-group-text">IDR</span>
+                    <input type="number" class="form-control" id="base_price" name="base_price" required>
+                </div>
+                <p class="form-text text-muted">
+                    <b>Base price of the item.</b><br>
+                    Set the price according to the quantity unit you set. This is the base price for each unit.<br>
+                    <i>For example, if you set the unit to "grams" and the price is 1500, then the price is IDR 1500 per gram.</i>
+                </p>
+            </div>
+            {% if data.item_type == 'validated' %}
+            <div class="col">
+                <label for="qty_unit_id">Quantity Unit <small class="text-muted"><i>(Required)</i></small></label>
+                <select class="form-select" id="qty_unit_id" name="qty_unit_id" required>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}">{{ unit.unit }}</option>
+                    {% endfor %}
+                </select>
+                <p class="form-text text-muted">
+                    <b>The unit in which the item is offered in.</b><br>
+                    If you are not sure what to set, set this to "pieces".<br>
+                    <i>Example: "sheets" for things like paper, "pieces" for most items, "grams" for weighable items, etc.</i>
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        <hr class="my-4">
+        <div class="row mb-3">
+            <div class="col-md-4 text-end">
+                <label for="description">Item Description</label>
+                <p class="form-text text-muted">
+                    <b>Additional information about the item.</b><br>
+                    <i>Example: "This item is refillable", "This item is made of recycled materials", etc.</i>
+                </p>
+            </div>
+            <div class="col-md-8">
+                <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+            </div>
+        </div>
+        <button type="button" id="btnDelete" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete Item</button>
+        <button type="submit" class="btn btn-primary float-end"><i class="fa-solid fa-save"></i> Save Changes</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const item_type = '{{ data.item_type }}';
+
+    $(document).ready(function() 
+    {
+        $('#brand').val('{{ item.brand }}');
+        $('#name').val('{{ item.name }}');
+        $('#variant').val('{{ item.variant }}');
+        $('#base_price').val(parseInt('{{ item.base_price }}'));
+        $('#category_id').val('{{ item.category_id }}');
+        $('#qty_unit_id').val('{{ item.qty_unit_id }}');
+        $('#description').val('{{ item.description }}');
+
+        if (item_type == 'validated')
+        {
+            $('#validated-badge').html('<i class="fa-solid fa-check-double"></i> Validated');
+            $('#validated-badge').addClass('bg-success');
+        }
+        else
+        {
+            $('#validated-badge').html('<i class="fa-solid fa-xmark"></i> Non-validated');
+            $('#validated-badge').addClass('bg-danger');
+        }
+    });
+
+    // Keep track of fields that changed
+    const fields = ['brand', 'name', 'variant', 'base_price', 'category_id', 'qty_unit_id', 'description'];
+    if (item_type == 'nonvalidated')
+    {
+        fields.splice(fields.indexOf('qty_unit_id'), 1);
+    }
+
+    fields.forEach(field => 
+    {   
+        document.querySelector(`#${field}`).addEventListener('change', () => 
+        {
+            document.querySelector(`#${field}`).classList.add('is-dirty');
+        });
+    });
+
+    const btnDefault = document.querySelector('#brand-default');
+    const btnDelete = document.querySelector('#btnDelete');
+    const form = document.querySelector('form');
+
+    form.addEventListener('submit', async (e) => {
+        displayToast('Submitting changes', 'Please wait while we process your changes...', 'info');
+
+        e.preventDefault();
+
+        const formData = new FormData();
+        fields.forEach(field => 
+        {
+            if (document.querySelector(`#${field}`).classList.contains('is-dirty')) 
+            {
+                formData.append(field, document.querySelector(`#${field}`).value);
+            }
+        });
+        
+        const response = await fetch('/api/items/{{ data.item_type }}/{{ item.id }}', 
+        {
+            method: 'PATCH',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) 
+        {
+            setTimeout(() => displayToast('Operation success', data.message), 1000);
+            setTimeout(() => window.location.href = '/items', 2000);
+        } 
+        else 
+        {
+            displayPopupAlert(data.error, data.details, 'error');
+        }
+    });
+
+    btnDefault.addEventListener('click', () => {
+        document.querySelector('#brand').value = 'Any Brand';
+    });
+
+    btnDelete.addEventListener('click', async () => {
+        await displayPopupConfirm('Delete item', 'Are you sure you want to delete this item? This action cannot be undone.',
+        confirmCallback = async () => 
+        {
+            displayToast('Deleting item', 'Please wait while we delete the item...', 'info');
+
+            const response = await fetch('/api/items/{{ data.item_type }}/{{ item.id }}', 
+            {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (response.ok)
+            {
+                setTimeout(() => displayToast('Operation success', data.message), 1000);
+                setTimeout(() => window.location.href = '/items', 2000);
+            } 
+            else
+            {
+                displayPopupAlert(data.error, data.details, 'error');
+            }
+        },
+        denyCallback = () => {},
+        confirmText = 'Yes, delete this item', 
+        denyText = 'No, keep this item');
+    });
+</script>
+{% endblock %}
