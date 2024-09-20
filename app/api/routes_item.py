@@ -244,8 +244,11 @@ def api_get_item(item_id):
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
     
     if item_val is not None:
+        obj = item_val.to_dict()
+        obj['validated'] = True
         return jsonify(item_val.to_dict()), HTTPStatus.OK
     else:
         obj = item_nonval.to_dict()
+        obj['validated'] = False
         obj['qty_unit'] = None
         return jsonify(obj), HTTPStatus.OK
