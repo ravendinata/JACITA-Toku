@@ -101,7 +101,7 @@ def api_delete_item(item_id):
         print(f"Error while deleting item: {e}")
         return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.NO_CONTENT
+    return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.OK
 
 # =========================
 # NON-VALIDATED ITEM ROUTES
@@ -196,7 +196,7 @@ def api_delete_nonval_item(item_id):
         print(f"Error while deleting non-validated item: {e}")
         return jsonify({ 'error': 'Error while deleting non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.NO_CONTENT
+    return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.OK
 
 # ======================
 # AGGREGATED ITEM ROUTES
