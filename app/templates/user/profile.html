@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="profile-page">
+<div class="container-fluid" style="width: 75%; padding-top: 28px; padding-bottom: 48px;">
     <span><a href="/" class="btn btn-secondary float-end"><i class="fa-solid fa-caret-left"></i> Back to Home</a></span>
     <h1>Profile</h1>
     <form id="editProfileForm" method="post" action="/api/user/{{ data.username }}">
