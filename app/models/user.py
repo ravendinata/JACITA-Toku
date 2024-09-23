@@ -1,5 +1,6 @@
 from app.extensions import db
 from helper.auth import generate_password_hash, check_password_hash
+from helper.role import Role, check_permission, get_allowed_operations
 
 class Division(db.Model):
     __tablename__ = 'division'
@@ -40,7 +41,16 @@ class User(db.Model):
         self.password = generate_password_hash(password)
     
     def is_admin(self):
-        return self.role == 1
+        return self.role == Role.ADMINISTRATOR
     
     def is_user(self):
-        return self.role != 1
+        return self.role != Role.ADMINISTRATOR and self.role != Role.SYSTEM
+    
+    def can_update_items(self):
+        return self.role == Role.ADMINISTRATOR or self.role == Role.PROCUREMENT_MANAGER or self.role == Role.SYSTEM
+    
+    def can_do(self, action):
+        return check_permission(self, action)
+    
+    def allowed_operations(self):
+        return get_allowed_operations(self)
