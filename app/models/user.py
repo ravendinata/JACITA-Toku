@@ -1,6 +1,6 @@
 from app.extensions import db
 from helper.auth import generate_password_hash, check_password_hash
-from helper.role import Role, check_permission, get_allowed_operations
+from helper.role import Role, check_permission, get_allowed_operations, get_role_text
 
 class Division(db.Model):
     __tablename__ = 'division'
@@ -32,7 +32,10 @@ class User(db.Model):
         return f'<User: {self.first_name} {self.last_name} @ {self.username}>'
     
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'password'}
+        user_data = {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'password' and c.name != 'role' and c.name != 'division_id'}
+        user_data['division'] = Division.query.get(self.division_id).to_dict()
+        user_data['role'] = { 'id': self.role, 'text': get_role_text(self.role) }
+        return user_data
     
     def check_password(self, password):
         return check_password_hash(self.password, password)
