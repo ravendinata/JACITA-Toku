@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-sm" style="padding-top: 48px;">
+    <div class="card text-center shadow">
+        <div class="card-body">
+            <a class="navbar-brand" href="/">
+                <h1 class="display-1"><i class="fa-solid fa-crow"></i></h1>
+            </a>
+            <h1 class="display-1">{{ code }}</h1>
+            <h2 class="card-title">{{ title }}</h2>
+            <p class="card-text">{{ message }}</p>
+            <a href="javascript:void(0);" class="btn btn-secondary" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Go Back</a>
+            <a href="/" class="btn btn-primary mx-2"><i class="fa-solid fa-home"></i> Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
