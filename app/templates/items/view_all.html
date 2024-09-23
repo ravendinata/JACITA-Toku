@@ -28,7 +28,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalAddToCartLabel">Add to Order</h5>
+                <h5 class="modal-title" id="modalAddToCartLabel"><i class="fas fa-cart-plus"></i> Add to Order</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formAddToCart" action="#" method="post">
@@ -52,8 +52,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="resetForm($(cart_item_id).val())">Reset</button>
-                    <button type="submit" class="btn btn-primary" id="btnAddToCartFinal">Add to Order</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm($(cart_item_id).val())"><i class="fas fa-undo"></i> Reset</button>
+                    <button type="submit" class="btn btn-primary" id="btnAddToCartFinal"><i class="fas fa-cart-plus"></i> Add to Order</button>
                 </div>
             </form>
         </div>
@@ -141,7 +141,7 @@
                     <button id="btnEditItem" type="button" class="btn btn-outline-secondary"><i class="fas fa-edit"></i> Edit Item</button>
                 </div>
                 <div>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
                     <button id="btnDetailAddToCart" type="button" class="btn btn-primary"><i class="fas fa-cart-plus"></i> Add to Order</button>
                 </div>
             </div>
@@ -552,7 +552,7 @@
         }
     
         btnAddToCart.disabled = false;
-        btnAddToCart.innerHTML = 'Add to Order';
+        btnAddToCart.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Order';
 });
 </script>
 {% endblock %}
