@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import current_app, render_template, session
+from flask import jsonify, render_template, session
 
 from app.models.user import User
 from helper.role import InsufficientPermissionError
@@ -64,6 +64,21 @@ def check_page_permission(permission: str):
             except InsufficientPermissionError as e:
                 return render_template('error/standard.html', title = "Forbidden", code = 403, message = e.message, data = { 'username': session['user'] }), HTTPStatus.FORBIDDEN
             return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def check_api_permission(permission: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                user = User.query.get(session['user'])
+                if user.can_do(permission):
+                    return func(*args, **kwargs)
+            except InsufficientPermissionError as e:
+                return jsonify({ 'error': e.error, 'details': e.message }), HTTPStatus.FORBIDDEN
+            except KeyError as e:
+                return jsonify({ 'error': 'Unauthorized' }), HTTPStatus.UNAUTHORIZED
         return wrapper
     return decorator
 
