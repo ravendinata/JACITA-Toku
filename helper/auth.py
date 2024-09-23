@@ -1,4 +1,7 @@
 import bcrypt
+from functools import wraps
+
+from flask import session, redirect, url_for
 
 def generate_password_hash(password):
     """
@@ -53,3 +56,21 @@ def is_authenticated(session):
     """
 
     return 'user' in session and session['user'] is not None
+
+def check_login(func):
+    """
+    A decorator that checks if the user is logged in.
+
+    Returns:
+    function
+        The decorated function.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not is_authenticated(session):
+            print('User not authenticated, redirecting to login page')
+            return redirect(url_for('web.page_login'))
+        else:
+            return func(*args, **kwargs)
+        
+    return wrapper
