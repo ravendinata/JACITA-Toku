@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-sm" style="padding-top: 48px;">
+<div id="errorBody" class="container-sm" style="padding-top: 48px;">
     <div class="card text-center shadow">
         <div class="card-body">
             <a class="navbar-brand" href="/">
-                <h1 class="display-1"><i class="fa-solid fa-crow"></i></h1>
+                <h1 class="display-1"><i class="fa-solid fa-feather-alt"></i></h1>
             </a>
             <h1 class="display-1">{{ code }}</h1>
             <h2 class="card-title">{{ title }}</h2>
@@ -15,4 +15,43 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $('#errorBody').hide();
+
+    const background = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#343a40' : '#f8f9fa';
+    const forecolor = document.documentElement.getAttribute('data-bs-theme') == 'dark' ? '#f8f9fa' : '#343a40';
+
+    Swal.fire(
+    {
+        title: {{ title|tojson }},
+        text: {{ message|tojson }},
+        icon: 'error',
+        confirmButtonText: `<i class="fa-solid fa-home"></i> Home`,
+        cancelButtonText: '<i class="fa-solid fa-caret-left"></i> Go Back',
+        showCancelButton: true,
+        buttonsStyling: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        reverseButtons: true,
+        customClass: 
+        {
+            popUp: 'container',
+            confirmButton: 'btn btn-primary mx-2',
+            cancelButton: 'btn btn-secondary'
+        },
+        background: background,
+        color: forecolor
+    }).then((result) => 
+    {
+        if (result.isConfirmed) 
+            window.location.href = '/';
+        else
+            history.back();            
+
+        $('#errorBody').show();
+    });
+</script>
 {% endblock %}
