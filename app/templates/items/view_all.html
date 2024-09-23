@@ -536,11 +536,12 @@
         });
 
         const data = await response.json();
+
+        $('#modalAddToCart').modal('hide');
         
         if (response.ok)
         {
             displayToast('Operation success', data.message);
-            $('#modalAddToCart').modal('hide');
             resetForm(item_id);
             updateCartItemsCount();
             updateCartTopItems();
