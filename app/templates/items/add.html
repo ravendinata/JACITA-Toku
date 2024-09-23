@@ -12,7 +12,7 @@
                 <label for="brand">Brand <small class="text-muted"><i>(Required)</i></small></label>
                 <div class="input-group">
                     <input type="text" class="form-control" id="brand" name="brand" required>
-                    <button class="btn btn-secondary" type="button" id="brand-default">Set Default</button>
+                    <button class="btn btn-secondary" type="button" id="brandDefault">Set Default</button>
                 </div>
                 <p class="form-text text-muted">
                     <b>Brand name or manufacturer.</b><br>
@@ -97,7 +97,7 @@
 
 {% block scripts %}
 <script>
-    const btnDefault = document.querySelector('#brand-default');
+    const btnDefault = document.querySelector('#brandDefault');
     const btnSubmit = document.querySelector('#btnSubmit');
     const form = document.querySelector('form');
 
