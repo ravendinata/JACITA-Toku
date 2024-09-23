@@ -6,7 +6,7 @@ from app.models.misc import QuantityUnit
 from app.models.orders import Orders
 from app.models.items import Items, NonvalItems
 from app.models.order_items import OrderItems, OrderNonvalItems
-from helper.endpoint import HTTPStatus, check_fields
+from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 
 @api.route('/order/<string:order_id>/items', methods = ['GET'])
 def api_get_order_items(order_id):
@@ -30,6 +30,7 @@ def api_get_order_item(order_id, item_id):
     return jsonify(item.to_dict()), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/item', methods = ['POST'])
+@check_api_permission('orderitem/create')
 def api_add_order_item(order_id):
     check_field = check_fields(request, 'orderitem/create')
     if not check_field['pass']:
@@ -81,6 +82,7 @@ def api_add_order_item(order_id):
     return jsonify({ 'message': 'Item added to order successfully' }), HTTPStatus.CREATED
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['PATCH'])
+@check_api_permission('orderitem/update')
 def api_update_order_item(order_id, item_id):
     check_field = check_fields(request, 'orderitem/update')
     if not check_field['pass']:
@@ -103,6 +105,7 @@ def api_update_order_item(order_id, item_id):
     return jsonify({ 'message': 'Item updated in order successfully', 'item_details': item.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['DELETE'])
+@check_api_permission('orderitem/delete')
 def api_remove_order_item(order_id, item_id):
     item = OrderItems.query.get((order_id, item_id))
     if item is None:

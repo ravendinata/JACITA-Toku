@@ -4,7 +4,7 @@ from app.api import api
 from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
 from helper.core import generate_item_id
-from helper.endpoint import HTTPStatus, check_fields
+from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 
 # =====================
 # VALIDATED ITEM ROUTES
@@ -22,6 +22,7 @@ def api_get_items():
     return jsonify([ item.to_dict() for item in items ]), HTTPStatus.OK
 
 @api.route('/items/validated', methods = ['POST'])
+@check_api_permission('item_validated/create')
 def api_create_item():
     check_field = check_fields(request, 'item/create')
     if not check_field['pass']:
@@ -57,7 +58,9 @@ def api_create_item():
     return jsonify({ 'message': 'Item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
+@check_api_permission('item_validated/update')
 def api_update_item(item_id):
+
     check_field = check_fields(request, 'item_validated/update')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
@@ -88,9 +91,9 @@ def api_update_item(item_id):
     return jsonify({ 'message': 'Item updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/validated/<string:item_id>', methods = ['DELETE'])
+@check_api_permission('item_validated/delete')
 def api_delete_item(item_id):
     item = Items.query.get(item_id)
-
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
 
@@ -119,6 +122,7 @@ def api_get_nonval_items():
     return jsonify([ item.to_dict() for item in items ]), HTTPStatus.OK
 
 @api.route('/items/nonvalidated', methods = ['POST'])
+@check_api_permission('item_nonvalidated/create')
 def api_create_nonval_item():
     check_field = check_fields(request, 'nonvalitem/create')
     if not check_field['pass']:
@@ -153,6 +157,7 @@ def api_create_nonval_item():
     return jsonify({ 'message': 'Non-validated item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['PATCH'])
+@check_api_permission('item_nonvalidated/update')
 def api_update_nonval_item(item_id):
     check_field = check_fields(request, 'item_nonvalidated/update')
     if not check_field['pass']:
@@ -183,9 +188,9 @@ def api_update_nonval_item(item_id):
     return jsonify({ 'message': 'Non-validated item updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['DELETE'])
-def api_delete_nonval_item(item_id):
+@check_api_permission('item_nonvalidated/delete')
+def api_delete_nonval_item(item_id):   
     item = NonvalItems.query.get(item_id)
-
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
 
