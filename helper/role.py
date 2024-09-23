@@ -15,11 +15,28 @@ class RoleText:
     SYSTEM = 'System'
 
 class InsufficientPermissionError(Exception):
-    def __init__(self, user, required):
+    def __init__(self, user, operation):
+        if type(operation) is list:
+            required = []
+            for op in operation:
+                required += get_required_role(op)
+        else:
+            required = get_required_role(operation)
+        
         roles = ', '.join([get_role_text(role) for role in required])
         if "Unknown" in roles:
             roles = "n/a"
+        else:
+            # Remove duplicates
+            roles = ', '.join(set(roles.split(', ')))
+        
+        if type(operation) is list:
+            self.error = get_deny_string(operation[0])
+        else:
+            self.error = get_deny_string(operation)
+
         self.message = f'Your role of {get_role_text(user.role)} does not have enough permission to perform this operation. Required role: {roles}'
+        
         super().__init__(self.message)
 
 class NonExistentRuleError(Exception):
@@ -51,6 +68,28 @@ required_role = {
     'orderitem/create': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'orderitem/update': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'orderitem/delete': [ Role.DIVISION_LEADER, Role.DIVISION_USER ]
+}
+
+deny_string = {
+    'item_validated/create': 'Insufficient permission to create validated item',
+    'item_validated/update': 'Insufficient permission to update validated item',
+    'item_validated/delete': 'Insufficient permission to delete validated item',
+    'item_nonvalidated/create': 'Insufficient permission to create non-validated item',
+    'item_nonvalidated/update': 'Insufficient permission to update non-validated item',
+    'item_nonvalidated/delete': 'Insufficient permission to delete non-validated item',
+    'item_nonvalidated/validate': 'Insufficient permission to validate non-validated item',
+    'order/create': 'Insufficient permission to create order',
+    'order/update': 'Insufficient permission to update order',
+    'order/delete': 'Insufficient permission to delete order',
+    'order/approve_division': 'Insufficient permission to approve order (Division)',
+    'order/reject_division': 'Insufficient permission to reject order (Division)',
+    'order/approve_finance': 'Insufficient permission to approve order (Finance)',
+    'order/reject_finance': 'Insufficient permission to reject order (Finance)',
+    'order/fulfill': 'Insufficient permission to fulfill order',
+    'order/cancel': 'Insufficient permission to cancel order',
+    'orderitem/create': 'Insufficient permission to create order item',
+    'orderitem/update': 'Insufficient permission to update order item',
+    'orderitem/delete': 'Insufficient permission to delete order item'
 }
 
 def get_role_text(role):
@@ -98,9 +137,38 @@ def check_permission(user, operation):
         if user.role in required:
             return True
         else:
-            raise InsufficientPermissionError(user, required)
+            raise InsufficientPermissionError(user, operation)
     else:
         raise NonExistentRuleError(operation)
+    
+def get_required_role(operation):
+    """
+    Get the required role for the operation.
+    
+    Parameters:
+    operation : str
+        The operation to be performed.
+        
+    Returns:
+    list
+        The list of roles required to perform the operation.
+    """
+    return required_role.get(operation, [])
+
+def get_deny_string(operation):
+    """
+    Get the deny string for the operation.
+    
+    Parameters:
+    operation : str
+        The operation to be performed.
+        
+    Returns:
+    str
+        The deny string for the operation.
+    """
+    print(operation)
+    return deny_string.get(operation, 'Unknown operation')
   
 def get_allowed_operations(user):
     """
