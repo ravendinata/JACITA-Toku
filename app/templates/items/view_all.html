@@ -137,7 +137,9 @@
                 </div>                
             </div>
             <div class="modal-footer justify-content-between">
-                <button id="btnEditItem" type="button" class="btn btn-outline-secondary"><i class="fas fa-edit"></i> Edit Item</button>
+                <div>
+                    <button id="btnEditItem" type="button" class="btn btn-outline-secondary"><i class="fas fa-edit"></i> Edit Item</button>
+                </div>
                 <div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button id="btnDetailAddToCart" type="button" class="btn btn-primary"><i class="fas fa-cart-plus"></i> Add to Order</button>
@@ -150,6 +152,13 @@
 
 {% block scripts %}
 <script>
+    const btnAddToCart = document.getElementById('btnAddToCartFinal');
+    const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
+    const btnEditItem = document.getElementById('btnEditItem');
+    const formAddToCart = document.getElementById('formAddToCart');
+
+    const operations = {{ operations|tojson }};
+
     $(document).ready(function() 
     {
         $('#data').DataTable(
@@ -210,12 +219,13 @@
                     data: null, // 7
                     render: function(data, type, row, meta) 
                     {
-                        // Add to cart button
-                        return `
-                        <button class="btn btn-primary btn-sm" id="btnAddToCart_${row.id}"><i class="fas fa-cart-plus"></i> Add to Order</button>
-                        <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.id}"><i class="fas fa-info-circle"></i></button>
-                        <button class="btn btn-secondary btn-sm" id="btnEditItem_${row.id}"><i class="fas fa-edit"></i></button>
-                        `;
+                        var buttons = `<button class="btn btn-primary btn-sm" id="btnAddToCart_${row.id}"><i class="fas fa-cart-plus"></i> Add to Order</button>
+                        <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.id}"><i class="fas fa-info-circle"></i></button>&nbsp;`;
+
+                        if ((operations.includes('item_validated/update') && row.validated == 1) || (operations.includes('item_nonvalidated/update') && row.validated == 0))
+                            buttons += `<button class="btn btn-secondary btn-sm" id="btnEditItem_${row.id}"><i class="fas fa-edit"></i></button>`;
+                        
+                        return buttons;
                     }
                 },
                 { 
@@ -335,11 +345,6 @@
         });
     });
 
-    const btnAddToCart = document.getElementById('btnAddToCartFinal');
-    const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
-    const btnEditItem = document.getElementById('btnEditItem');
-    const formAddToCart = document.getElementById('formAddToCart');
-
     function resetForm(item_id = null)
     {
         $('#cart_qty').val(1);
@@ -399,12 +404,22 @@
             $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Non-validated`);
             $('#item_validated').removeClass('bg-success');
             $('#item_validated').addClass('bg-danger');
+
+            if (operations.includes('item_nonvalidated/update'))
+                $('#btnEditItem').show();
+            else
+                $('#btnEditItem').hide();
         }
         else
         {
             $('#item_validated').html(`<i class="fa-solid fa-check-double"></i> Validated`);
             $('#item_validated').removeClass('bg-danger');
             $('#item_validated').addClass('bg-success');
+
+            if (operations.includes('item_validated/update'))
+                $('#btnEditItem').show();
+            else
+                $('#btnEditItem').hide();
         }
 
         // Item Metadata
@@ -453,6 +468,7 @@
     {
         const item_id = $('#item_id').val();
         window.location.href = `/item/${item_id}/edit`;
+        $('#modalItemDetails').modal('hide');
     });
 
     // Add to cart button in details modal handler

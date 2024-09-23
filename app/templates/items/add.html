@@ -89,7 +89,7 @@
                 <textarea class="form-control" id="description" name="description" rows="4"></textarea>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary float-end">Add Item</button>
+        <button type="submit" class="btn btn-primary float-end" id="btnSubmit">Add Item</button>
         <button type="button" class="btn btn-secondary float-end me-2" onclick="form.reset();">Reset Form</button>
     </form>
 </div>
@@ -98,15 +98,29 @@
 {% block scripts %}
 <script>
     const btnDefault = document.querySelector('#brand-default');
+    const btnSubmit = document.querySelector('#btnSubmit');
     const form = document.querySelector('form');
+
+    const operations = {{ operations|tojson }};
+
+    if (operations.includes('item_validated/create')) 
+        btnSubmit.innerHTML = '<i class="fa-solid fa-save"></i> Add Validated Item';
+    else if (operations.includes('item_nonvalidated/create')) 
+        btnSubmit.innerHTML = '<i class="fa-solid fa-save"></i> Add Non-Validated Item';
 
     form.addEventListener('submit', async (e) => {
         displayToast('Submitting item', 'Please wait while we process your item...', 'info');
 
         e.preventDefault();
 
+        var endpoint = '/api/items/';
+        if (operations.includes('item_validated/create')) 
+            endpoint = '/api/items/validated';
+        else if (operations.includes('item_nonvalidated/create')) 
+            endpoint = '/api/items/nonvalidated';
+        
         const formData = new FormData(form);
-        const response = await fetch('/api/items/validated', 
+        const response = await fetch(endpoint, 
         {
             method: 'POST',
             body: formData
