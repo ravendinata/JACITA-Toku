@@ -18,6 +18,6 @@ def page_profile():
         user = User.query.get(username)
         data = { 'username': username }
 
-        return render_template('user/profile.html', title = "Profile", user = user, data = data)
+        return render_template('user/profile.html', title = "Profile", user = user.to_dict(), data = data)
     else:
         return redirect(url_for('web.login'))
