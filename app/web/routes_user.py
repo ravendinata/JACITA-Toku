@@ -9,7 +9,7 @@ def page_login():
     if is_authenticated(session):
         return redirect(url_for('web.index'))
     else:
-        return render_template('user/login.html', title = "Login")
+        return render_template('user/login.html', title = "Login", next_url = session.get('next'))
     
 @web.route('/user/profile')
 def page_profile():

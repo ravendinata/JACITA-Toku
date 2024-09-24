@@ -125,6 +125,9 @@ def api_login_user():
         return jsonify({ 'success': False, 'error': 'Invalid password' }), HTTPStatus.UNAUTHORIZED
     
     session['user'] = user.username
+    
+    if 'next' in session:
+        session.pop('next')
 
     return jsonify({ 'success': True, 'message': 'Login successful' }), HTTPStatus.OK
 
