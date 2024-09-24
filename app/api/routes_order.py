@@ -3,6 +3,8 @@ from flask import jsonify, request
 from app.api import api
 from app.extensions import db
 from app.models.orders import Orders
+from app.models.order_items import OrderItems, OrderNonvalItems
+from app.models.items import Items, NonvalItems
 from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields
 from helper.status import OrderStatusTransitionError
@@ -86,6 +88,23 @@ def api_delete_order(order_id):
 # ==================================
 # ORDER-SPECIFIC OPERATION ENDPOINTS
 # ==================================
+
+@api.route('/order/<string:order_id>/total', methods = ['GET'])
+def api_get_order_total(order_id):
+    order_items = OrderItems.query.filter_by(order_id = order_id).all()
+    order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order_id).all()
+
+    total = 0
+
+    for item in order_items:
+        item_data = Items.query.get(item.item_id)
+        total += item_data.base_price * float(item.quantity)
+
+    for item in order_nonval_items:
+        item_data = NonvalItems.query.get(item.item_id)
+        total += item_data.base_price * float(item.quantity)
+
+    return jsonify({ 'total': total }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/submit', methods = ['POST'])
 def api_submit_order(order_id):
