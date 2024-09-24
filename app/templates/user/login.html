@@ -49,14 +49,18 @@ document.querySelector('form').addEventListener('submit', async (event) =>
 
     if (data.success === true) 
     {
-        window.location.href = "{{ url_for('web.index') }}";
+        next_url = "{{ next_url }}";
+        if (next_url == "None")
+            window.location.href = "{{ url_for('web.index') }}";
+        else
+            window.location.href = next_url
     } 
     else 
     {
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = 'Login';
         
-        alert(data.message);
+        displayPopupAlert('Login Failed', data.error, 'error');
     }
 
 });
