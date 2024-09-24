@@ -13,11 +13,42 @@ def api_get_order_items(order_id):
     if Orders.query.get(order_id) is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
 
-    items = OrderItems.query.filter_by(order_id = order_id).all()
-    nonval_items = OrderNonvalItems.query.filter_by(order_id = order_id).all()
+    order_items = OrderItems.query.filter_by(order_id = order_id).all()
+    order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order_id).all()
+
+    data = []
+
+    for order_item in order_items:
+        item = Items.query.get(order_item.item_id)
+        order_item = order_item.to_dict()
+
+        order_item.pop('order_id')
+        order_item['brand'] = item.brand
+        order_item['name'] = item.name
+        order_item['variant'] = item.variant
+        order_item['price'] = item.base_price
+        order_item['qty_unit'] = QuantityUnit.query.get(item.qty_unit_id).unit
+        order_item['validated'] = True
+        order_item['sub_total'] = item.base_price * float(order_item['quantity'])
+
+        data.append(order_item)
+
+    for order_item in order_nonval_items:
+        item = NonvalItems.query.get(order_item.item_id)
+        order_item = order_item.to_dict()
+
+        order_item.pop('order_id')
+        order_item['brand'] = item.brand
+        order_item['name'] = item.name
+        order_item['variant'] = item.variant
+        order_item['price'] = item.base_price
+        order_item['qty_unit'] = QuantityUnit.query.get(0).unit
+        order_item['validated'] = False
+        order_item['sub_total'] = item.base_price * float(order_item['quantity'])
+
+        data.append(order_item)
     
-    return jsonify({ 'items': [ item.to_dict() for item in items ],
-                    'nonval_items': [ item.to_dict() for item in nonval_items ] }), HTTPStatus.OK
+    return jsonify(data), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['GET'])
 def api_get_order_item(order_id, item_id):
@@ -119,7 +150,7 @@ def api_remove_order_item(order_id, item_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while removing item from order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Item removed from order successfully' }), HTTPStatus.NO_CONTENT
+    return jsonify({ 'message': 'Item removed from order successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/items/count', methods = ['GET'])
 def api_get_order_item_count(order_id):
