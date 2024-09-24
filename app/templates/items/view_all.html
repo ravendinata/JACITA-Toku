@@ -42,12 +42,19 @@
                         <label for="cart_price" class="form-label">Price</label>
                         <input type="text" class="form-control" id="cart_price" readonly>
                     </div>
-                    <div class="input-group mb-3">
-                        <label class="input-group-text" for="cart_qty">Quantity</label>
-                        <input type="number" class="form-control" id="cart_qty" value="1" min="1" max="100">
+                    <div class="mb-3">
+                        <label class="form-label" for="cart_qty">Quantity</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" id="btnMinus10Qty"><i class="fas fa-minus"></i> 10</button>
+                            <button class="btn btn-outline-secondary" type="button" id="btnMinusQty"><i class="fas fa-minus"></i></button>
+                            <input type="number" class="form-control" id="cart_qty" value="1" min="1" max="100">
+                            <span class="input-group-text" id="qty_update_qty_unit"></span>
+                            <button class="btn btn-outline-secondary" type="button" id="btnPlusQty"><i class="fas fa-plus"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" id="btnPlus10Qty"><i class="fas fa-plus"></i> 10</button>
+                        </div>
                     </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Remarks</span>
+                    <div class="mb-3">
+                        <label class="form-label" for="cart_remarks">Remarks</label>
                         <textarea class="form-control" id="cart_remarks" aria-label="Remarks"></textarea>
                     </div>
                 </div>
@@ -155,7 +162,13 @@
     const btnAddToCart = document.getElementById('btnAddToCartFinal');
     const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
     const btnEditItem = document.getElementById('btnEditItem');
+    
     const formAddToCart = document.getElementById('formAddToCart');
+
+    const btnMinusQty = document.getElementById('btnMinusQty');
+    const btnPlusQty = document.getElementById('btnPlusQty');
+    const btnMinus10Qty = document.getElementById('btnMinus10Qty');
+    const btnPlus10Qty = document.getElementById('btnPlus10Qty');
 
     const operations = {{ operations|tojson }};
 
@@ -354,11 +367,16 @@
             sessionStorage.removeItem(`cart_item_${item_id}`);
     }
 
-    function populateAddToCartModal(item_id, item_name, item_price)
+    function populateAddToCartModal(item_id, item_name, item_price, qty_unit = '')
     {
         $('#cart_item_id').val(item_id);
         $('#cart_item').val(item_name);
         $('#cart_price').val(item_price);
+
+        if (qty_unit == null || qty_unit == '')
+            $('#qty_update_qty_unit').text('pcs');
+        else
+            $('#qty_update_qty_unit').text(qty_unit);
 
         // Load the quantity and remarks from the local storage
         const cart_item = JSON.parse(sessionStorage.getItem(`cart_item_${item_id}`));
@@ -378,7 +396,7 @@
         const id = this.id.split('_')[1];
         const item = $('#data').DataTable().row((idx, data) => data.id == id).data();
         
-        populateAddToCartModal(item.id, `${item.brand} ${item.name} ${item.variant}`, formatCurrency(item.base_price));
+        populateAddToCartModal(item.id, `${item.brand} ${item.name} ${item.variant}`, formatCurrency(item.base_price), item.qty_unit);
         
         $('#modalAddToCart').modal('show');
     });
@@ -477,8 +495,9 @@
         const item_id = $('#item_id').val();
         const item_name = $('#item_brand').val() + ' ' + $('#item_name').val() + ' ' + $('#item_variant').val();
         const item_price = $('#item_base_price').val();
+        const qty_unit = $('#item_qty_unit').val();
 
-        populateAddToCartModal(item_id, item_name, item_price);
+        populateAddToCartModal(item_id, item_name, item_price, qty_unit);
         
         $('#modalItemDetails').modal('hide');
         $('#modalAddToCart').modal('show');
@@ -553,6 +572,53 @@
     
         btnAddToCart.disabled = false;
         btnAddToCart.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Order';
+    });
+
+    // Quantity Manipulation
+    btnMinusQty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+
+        if (qty == 1)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be less than 1.', 'error');
+
+        qtyInput.val(qty - 1).trigger('change');
+    });
+
+    btnPlusQty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+
+        if (qty == 100)
+            displayPopupAlert('Quantity Error', 'Quantity cannot be more than 100.', 'error');
+            
+        qtyInput.val(qty + 1).trigger('change');
+    });
+
+    btnMinus10Qty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+
+        if (qty == 1)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be less than 1.', 'error');
+
+        qty = Math.max(qty - 10, 1);
+        qtyInput.val(qty).trigger('change');
+    });
+
+    btnPlus10Qty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+    
+        if (qty >= 100)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be more than 100.', 'error');
+    
+        qty = Math.min(qty + 10, 100);
+        qtyInput.val(qty).trigger('change');
     });
 </script>
 {% endblock %}
