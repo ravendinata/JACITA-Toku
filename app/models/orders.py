@@ -33,8 +33,9 @@ class Orders(db.Model):
         return f'<Order: {self.id} @ {self.created_date} by {self.created_by}>'
 
     def to_dict(self):
-        data = { c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'status' }
+        data = { c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'status' and c.name != 'division_id' }
         data['status'] = { 'code': self.status, 'text': get_order_status_text(self.status) }
+        data['division'] = { 'id': self.division_id, 'name': Division.query.get(self.division_id).full_name }
         return data
 
     def is_approved(self, by):
@@ -49,7 +50,10 @@ class Orders(db.Model):
         return self.fulfillment_date is not None
     
     def get_status(self):
-        return OrderStatus(self.status)
+        return get_order_status_text(self.status)
+    
+    def get_division(self):
+        return Division.query.get(self.division_id).full_name        
     
     def clear_approval(self):
             self.approval_division_date = None
