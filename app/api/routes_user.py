@@ -84,7 +84,10 @@ def api_delete_user(username):
     db.session.delete(user)
     db.session.commit()
 
-    return jsonify({ 'message': 'User deleted' }), HTTPStatus.NO_CONTENT
+    if 'user' in session:
+        session.pop('user')
+
+    return jsonify({ 'message': 'User deleted' }), HTTPStatus.OK
 
 @api.route('/user/<string:username>/change_password', methods = ['POST'])
 def api_change_password(username):
