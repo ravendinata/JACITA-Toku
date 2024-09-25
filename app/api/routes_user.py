@@ -131,11 +131,6 @@ def api_login_user():
     
     # SUCCESS - Session setup
     session['user'] = user.username
-
-    # Get active order
-    active_order = Orders.query.filter(~Orders.status.in_([10, 99]), Orders.created_by == username).order_by(desc(Orders.created_date)).first()
-    if active_order:
-        session['active_order'] = active_order.id
     
     if 'next' in session:
         session.pop('next')
