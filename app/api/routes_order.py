@@ -15,7 +15,14 @@ from helper.status import OrderStatusTransitionError
 
 @api.route('/orders', methods = ['GET'])
 def api_get_orders():
-    orders = Orders.query.all()
+    queryable_paramereters = ['period', 'division_id', 'created_by', 'status']
+    filter_criteria = { key: request.args.get(key) for key in queryable_paramereters if request.args.get(key) is not None }
+
+    if filter_criteria:
+        orders = Orders.query.filter_by(**filter_criteria).all()
+    else:
+        orders = Orders.query.all()
+
     return jsonify([ order.to_dict() for order in orders ]), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>', methods = ['GET'])
