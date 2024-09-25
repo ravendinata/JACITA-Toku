@@ -7,6 +7,4 @@ def inject_session_data():
     for key in session_data_keys:
         data[key] = session.get(key, None)
 
-    print(f"Context Processor: {data}")
-
     return { 'data': data }
