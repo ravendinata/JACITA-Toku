@@ -79,6 +79,8 @@ class Orders(db.Model):
             self.transition(OrderStatus.DIVISION_APPROVED)
             self.approval_division_date = func.current_timestamp()
             self.approval_division_by = username
+            self.approval_finance_by = None
+            self.approval_finance_date = None
         elif by == 'finance':
             self.transition(OrderStatus.FINANCE_APPROVED)
             self.approval_finance_date = func.current_timestamp()
@@ -93,6 +95,8 @@ class Orders(db.Model):
             self.transition(OrderStatus.FINANCE_REJECTED)
             self.approval_finance_date = func.current_timestamp()
             self.approval_finance_by = username
+            self.approval_division_by = None
+            self.approval_division_date = None
     
     def fulfill(self):
         self.transition(OrderStatus.FULFILLED)
