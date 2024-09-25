@@ -147,6 +147,6 @@ def api_logout_user():
     if not is_authenticated(session):
         return jsonify({ 'success': False, 'error': 'User not logged in' }), HTTPStatus.UNAUTHORIZED
 
-    session.pop('user')
+    session.clear()
 
     return jsonify({ 'success': True, 'message': 'Logout successful' }), HTTPStatus.OK
