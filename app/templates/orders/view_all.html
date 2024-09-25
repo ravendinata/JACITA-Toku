@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<span class="float-end"><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal"><i class="fa-solid fa-plus"></i> Create New Order</button></span>
+<h2>My Orders</h2>
+<hr>
+<div class="container-fluid" style="width: 75%; padding-bottom: 48px;">
+{% if active_order %}
+    <div class="card mb-3">
+        <div class="card-header">Active Order</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5" style="border-right: 1px dashed;">
+                    <h5 class="card-title"><i class="fa-solid fa-shopping-cart"></i> Order ID: <b>{{ active_order.id }}</b></h5>
+                    <p class="card-text">Opened on: <span id="activeOrderDate"></span></p>
+                    <a href="/order/{{ active_order.id }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Order</a>
+                </div>
+                <div class="col ms-4" style="border-right: 1px dashed;">
+                    <h5 class="card-title">Order Details</h5>
+                    <p class="card-text">
+                        Period: {{ active_order.period }}<br>
+                        Status: {{ active_order.get_status() }}<br>
+                        Value: <span id="activeOrderTotal"></span>
+                    </p>
+                </div>
+                <div class="col ms-4">
+                    <h5 class="card-title">Order Progress</h5>
+                    <p class="card-text">
+                        {% if active_order.status < 1 %}
+                            <i class="fa-solid fa-clock"></i> Pending Submmission<br>
+                            <span class="text-muted"><i class="fa-solid fa-clock"></i> Pending Approval</span><br>
+                            <span class="text-muted"><i class="fa-solid fa-clock"></i> Pending Fulfillment</span>
+                        {% elif active_order.status < 7 %}
+                            <span class="text-success"><i class="fa-solid fa-check"></i> Submmitted</span><br>
+                            <i class="fa-solid fa-clock"></i> Pending Approval<br>
+                            <span class="text-muted"><i class="fa-solid fa-clock"></i> Pending Fulfillment</span>
+                        {% elif active_order.status < 10 %}
+                            <span class="text-success"><i class="fa-solid fa-check"></i> Submmitted</span><br>
+                            <span class="text-success"><i class="fa-solid fa-check"></i> Approved</span><br>
+                            <i class="fa-solid fa-clock"></i> Pending Fulfillment
+                        {% else %}
+                            <span class="text-success"><i class="fa-solid fa-check"></i> Submmitted</span><br>
+                            <span class="text-success"><i class="fa-solid fa-check"></i> Approved</span><br>
+                            <span class="text-success"><i class="fa-solid fa-check"></i> Fulfilled</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <p>No active order found.</p>
+{% endif %}
+<h2>Past Orders</h2>
+{% if past_orders %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Period</th>
+                <th>Order Date</th>
+                <th>Close Reason</th>
+                <th>Fulfilled On</th>
+                <td></td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in past_orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.period }}</td>
+                    <td id="pastOrderDate_{{ order.id }}">{{ order.created_date }}</td>
+                    <td>{{ order.get_status() }}</td>
+                    <td id="pastOrderFulfillmentDate_{{ order.id }}">{{ order.fulfillment_date }}</td>
+                    <td><a href="/order/{{ order.id }}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-eye"></i> View Order</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No past orders found.</p>
+{% endif %}
+</div>
+<!-- Create new order modal -->
+<div class="modal fade" id="newOrderModal" tabindex="-1" aria-labelledby="newOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newOrderModalLabel">Create New Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newOrderForm">
+                    <input type="hidden" name="created_by" value="{{ data.user }}">
+                    <input type="hidden" name="division_id" value="{{ division.id }}">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="period" class="form-label">Period</label>
+                            <select class="form-select" id="period" name="period" required></select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="division" class="form-label">Division</label>
+                            <input type="text" class="form-control" id="division" name="division" value="{{ division.full_name }}" required readonly>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary float-end">Create Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const DATE_OPTIONS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+    const pastOrderDates = document.querySelectorAll('[id^="pastOrderDate_"]');
+    const pastOrderFulfillmentDates = document.querySelectorAll('[id^="pastOrderFulfillmentDate_"]');
+
+    const newOrderForm = document.getElementById('newOrderForm');
+    const periodSelect = document.getElementById('period');
+    const divisionInput = document.getElementById('division');
+
+    async function getOrderTotal()
+    {
+        if ('{{ active_order }}' === 'None')
+            return;
+
+        try
+        {
+            const response = await fetch(`/api/order/{{ active_order.id }}/total`, { method: 'GET' });
+            const data = await response.json();
+
+            if (response.ok)
+                $('#activeOrderTotal').text(formatCurrency(data.total));
+            else
+                displayToast('Order Total Error', response.statusText, 'error');
+        }
+        catch (error)
+        {
+            displayToast('Failed to Retrieve Order Total', error, 'error');
+        }
+    }
+
+    getOrderTotal();
+
+    $('#activeOrderDate').text(new Date('{{ active_order.created_date }}').toLocaleDateString('en-GB', DATE_OPTIONS));
+
+    pastOrderDates.forEach(dateElement => {
+        const orderId = dateElement.id.split('_')[1];
+        dateElement.textContent = new Date(dateElement.textContent).toLocaleDateString('en-GB', DATE_OPTIONS);
+    });
+
+    pastOrderFulfillmentDates.forEach(dateElement => {
+        const orderId = dateElement.id.split('_')[1];
+        dateElement.textContent = new Date(dateElement.textContent).toLocaleDateString('en-GB', DATE_OPTIONS);
+    });
+
+    // Add periods to the new order form (next 3 months in YYYY/MM format)
+    const today = new Date();
+    for (let i = 0; i < 4; i++)
+    {
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(today.getMonth() + i);
+        var month = nextMonth.getMonth() + 1;
+        if (month < 10)
+            month = '0' + month;
+        const periodValue = `${nextMonth.getFullYear()}/${month}`;
+        const periodText = nextMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        periodSelect.innerHTML += `<option value="${periodValue}">${periodValue} - ${periodText}</option>`;
+    }   
+
+    newOrderForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        try
+        {
+            const response = await fetch('/api/order', {
+                method: 'POST',
+                body: new FormData(newOrderForm)
+            });
+
+            const data = await response.json();
+
+            if (response.ok)
+            {
+                displayToast('Operation success', data.message);
+                window.location.reload();
+            }
+            else
+                displayPopupAlert(data.error, data.details, 'error');
+        }
+        catch (error)
+        {
+            displayToast('Failed to Create Order', error, 'error');
+        }
+    });
+</script>
+{% endblock %}
+    
