@@ -1,8 +1,10 @@
 from flask import jsonify, request, session
+from sqlalchemy import desc
 
 from app.api import api
 from app.extensions import db
 from app.models.user import User
+from app.models.orders import Orders
 from helper.auth import generate_password_hash, is_authenticated
 from helper.endpoint import HTTPStatus, check_fields
 
@@ -127,7 +129,13 @@ def api_login_user():
     if user.check_password(password) is False:
         return jsonify({ 'success': False, 'error': 'Invalid password' }), HTTPStatus.UNAUTHORIZED
     
+    # SUCCESS - Session setup
     session['user'] = user.username
+
+    # Get active order
+    active_order = Orders.query.filter(~Orders.status.in_([10, 99]), Orders.created_by == username).order_by(desc(Orders.created_date)).first()
+    if active_order:
+        session['active_order'] = active_order.id
     
     if 'next' in session:
         session.pop('next')

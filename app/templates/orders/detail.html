@@ -364,8 +364,7 @@
         if (response.ok)
         {
             displayToast('Remove Item', 'Item removed successfully.');
-            updateCartItemsCount();
-            updateCartTopItems();
+            updateNavbarCart('{{ data.active_order }}');
             getOrderTotal();
             $('#data').DataTable().ajax.reload();
         }
@@ -826,8 +825,7 @@
         if (response.ok)
         {
             displayToast('Update Quantity', 'Quantity updated successfully.');
-            updateCartItemsCount();
-            updateCartTopItems();
+            updateNavbarCart('{{ data.active_order }}');
             getOrderTotal();
             $('#data').DataTable().ajax.reload();
         }

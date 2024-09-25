@@ -87,8 +87,7 @@
                 alert(data.message);
         });
 
-        updateCartItemsCount();
-        updateCartTopItems();
+        updateNavbarCart('{{ data.active_order }}');
     });
     </script>
     {% block scripts %}{% endblock %}

@@ -562,8 +562,7 @@
         {
             displayToast('Operation success', data.message);
             resetForm(item_id);
-            updateCartItemsCount();
-            updateCartTopItems();
+            updateNavbarCart('{{ data.active_order }}');
         }
         else
         {

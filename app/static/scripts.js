@@ -85,18 +85,17 @@ function formatCurrency(value, rounding = 2, symbol = 'IDR')
     return `${symbol} ${formatted}`;
 }
 
-function updateCartItemsCount()
+function updateCartItemsCount(orderId)
 {
-    const order_id = getCookie('order_id');
     const badge = document.getElementById('cartCount');
 
-    if (order_id === '' || order_id == null) 
+    if (orderId === '' || orderId == null) 
     {
         badge.hidden = true;
         return;
     }
     
-    fetch(`/api/order/${order_id}/items/count`)
+    fetch(`/api/order/${orderId}/items/count`)
     .then(response => response.json())
     .then(data => 
     {
@@ -105,13 +104,12 @@ function updateCartItemsCount()
     });
 }
 
-function updateCartTopItems()
+function updateCartTopItems(orderId)
 {
-    const order_id = getCookie('order_id');
     const cartItems = document.getElementById('cartItems');
     const btnOrderDetails = document.getElementById('btnOrderDetails');
 
-    if (order_id === '' || order_id == null) 
+    if (orderId === '' || orderId == null) 
     {
         cartItems.innerHTML = '';
 
@@ -126,9 +124,9 @@ function updateCartTopItems()
     }
 
     btnOrderDetails.hidden = false;
-    btnOrderDetails.href = `/order/${order_id}`;
+    btnOrderDetails.href = `/order/${orderId}`;
 
-    fetch(`/api/order/${order_id}/items/top`)
+    fetch(`/api/order/${orderId}/items/top`)
     .then(response => response.json())
     .then(data => 
     {
@@ -152,6 +150,12 @@ function updateCartTopItems()
         );
     }
     );
+}
+
+function updateNavbarCart(orderId)
+{
+    updateCartItemsCount(orderId);
+    updateCartTopItems(orderId);
 }
 
 function displayToast(title, message, type = 'success', timer = 5000)
