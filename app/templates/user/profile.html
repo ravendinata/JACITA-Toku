@@ -87,7 +87,7 @@
         data = await response.json();
 
         if (response.ok) 
-            displayToast("Operation success", data.messge);
+            displayToast("Operation success", data.message);
         else
             displayPopupAlert("Operation failed", data.error);
     });
