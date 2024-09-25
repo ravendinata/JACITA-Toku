@@ -3,7 +3,19 @@
 {% block content %}
 <div class="container-fluid" style="padding-top: 28px; padding-bottom: 48px;">
     <span>
-        <a href="/items" class="btn btn-primary float-end mx-2"><i class="fa-solid fa-cart-plus"></i> Add More Items to this Order</a>
+        {% if can_do['order/update'] %}
+        <button type="button" class="btn btn-success float-end ms-1" id="btnSubmitOrder"><i class="fa-regular fa-paper-plane"></i> Submit Order</button>
+        {% endif %}
+        {% if can_do['order/approve_division'] or can_do['order/approve_finance'] %}
+        <button type="button" class="btn btn-success float-end ms-1" id="btnApproveOrder"><i class="fa-regular fa-circle-check"></i> Approve Order</button>
+        <button type="button" class="btn btn-danger float-end ms-1" id="btnRejectOrder"><i class="fa-solid fa-times"></i> Reject Order</button>
+        {% endif %}
+        {% if can_do['order/fulfill'] %}
+        <button type="button" class="btn btn-success float-end ms-1" id="btnFulfillOrder"><i class="fa-regular fa-circle-check"></i> Fulfill Order</button>
+        {% endif %}
+        {% if order.id == data.active_order and can_do['orderitem/create'] %}
+        <a href="/items" class="btn btn-primary float-end ms-1"><i class="fa-solid fa-cart-plus"></i> Add More Items to this Order</a>
+        {% endif %}
         <a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
     </span>
     <h1>Order Detail</h1>
@@ -65,19 +77,35 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col">
+                                {% if order.status == 2 %}
+                                <label for="division_approved_by">Rejected By</label>
+                                {% else %}
                                 <label for="division_approved_by">Approved By</label>
+                                {% endif %}
                                 <input type="text" class="form-control" id="division_approved_by" name="division_approved_by" value="{{ order.approval_division_by }}" readonly>
                             </div>
                             <div class="col">
-                                <label for="division_approved_date">Approved Date</label>
+                                {% if order.status == 2 %}
+                                <label for="finance_approved_by">Rejected On</label>
+                                {% else %}
+                                <label for="finance_approved_by">Approved On</label>
+                                {% endif %}
                                 <input type="text" class="form-control" id="division_approved_at" name="division_approved_at" readonly>
                             </div>
                             <div class="col">
+                                {% if order.status == 6 %}
+                                <label for="finance_approved_by">Rejected By</label>
+                                {% else %}
                                 <label for="finance_approved_by">Approved By</label>
+                                {% endif %}
                                 <input type="text" class="form-control" id="finance_approved_by" name="finance_approved_by" value="{{ order.approval_finance_by }}" readonly>
                             </div>
                             <div class="col">
-                                <label for="finance_approved_date">Approved Date</label>
+                                {% if order.status == 6 %}
+                                <label for="finance_approved_date">Rejected On</label>
+                                {% else %}
+                                <label for="finance_approved_date">Approved On</label>
+                                {% endif %}
                                 <input type="text" class="form-control" id="finance_approved_at" name="finance_approved_at" readonly>
                             </div>
                         </div>
@@ -202,7 +230,9 @@
                             <div class="input-group">
                                 <input type="text" class="form-control text-end" id="item_details_quantity" name="item_details_quantity" readonly>
                                 <span class="input-group-text" id="item_details_qty_unit"></span>
+                                {% if order.id == data.active_order and can_do['orderitem/update']%}
                                 <button class="btn btn-primary" type="button" id="btnModalUpdateQty"><i class="fas fa-plus-minus"></i></button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -210,7 +240,9 @@
                         <div class="col">
                             <label for="item_details_remarks">Remarks</label>
                             <textarea class="form-control" id="item_details_remarks" name="item_details_remarks" rows="3"></textarea>
+                            {% if order.id == data.active_order and can_do['orderitem/update']%}
                             <button type="button" class="btn btn-primary mt-2 float-end" id="btnModalUpdateRemarks" disabled><i class="fas fa-save"></i> Update Remarks</button>
+                            {% endif %}
                         </div>
                     </div>
                     <hr>
@@ -226,7 +258,9 @@
             </div>
             <div class="modal-footer justify-content-between">
                 <div>
+                    {% if order.id == data.active_order and can_do['orderitem/update']%}
                     <button type="button" class="btn btn-outline-danger" id="btnModalRemoveItem"><i class="fas fa-trash-alt"></i> Remove Item</button>
+                    {% endif %}
                 </div>
                 <div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
@@ -328,6 +362,11 @@
     const btnPlus10Qty = document.getElementById('btnPlus10Qty');
     const btnUpdateQty = document.getElementById('btnUpdateQty');
 
+    const btnSubmitOrder = document.getElementById('btnSubmitOrder');
+    const btnFulfillOrder = document.getElementById('btnFulfillOrder');
+    const btnApproveOrder = document.getElementById('btnApproveOrder');
+    const btnRejectOrder = document.getElementById('btnRejectOrder');
+
     const btnModalUpdateQty = document.getElementById('btnModalUpdateQty');
     const btnModalRemoveItem = document.getElementById('btnModalRemoveItem');
     const btnModalUpdateRemarks = document.getElementById('btnModalUpdateRemarks');
@@ -381,6 +420,24 @@
                 displayPopupAlert(err_title, `Available fields: ${data.available_fields}`, 'error');
             else
                 displayPopupAlert(err_title, response.statusText, 'error');
+        }
+    }
+
+    // Generic Order Status Manipulation Function
+    async function updateOrderStatus(action, formData = null)
+    {
+        displayToast('Updating Order Status', 'Please wait while we update the order status...', 'info');
+        const response = await fetch(`/api/order/{{ order.id }}/${action}`, { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (response.ok)
+        {
+            setTimeout(() => displayToast('Operation success', data.message), 1000);
+            setTimeout(() => window.location.reload(), 2000);
+        }
+        else
+        {
+            displayPopupAlert(data.error, data.details, 'error');
         }
     }
 
@@ -449,9 +506,16 @@
                     data: null, // 8
                     render: function(data, type, row, meta) 
                     {
-                        var buttons = `<button class="btn btn-primary btn-sm" id="btnUpdateQty_${row.item_id}"><i class="fas fa-plus-minus"></i></button>
-                        <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.item_id}"><i class="fas fa-info-circle"></i></button>
-                        <button class="btn btn-danger btn-sm" id="btnRemoveItem_${row.item_id}"><i class="fas fa-trash-alt"></i></button>`;
+                        if ("{{ order.id }}" == "{{ data.active_order }}" && "{{ can_do['orderitem/update'] }}" == "True")
+                        {
+                            var buttons = `<button class="btn btn-primary btn-sm" id="btnUpdateQty_${row.item_id}"><i class="fas fa-plus-minus"></i></button>
+                            <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.item_id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-sm" id="btnRemoveItem_${row.item_id}"><i class="fas fa-trash-alt"></i></button>`;
+                        }
+                        else
+                        {
+                            var buttons = `<button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.item_id}"><i class="fas fa-info-circle"></i></button>`;
+                        }
                         
                         return buttons;
                     }
@@ -596,6 +660,71 @@
         getOrderTotal();
     });
 
+    // Submit Order Button
+    if (btnSubmitOrder != null)
+    {
+        btnSubmitOrder.addEventListener('click', function() 
+        {
+            displayPopupConfirm('Submit Order', 'Are you sure you want to submit this order for approval? This action cannot be undone.',
+            confirmCallback = async () => { await updateOrderStatus('submit'); },
+            denyCallback = () => {},
+            confirmText = 'Yes, submit this order',
+            denyText = 'No, keep this order');
+        });
+    }
+
+    if (btnFulfillOrder != null)
+    {
+        btnFulfillOrder.addEventListener('click', function() 
+        {
+            displayPopupConfirm('Fulfill Order', 'Are you sure you want to fulfill this order? This action cannot be undone.',
+            confirmCallback = async () => { await updateOrderStatus('fulfill'); },
+            denyCallback = () => {},
+            confirmText = 'Yes, fulfill this order',
+            denyText = 'No, keep this order');
+        });
+    }
+
+    if (btnApproveOrder != null)
+    {
+        btnApproveOrder.addEventListener('click', function() 
+        {
+            displayPopupConfirm('Approve Order', 'Are you sure you want to approve this order? This action cannot be undone.',
+            confirmCallback = async () => 
+            { 
+                const formData = new FormData();
+                formData.append('username', '{{ data.user }}');
+                if ("{{ can_do['order/approve_finance'] }}" == "True")
+                    await updateOrderStatus('approve/finance', formData);
+                else if ("{{ can_do['order/approve_division'] }}" == "True")
+                    await updateOrderStatus('approve/division', formData);
+            },
+            denyCallback = () => {},
+            confirmText = 'Yes, approve this order',
+            denyText = 'No, keep this order');
+        });
+    }
+
+    if (btnRejectOrder != null)
+    {
+        btnRejectOrder.addEventListener('click', function() 
+        {
+            displayPopupConfirm('Reject Order', 'Are you sure you want to reject this order? This action cannot be undone.',
+            confirmCallback = async () =>
+            {
+                const formData = new FormData();
+                formData.append('username', '{{ data.user }}');
+                if ("{{ can_do['order/approve_finance'] }}" == "True")
+                    await updateOrderStatus('reject/finance', formData);
+                else if ("{{ can_do['order/approve_division'] }}" == "True")
+                    await updateOrderStatus('reject/division', formData);
+            },
+            denyCallback = () => {},
+            confirmText = 'Yes, reject this order',
+            denyText = 'No, keep this order');
+        });
+    }
+
     // Update Quantity Button
     $('#data').on('click', 'button[id^="btnUpdateQty_"]', function() 
     {
@@ -713,21 +842,24 @@
     });
 
     // Update Quantity Button (Modal)
-    btnModalUpdateQty.addEventListener('click', function() 
+    if (btnModalUpdateQty != null)
     {
-        const item_id = $('#item_details_item_id').val();
-        const qty = parseInt($('#item_details_quantity').val());
+        btnModalUpdateQty.addEventListener('click', function() 
+        {
+            const item_id = $('#item_details_item_id').val();
+            const qty = parseInt($('#item_details_quantity').val());
 
-        $('#qty_update_item_id').val(item_id);
-        $('#qty_update_item_name').val($('#item_details_item_name').val());
-        $('#qty_update_price').val($('#item_details_price').val());
-        $('#qty_update_qty').val(qty);
-        $('#qty_update_qty_unit').text($('#item_details_qty_unit').text());
-        $('#qty_update_subtotal').text($('#item_details_subtotal').text());
+            $('#qty_update_item_id').val(item_id);
+            $('#qty_update_item_name').val($('#item_details_item_name').val());
+            $('#qty_update_price').val($('#item_details_price').val());
+            $('#qty_update_qty').val(qty);
+            $('#qty_update_qty_unit').text($('#item_details_qty_unit').text());
+            $('#qty_update_subtotal').text($('#item_details_subtotal').text());
 
-        $('#orderItemDetailsModal').modal('hide');
-        $('#updateQtyModal').modal('show');
-    });
+            $('#orderItemDetailsModal').modal('hide');
+            $('#updateQtyModal').modal('show');
+        });
+    }
 
     // Remarks Change Event (Modal)
     $('#item_details_remarks').on('change', function() 
@@ -736,61 +868,67 @@
     });
 
     // Update Remarks Button (Modal)
-    btnModalUpdateRemarks.addEventListener('click', async function() 
+    if (btnModalUpdateRemarks != null)
     {
-        const item_id = $('#item_details_item_id').val();
-        const remarks = $('#item_details_remarks').val();
-
-        const formData = new FormData();
-        formData.append('remarks', remarks);
-
-        const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
+        btnModalUpdateRemarks.addEventListener('click', async function() 
         {
-            method: 'PATCH',
-            body: formData
+            const item_id = $('#item_details_item_id').val();
+            const remarks = $('#item_details_remarks').val();
+
+            const formData = new FormData();
+            formData.append('remarks', remarks);
+
+            const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
+            {
+                method: 'PATCH',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            $('#orderItemDetailsModal').modal('hide');
+
+            if (response.ok)
+            {
+                displayToast('Update Remarks', 'Remarks updated successfully.');
+                $('#data').DataTable().ajax.reload();
+            }
+            else
+            {
+                if (data.error != null)
+                    err_title = data.error;
+                else
+                    err_title = 'Update Remarks Error';
+
+                if (data.details != null)
+                    displayPopupAlert(err_title, data.details, 'error');
+                else if (data.available_fields != null)
+                    displayPopupAlert(err_title, `Available fields: ${data.available_fields}`, 'error');
+                else
+                    displayPopupAlert(err_title, response.statusText, 'error');
+            }
         });
-
-        const data = await response.json();
-
-        $('#orderItemDetailsModal').modal('hide');
-
-        if (response.ok)
-        {
-            displayToast('Update Remarks', 'Remarks updated successfully.');
-            $('#data').DataTable().ajax.reload();
-        }
-        else
-        {
-            if (data.error != null)
-                err_title = data.error;
-            else
-                err_title = 'Update Remarks Error';
-
-            if (data.details != null)
-                displayPopupAlert(err_title, data.details, 'error');
-            else if (data.available_fields != null)
-                displayPopupAlert(err_title, `Available fields: ${data.available_fields}`, 'error');
-            else
-                displayPopupAlert(err_title, response.statusText, 'error');
-        }
-    });
+    }
 
     // Remove Item Button (Modal)
-    btnModalRemoveItem.addEventListener('click', async function() 
+    if (btnModalRemoveItem != null)
     {
-        const item_name = $('#item_details_item_name').val();
-        await displayPopupConfirm('Remove Item', `Are you sure you want to remove ${item_name} from the order? This action cannot be undone.`,
-        confirmCallback = async () => 
+        btnModalRemoveItem.addEventListener('click', async function() 
         {
-            $('#orderItemDetailsModal').modal('hide');
-            displayToast('Removing Item', 'Please wait while we remove the item...', 'info');
-            const item_id = $('#item_details_item_id').val();
-            removeItem(item_id);
-        },
-        denyCallback = () => {},
-        confirmText = 'Yes, remove this item',
-        denyText = 'No, keep this item');
-    });
+            const item_name = $('#item_details_item_name').val();
+            await displayPopupConfirm('Remove Item', `Are you sure you want to remove ${item_name} from the order? This action cannot be undone.`,
+            confirmCallback = async () => 
+            {
+                $('#orderItemDetailsModal').modal('hide');
+                displayToast('Removing Item', 'Please wait while we remove the item...', 'info');
+                const item_id = $('#item_details_item_id').val();
+                removeItem(item_id);
+            },
+            denyCallback = () => {},
+            confirmText = 'Yes, remove this item',
+            denyText = 'No, keep this item');
+        });
+    }
 
     // Details Modal Close Event
     $('#orderItemDetailsModal').on('hidden.bs.modal', function() 
