@@ -89,7 +89,7 @@ function updateCartItemsCount(orderId)
 {
     const badge = document.getElementById('cartCount');
 
-    if (orderId === '' || orderId == null) 
+    if (orderId === 'None')
     {
         badge.hidden = true;
         return;
@@ -109,7 +109,7 @@ function updateCartTopItems(orderId)
     const cartItems = document.getElementById('cartItems');
     const btnOrderDetails = document.getElementById('btnOrderDetails');
 
-    if (orderId === '' || orderId == null) 
+    if (orderId == 'None') 
     {
         cartItems.innerHTML = '';
 
