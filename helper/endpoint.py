@@ -62,7 +62,7 @@ def check_page_permission(permission: str):
             try:
                 user.can_do(permission)
             except InsufficientPermissionError as e:
-                return render_template('error/standard.html', title = "Forbidden", code = 403, message = e.message, data = { 'username': session['user'] }), HTTPStatus.FORBIDDEN
+                return render_template('error/standard.html', title = "Forbidden", code = 403, message = e.message), HTTPStatus.FORBIDDEN
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -96,7 +96,7 @@ def check_page_permissions(permissions: list):
                         continue
                 raise InsufficientPermissionError(user, permissions)
             except InsufficientPermissionError as e:
-                return render_template('error/standard.html', title = "Forbidden", code = 403, message = e.message, data = { 'username': session['user'] }), HTTPStatus.FORBIDDEN
+                return render_template('error/standard.html', title = "Forbidden", code = 403, message = e.message), HTTPStatus.FORBIDDEN
         return wrapper
     return decorator
 

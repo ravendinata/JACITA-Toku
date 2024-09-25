@@ -16,8 +16,6 @@ def page_profile():
     if is_authenticated(session):
         username = session.get('user')
         user = User.query.get(username)
-        data = { 'username': username }
-
-        return render_template('user/profile.html', title = "Profile", user = user.to_dict(), data = data)
+        return render_template('user/profile.html', title = "Profile", user = user.to_dict())
     else:
         return redirect(url_for('web.login'))

@@ -4,6 +4,7 @@ from datetime import timedelta
 from flask import Flask
 
 from app.extensions import db
+from app.context_processor import inject_session_data
 
 def create_app():
     with open('config.json') as config_file:
@@ -18,6 +19,11 @@ def create_app():
     # Extensions
     # ==========
     db.init_app(app)
+
+    # =================
+    # Context Processor
+    # =================
+    app.context_processor(inject_session_data)
 
     # ==========
     # Blueprints

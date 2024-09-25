@@ -11,4 +11,4 @@ def page_order_view(id):
     if order is None:
         return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
 
-    return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, data = { 'username': session['user'] })
+    return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order)

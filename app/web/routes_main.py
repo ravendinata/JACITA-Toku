@@ -8,5 +8,4 @@ def index():
     if not is_authenticated(session):
         return redirect(url_for('web.page_login'))
     else:
-        data = { 'username': session.get('user') }
-        return render_template('index.html', title = "Home", data = data)
+        return render_template('index.html', title = "Home")

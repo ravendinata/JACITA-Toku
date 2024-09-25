@@ -11,16 +11,13 @@ from helper.endpoint import inject_allowed_operations, check_page_permission, ch
 @check_login
 @inject_allowed_operations
 def page_items_view_all(user_operations):
-    data = { 'username': session['user'] }
-    return render_template('items/view_all.html', use_datatables = True, title = "Items", data = data, operations = user_operations)
+    return render_template('items/view_all.html', use_datatables = True, title = "Items", operations = user_operations)
     
 @web.route('/items/add')
 @check_login
 @inject_allowed_operations
 @check_page_permissions([ 'item_validated/create', 'item_nonvalidated/create' ])
 def page_items_add(user_operations):
-    data = { 'username': session['user'] }
-    
     units = QuantityUnit.query.all()
     units = [ unit.to_dict() for unit in units ]
 
@@ -29,14 +26,12 @@ def page_items_add(user_operations):
     categories = sorted(categories, key = lambda x: x['id'])
 
     return render_template('items/add.html', title = "Add Item", 
-                            data = data, units = units, categories = categories, operations = user_operations)
+                            units = units, categories = categories, operations = user_operations)
     
 @web.route('/item/<string:id>/edit')
 @check_login
 def page_items_edit(id):
     username = session['user']
-
-    data = { 'username': username }
     
     units = QuantityUnit.query.all()
     units = [ unit.to_dict() for unit in units ]
@@ -55,10 +50,9 @@ def page_items_edit(id):
     def page():
         user = User.query.get(username)
         if item.created_by != username and not user.can_update_items():
-            return render_template('error/standard.html', title = "Forbidden", code = 403, message = "You are not the creator of this item.", data = data), 403
+            return render_template('error/standard.html', title = "Forbidden", code = 403, message = "You are not the creator of this item."), 403
         else:
-            data['item_type'] = item_type
             return render_template('items/edit.html', title = "Edit Item", 
-                                    data = data, units = units, categories = categories, item = item.to_dict())
+                                    item_type = item_type, units = units, categories = categories, item = item.to_dict())
 
     return page()
