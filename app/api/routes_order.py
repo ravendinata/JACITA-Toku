@@ -1,4 +1,5 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
+from sqlalchemy import desc
 
 from app.api import api
 from app.extensions import db
@@ -43,6 +44,10 @@ def api_create_order():
     period = request.form.get('period')
     division_id = request.form.get('division_id')
     created_by = request.form.get('created_by')
+
+    active_order = Orders.query.filter(~Orders.status.in_([10, 99]), Orders.created_by == created_by).order_by(desc(Orders.created_date)).first()
+    if active_order:
+        return jsonify({ 'error': 'Active order exists', 'details': f"Active order already exists for {created_by}. Your currently active order: {active_order.id}" }), HTTPStatus.FORBIDDEN
     
     id = generate_order_id(period, division_id)
 
@@ -51,6 +56,7 @@ def api_create_order():
     try:
         db.session.add(order)
         db.session.commit()
+        session['active_order'] = id
     except Exception as e:
         return jsonify({ 'error': 'Error while creating order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
