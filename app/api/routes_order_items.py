@@ -7,6 +7,7 @@ from app.models.orders import Orders
 from app.models.items import Items, NonvalItems
 from app.models.order_items import OrderItems, OrderNonvalItems
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
+from helper.status import OrderStatus
 
 @api.route('/order/<string:order_id>/items', methods = ['GET'])
 def api_get_order_items(order_id):
@@ -67,8 +68,12 @@ def api_add_order_item(order_id):
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
-    if Orders.query.get(order_id) is None:
+    order = Orders.query.get(order_id)
+    if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
+    
+    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
+        return jsonify({ 'error': 'Forbidden operation', 'details': 'The active order is currently not able to accept new items' }), HTTPStatus.FORBIDDEN
     
     item_type = 'validated'
     item_id = request.form.get('item_id')
