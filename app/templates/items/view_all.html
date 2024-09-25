@@ -522,7 +522,7 @@
     {
         event.preventDefault();
         
-        const order_id = getCookie('order_id');
+        const order_id = "{{ data.active_order }}";
         const item_id = $('#cart_item_id').val();
         const qty = parseInt($('#cart_qty').val());
         const remarks = $('#cart_remarks').val();
