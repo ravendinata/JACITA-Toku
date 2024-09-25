@@ -65,7 +65,7 @@
                     <i>For example, if you set the unit to "grams" and the price is 1500, then the price is IDR 1500 per gram.</i>
                 </p>
             </div>
-            {% if data.item_type == 'validated' %}
+            {% if item_type == 'validated' %}
             <div class="col">
                 <label for="qty_unit_id">Quantity Unit <small class="text-muted"><i>(Required)</i></small></label>
                 <select class="form-select" id="qty_unit_id" name="qty_unit_id" required>
@@ -102,7 +102,7 @@
 
 {% block scripts %}
 <script>
-    const item_type = '{{ data.item_type }}';
+    const item_type = '{{ item_type }}';
 
     $(document).ready(function() 
     {
@@ -159,7 +159,7 @@
             }
         });
         
-        const response = await fetch('/api/items/{{ data.item_type }}/{{ item.id }}', 
+        const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', 
         {
             method: 'PATCH',
             body: formData
@@ -188,7 +188,7 @@
         {
             displayToast('Deleting item', 'Please wait while we delete the item...', 'info');
 
-            const response = await fetch('/api/items/{{ data.item_type }}/{{ item.id }}', 
+            const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', 
             {
                 method: 'DELETE'
             });
