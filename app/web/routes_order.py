@@ -136,3 +136,50 @@ def page_order_view(id):
         can_do['order/fulfill'] = check_permission('order/fulfill')
 
     return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, can_do = can_do)
+
+@web.route('/order/<string:period>/<int:division_id>')
+@check_login
+def page_division_order_view(period, division_id):
+    period = f"{period[:4]}/{period[4:]}"
+    orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(desc(Orders.created_date)).all()
+
+    if len(orders) == 0:
+        return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
+    
+    user = User.query.get(session['user'])
+    
+    can_do = {
+        'orderitem/delete': False,
+        'order/approve_division': False,
+        'order/approve_finance': False,
+        'order/fulfill': False
+    }
+
+    sync = len(set([order.status for order in orders])) == 1
+
+    def check_permission(action):
+        try:
+            return user.can_do(action)
+        except InsufficientPermissionError:
+            return False
+        
+    if sync:
+        status = orders[0].status
+        
+        if status in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
+            can_do['orderitem/delete'] = check_permission('orderitem/delete')
+        
+        if status in [OrderStatus.SUBMITTED,  OrderStatus.FINANCE_REJECTED]:
+            can_do['order/approve_division'] = check_permission('order/approve_division')
+            can_do['orderitem/delete'] = check_permission('orderitem/delete')
+        
+        if status == OrderStatus.DIVISION_APPROVED:
+            can_do['order/approve_finance'] = check_permission('order/approve_finance')
+        
+        if status == OrderStatus.FINANCE_APPROVED:
+            can_do['order/fulfill'] = check_permission('order/fulfill')
+
+    division = {'id': division_id, 'name': orders[0].get_division()}
+
+    return render_template('orders/collection_detail.html', use_datatables = True, title = "Division Orders", can_do = can_do, sync = sync,
+                           orders = orders, period = period, division = division, last_modification_date = orders[0].last_modification_date)
