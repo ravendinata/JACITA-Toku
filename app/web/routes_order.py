@@ -1,10 +1,13 @@
+from datetime import datetime
+
 from flask import render_template, session
-from sqlalchemy import desc
+from sqlalchemy import asc, desc, or_
 
 from app.web import web
 from app.models.orders import Orders
 from app.models.user import User
 from helper.auth import check_login
+from helper.endpoint import check_page_permission
 from helper.role import InsufficientPermissionError
 from helper.status import OrderStatus
 
@@ -20,6 +23,67 @@ def page_order_list():
 
     return render_template('orders/view_all.html', use_datatables = True, title = "My Orders",
                            active_order = active_order, past_orders = past_orders, division = division)
+
+@web.route('/orders/administration')
+@check_login
+@check_page_permission('order/administer')
+def page_order_administration():
+    user = User.query.get(session['user'])
+    this_month = f"{datetime.now().year}/{datetime.now().month:02d}"
+    if datetime.now().month == 12:
+        next_month = f"{datetime.now().year + 1}/01"
+    else:
+        next_month = f"{datetime.now().year}/{datetime.now().month + 1:02d}"
+
+    can_do = {
+        'order/approve_division': False,
+        'order/approve_finance': False,
+        'order/fulfill': False
+    }
+
+    for action in can_do:
+        try:
+            can_do[action] = user.can_do(action)
+        except InsufficientPermissionError:
+            can_do[action] = False
+
+    if can_do['order/approve_division']:
+        orders = Orders.query.filter(Orders.status != OrderStatus.PENDING, or_(Orders.period == this_month, Orders.period == next_month),
+                                     Orders.division_id == user.division_id).order_by(asc(Orders.period)).all()
+        
+        grouped_orders = {}
+        for order in orders:
+            if order.period not in grouped_orders:
+                grouped_orders[order.period] = []
+            grouped_orders[order.period].append(order)
+        
+        return render_template('orders/administration.html', use_datatables = True, title = "Order Administration", 
+                           period = {'this_month': this_month, 'next_month': next_month},
+                           orders = grouped_orders, can_do = can_do, division = user.division_id)
+    
+    if can_do['order/approve_finance']:
+        orders = Orders.query.filter(or_(Orders.status == OrderStatus.DIVISION_APPROVED, Orders.status == OrderStatus.FINANCE_REJECTED),
+                                     or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
+    elif can_do['order/fulfill']:
+        orders = Orders.query.filter(Orders.status == OrderStatus.FINANCE_APPROVED, 
+                                     or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
+        
+    grouped_orders = {}
+    for order in orders:
+        period = order.period
+        division = order.get_division()
+
+        if period not in grouped_orders:
+            grouped_orders[period] = {}
+
+        if division not in grouped_orders[period]:
+            grouped_orders[period][division] = []
+
+        grouped_orders[period][division].append(order)
+
+    return render_template('orders/administration.html', use_datatables = True, title = "Order Administration",
+                            period = {'this_month': this_month, 'next_month': next_month},
+                            grouped_orders = grouped_orders, can_do = can_do)
 
 @web.route('/order/<string:id>')
 @check_login

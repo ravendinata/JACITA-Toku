@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if can_do['order/approve_division'] %}
+    <span class="float-end"><a href="/order/{{ period.next_month|replace('/', '') }}/{{ division }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Coming Month's Order Collection</a></span>
+{% endif %}
+<h2>Order Administration</h2>
+<hr>
+<div class="container-fluid" style="width: 75%; padding-bottom: 48px;">
+    <div class="my-3">
+    {% if orders %}
+        {% for period, period_order in orders.items() %}
+        <h5>Period: {{ period }}</h5>
+        {% for order in period_order %}
+        <div class="card mb-3">
+            <div class="card-header">Order ID: {{ order.id }}</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5" style="border-right: 1px dashed;">
+                        <h5 class="card-title"><i class="fa-solid fa-shopping-cart"></i> Order ID: <b>{{ order.id }}</b></h5>
+                        <p class="card-text">
+                            Opened on: <span id="orderDate_{{ order.id }}">{{ order.created_date }}</span><br>
+                            By: {{ order.created_by }}
+                        </p>
+                        <a href="/order/{{ order.id }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Order</a>
+                    </div>
+                    <div class="col ms-4">
+                        <h5 class="card-title">Order Details</h5>
+                        <p class="card-text">
+                            Period: {{ order.period }}<br>
+                            Status: {{ order.get_status() }}<br>
+                            Value: <span id="orderTotal_{{ order.id }}"></span>  
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    {% elif grouped_orders %}
+        {% for period, divisions in grouped_orders.items() %}
+        <h5>Period: {{ period }}</h5>
+        {% for division, orders in divisions.items() %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <span class="float-end">
+                    <a href="/order/{{ period | replace('/', '') }}/{{ orders[0].division_id }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Order</a>
+                    {% if can_do['order/approve_finance'] %}
+                        <button type="button" class="btn btn-success" id="btnApproveOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Approve Order</button>
+                        <button type="button" class="btn btn-danger" id="btnRejectOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-times"></i> Reject Order</button>
+                    {% elif can_do['order/fulfill'] %}
+                        <button type="button" class="btn btn-success" id="btnFulfillOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Fulfill Order</button>
+                    {% endif %}
+                </span>
+                <h5 class="card-title">{{ division }}</b></h5>
+                <p class="card-text">
+                    <span>Total Orders: {{ orders|length }}</span><br>
+                    <span>Total Value: <span id="orderTotal_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"></span></span><br>
+                </p>
+                <div class="accordion mt-4" id="accordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}" aria-expanded="false" aria-controls="childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}">
+                                Child Orders
+                            </button>
+                        </h2>
+                        <div id="childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}" class="accordion-collapse collapse m-3" aria-labelledby="childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}">
+                            <div id="accordion-body">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Submitter</th>
+                                            <th>Value</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.id }}</td>
+                                            <td>{{ order.created_by }}</td>
+                                            <td id="orderTotal_{{ order.id }}"></td>
+                                            <td><a href="/order/{{ order.id }}" class="btn btn-sm btn-secondary float-end"><i class="fa-solid fa-eye"></i> View Order</a></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>    
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    {% else %}
+        <p>No active orders to administer for this period.</p>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const DATE_OPTIONS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+    const orderDates = document.querySelectorAll('[id^="orderDate_"]');
+    const orderTotals = document.querySelectorAll('[id^="orderTotal_"]');
+    const btnApproveOrder = document.querySelectorAll('[id^="btnApproveOrder_"]');
+    const btnRejectOrder = document.querySelectorAll('[id^="btnRejectOrder_"]');
+    const btnFulfillOrder = document.querySelectorAll('[id^="btnFulfillOrder_"]');
+
+    async function updateOrderStatus(action, id, formData = null)
+    {
+        displayToast('Updating Order Status', 'Please wait while we update the order status...', 'info');
+        const response = await fetch(`/api/order/${id}/${action}`, { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (response.ok)
+        {
+            setTimeout(() => displayToast('Operation success', data.message), 1000);
+            setTimeout(() => window.location.reload(), 2000);
+        }
+        else
+        {
+            displayPopupAlert(data.error, data.details, 'error');
+        }
+    }
+
+    async function getOrderTotal(orderId, args = null)
+    {
+        try
+        {
+            var url = `/api/order/${orderId}/total`;
+            if (args)
+                url += `?${args}`;
+            const response = await fetch(url, { method: 'GET' });
+            const data = await response.json();
+
+            if (response.ok)
+                document.getElementById(`orderTotal_${orderId}`).textContent = formatCurrency(data.total);
+            else
+                displayToast('Order Total Error', response.statusText, 'error');
+        }
+        catch (error)
+        {
+            displayToast('Failed to Retrieve Order Total', error, 'error');
+        }
+    }
+
+    orderDates.forEach(orderDate => {
+        const orderId = orderDate.id.split('_')[1];
+        const date = new Date(orderDate.textContent);
+        orderDate.textContent = date.toLocaleDateString('en-US', DATE_OPTIONS);
+    });
+
+    orderTotals.forEach(orderTotal => {
+        const orderId = orderTotal.id.split('_')[1];
+        
+        var args = null;
+        if (orderId.includes('/'))
+            args = "status={{ 7 if can_do['order/fulfill'] else 3 }}";
+
+        getOrderTotal(orderId, args);
+    });
+
+    btnApproveOrder.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.id.split('_')[1];
+            const formData = new FormData();
+            formData.append('username', '{{ data.user }}');
+            updateOrderStatus('approve/finance', id, formData);
+        });
+    });
+
+    btnRejectOrder.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.id.split('_')[1];
+            const formData = new FormData();
+            formData.append('username', '{{ data.user }}');
+            updateOrderStatus('reject/finance', id, formData);
+        });
+    });
+
+    btnFulfillOrder.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.id.split('_')[1];
+            const formData = new FormData();
+            updateOrderStatus('fulfill', id);
+        });
+    });
+</script>
+{% endblock %}
+    
