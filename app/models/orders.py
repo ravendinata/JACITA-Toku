@@ -40,9 +40,9 @@ class Orders(db.Model):
 
     def is_approved(self, by):
         if by == 'division':
-            return self.approval_division_date is not None
+            return self.approval_division_date is not None and self.status == OrderStatus.DIVISION_APPROVED
         elif by == 'finance':
-            return self.approval_finance_date is not None
+            return self.approval_finance_date is not None and self.status == OrderStatus.FINANCE_APPROVED
         else:
             return False
         
