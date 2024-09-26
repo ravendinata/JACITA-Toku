@@ -1,5 +1,5 @@
 from flask import jsonify, request, session
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 
 from app.api import api
 from app.extensions import db
@@ -217,3 +217,124 @@ def api_fulfill_order(order_id):
         return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Order fulfilled successfully' }), HTTPStatus.OK
+
+# ==================================
+# COMBINED ORDER OPERATION ENDPOINTS
+# ==================================
+
+@api.route('/order/<string:period>/<string:division_id>/total', methods = ['GET'])
+def api_get_total_order(period, division_id):
+    status = request.args.get('status')
+    period = f"{period[:4]}/{period[4:]}"
+
+    if status:
+        orders = Orders.query.filter_by(period = period, division_id = division_id, status = status).all()
+    else:
+        orders = Orders.query.filter_by(period = period, division_id = division_id).all()
+
+    total = 0
+
+    for order in orders:
+        order_items = OrderItems.query.filter_by(order_id = order.id).all()
+        order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order.id).all()
+
+        for item in order_items:
+            item_data = Items.query.get(item.item_id)
+            total += item_data.base_price * float(item.quantity)
+
+        for item in order_nonval_items:
+            item_data = NonvalItems.query.get(item.item_id)
+            total += item_data.base_price * float(item.quantity)
+
+    return jsonify({ 'total': total }), HTTPStatus.OK
+
+@api.route('/order/<string:period>/<string:division_id>/approve/<string:by>', methods = ['POST'])
+def api_approve_orders(period, division_id, by):
+    check_field = check_fields(request, 'order/approve')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+
+    period = f"{period[:4]}/{period[4:]}"
+    if by not in ['division', 'finance']:
+        return jsonify({ 'error': 'Invalid approval level', 'details': 'Approval level must be either division or finance.' }), HTTPStatus.BAD_REQUEST
+    
+    orders = Orders.query.filter_by(period = period, division_id = division_id).all()
+
+    if by == 'finance':
+        reject_ids = [ order.id for order in orders if not order.is_approved('division') ]
+        if reject_ids:
+            return jsonify({ 'error': 'Some orders not approved at division level', 
+                            'details': f"Orders {', '.join(reject_ids)} are not at division approved state. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
+    elif by == 'division':
+        reject_ids = [ order.id for order in orders if not order.status == 1 ]
+        if reject_ids:
+            return jsonify({ 'error': 'Some orders not submitted', 
+                            'details': f"Orders {', '.join(reject_ids)} are not yet submitted or have gone beyond submission level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
+
+    for order in orders:
+        try:
+            order.approve(by, request.form.get('username'))
+            db.session.commit()
+        except OrderStatusTransitionError as e:
+            return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
+        except Exception as e:
+            return jsonify({ 'error': 'Error while approving order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Orders approved successfully' }), HTTPStatus.OK
+
+@api.route('/order/<string:period>/<string:division_id>/reject/<string:by>', methods = ['POST'])
+def api_reject_orders(period, division_id, by):
+    check_field = check_fields(request, 'order/reject')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+
+    period = f"{period[:4]}/{period[4:]}"
+    if by not in ['division', 'finance']:
+        return jsonify({ 'error': 'Invalid rejection level', 'details': 'Rejection level must be either division or finance.' }), HTTPStatus.BAD_REQUEST
+    
+    orders = Orders.query.filter_by(period = period, division_id = division_id).all()
+
+    if by == 'finance':
+        reject_ids = [ order.id for order in orders if not order.is_approved('division') ]
+        if reject_ids:
+            return jsonify({ 'error': 'Some orders not approved at division level', 
+                            'details': f"Orders {', '.join(reject_ids)} are not at division approved level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
+    elif by == 'division':
+        reject_ids = [ order.id for order in orders if not order.status == 1 ]
+        if reject_ids:
+            return jsonify({ 'error': 'Some orders not submitted', 
+                            'details': f"Orders {', '.join(reject_ids)} are not yet submitted or have gone beyond submission level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
+
+    for order in orders:
+        try:
+            order.reject(by, request.form.get('username'))
+            db.session.commit()
+        except OrderStatusTransitionError as e:
+            return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
+        except Exception as e:
+            return jsonify({ 'error': 'Error while rejecting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Orders rejected successfully' }), HTTPStatus.OK
+
+@api.route('/order/<string:period>/<string:division_id>/fulfill', methods = ['POST'])
+def api_fulfill_orders(period, division_id):
+    period = f"{period[:4]}/{period[4:]}"
+    orders = Orders.query.filter_by(period = period, division_id = division_id).all()
+
+    reject_ids = [ order.id for order in orders if not order.is_approved('finance') ]
+    if reject_ids:
+        print(reject_ids)
+        return jsonify({ 'error': 'Some orders not approved at finance level', 
+                        'details': f"Orders {', '.join(reject_ids)} are not approved at finance level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
+
+    print(reject_ids)
+    for order in orders:
+        try:
+            order.fulfill()
+            db.session.commit()
+        except OrderStatusTransitionError as e:
+            return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
+        except Exception as e:
+            return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Orders fulfilled successfully' }), HTTPStatus.OK
