@@ -58,6 +58,7 @@ required_role = {
     'order/create': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'order/update': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'order/delete': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
+    'order/administer': [ Role.DIVISION_LEADER, Role.FINANCE_MANAGER, Role.PROCUREMENT_MANAGER ],
     'order/approve_division': [ Role.DIVISION_LEADER ],
     'order/reject_division': [ Role.DIVISION_LEADER ],
     'order/approve_finance': [Role.FINANCE_MANAGER ],
