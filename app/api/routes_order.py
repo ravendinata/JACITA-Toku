@@ -10,6 +10,23 @@ from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields
 from helper.status import OrderStatusTransitionError
 
+def calculateTotal(orders):
+    total = 0
+
+    for order in orders:
+        order_items = OrderItems.query.filter_by(order_id = order.id).all()
+        order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order.id).all()
+
+        for item in order_items:
+            item_data = Items.query.get(item.item_id)
+            total += item_data.base_price * float(item.quantity)
+
+        for item in order_nonval_items:
+            item_data = NonvalItems.query.get(item.item_id)
+            total += item_data.base_price * float(item.quantity)
+
+    return total
+
 # =================================
 # STANDARD CRUD OPERATION ENDPOINTS
 # =================================
@@ -232,20 +249,8 @@ def api_get_total_order(period, division_id):
     else:
         orders = Orders.query.filter_by(period = period, division_id = division_id).all()
 
-    total = 0
-
-    for order in orders:
-        order_items = OrderItems.query.filter_by(order_id = order.id).all()
-        order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order.id).all()
-
-        for item in order_items:
-            item_data = Items.query.get(item.item_id)
-            total += item_data.base_price * float(item.quantity)
-
-        for item in order_nonval_items:
-            item_data = NonvalItems.query.get(item.item_id)
-            total += item_data.base_price * float(item.quantity)
-
+    total = calculateTotal(orders)
+ 
     return jsonify({ 'total': total }), HTTPStatus.OK
 
 @api.route('/order/<string:period>/<string:division_id>/approve/<string:by>', methods = ['POST'])
@@ -336,3 +341,21 @@ def api_fulfill_orders(period, division_id):
             return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Orders fulfilled successfully' }), HTTPStatus.OK
+
+# =========================
+# PERIOD SPECIFIC ENDPOINTS
+# =========================
+
+@api.route('/procurement/<string:period>/total', methods = ['GET'])
+def api_get_total_procurement(period):
+    period = f"{period[:4]}/{period[4:]}"
+    status = request.args.get('status')
+
+    if status:
+        orders = Orders.query.filter_by(period = period, status = status).all()
+    else:
+        orders = Orders.query.filter_by(period = period).all()
+
+    total = calculateTotal(orders)
+
+    return jsonify({ 'total': total }), HTTPStatus.OK
