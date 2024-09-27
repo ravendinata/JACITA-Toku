@@ -1,0 +1,673 @@
+{% extends 'base.html '%}
+
+{% block content %}
+<div class="container-fluid" style="padding-bottom: 48px;">
+    <span>
+        {% if can_fulfill %}
+        <button type="button" class="btn btn-success float-end ms-1" id="btnFulfillOrder"><i class="fa-regular fa-circle-check"></i> Fulfill All Orders In This Period</button>
+        {% endif %}
+        <a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
+    </span>
+    <h1 class="mb-3">Procurement View</h1>
+    {% if not sync %}
+    <div class="alert alert-warning" role="alert">
+        <h5><i class="fa-solid fa-exclamation-triangle"></i> Orders in this collection are not in a synchronized state</h5>
+        <p class="mb-1">Bulk operations have been disabled to prevent data corruption</p>
+    </div>
+    {% endif %}
+    <div class="accordion" id="accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#sectionOrderDetail" aria-expanded="true" aria-controls="sectionOrderDetail">
+                    Current Period Order Information
+                </button>
+            </h2>
+            <div id="sectionOrderDetail" class="accordion-collapse collapse show m-3" aria-labelledby="sectionOrderDetail">
+                <div id="accordion-body">
+                    <form>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="updated_at">Latest Modification At</label>
+                                <input type="text" class="form-control" id="updated_at" name="updated_at" readonly>
+                            </div>
+                            <div class="col">
+                                <label for="period">Period</label>
+                                <input type="text" class="form-control" id="period" name="period" value="{{ period }}" readonly>
+                            </div>
+                            <div class="col">
+                                <label for="division">Divisions</label>
+                                <input type="text" class="form-control" id="division" name="division" value="{{ division|length }}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="total">Total (Based on Base Price)</label>
+                                <input type="text" class="form-control" id="periodTotal" name="total" readonly>
+                            </div>
+                            <div class="col">
+                                <label for="suggested_budget">Suggested Budget Allocation</label>
+                                <input type="text" class="form-control" id="suggested_budget" name="suggested_budget" readonly>
+                            </div>
+                            <div class="col">
+                                <p class="text-muted fst-italic mt-3 mb-1">Suggested budget is 20% more than the total value (based on database price) of the ordered items in this period.</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#sectionChildOrders" aria-expanded="false" aria-controls="sectionChildOrders">
+                    Child Orders -&nbsp;<b>{{ orders|length }}</b>&nbsp;divisions in this collection
+                </button>
+            </h2>
+            <div id="sectionChildOrders" class="accordion-collapse collapse" aria-labelledby="sectionChildOrders">
+                <div class="accordion-body">
+                    <table class="table table-striped" style="vertical-align: middle;">
+                        <thead>
+                            <tr class="text-center">
+                                <th>Order ID</th>
+                                <th>Submitter</th>
+                                <th>Status</th>
+                                <th>Value</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for division, division_orders in orders.items() %}
+                            <tr class="table-active text-center fw-bold">
+                                <td class="text-bg-secondary">{{ period | replace('/', '') }}/{{ division_orders[0].division_id }}</td>
+                                <td class="text-bg-secondary">{{ division }}</td>
+                                <td class="text-bg-secondary"></td>
+                                <td class="text-bg-success" id="orderTotal_{{ period | replace('/', '') }}/{{ division_orders[0].division_id }}"></td>
+                                <td class="text-bg-primary">
+                                    <a href="/order/{{ period | replace('/', '') }}/{{ division_orders[0].division_id }}" class="btn btn-sm fw-bold">
+                                        <i class="fa-solid fa-eye"></i> View Collection
+                                    </a>
+                                </td>
+                            </tr>
+                            {% for order in division_orders %}
+                            <tr class="text-center">
+                                <td>{{ order.id }}</td>
+                                <td>{{ order.created_by }}</td>
+                                <td>{{ order.get_status() }}</td>
+                                <td id="orderTotal_{{ order.id }}"></td>
+                                <td><a href="/order/{{ order.id }}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-eye"></i> View Order</a></td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#sectionOrderItems" aria-expanded="false" aria-controls="sectionOrderItems">
+                    Order Items
+                </button>
+            </h2>
+            <div id="sectionOrderItems" class="accordion-collapse collapse show" aria-labelledby="sectionOrderItems">
+                <div class="accordion-body">
+                    <table id="data" class="table table-striped" style="width: 100%;">
+                        <thead style="vertical-align: middle;">
+                            <tr>
+                                <th data-priority="2">Item ID</th> <!-- 0 -->
+                                <th data-priority="1">Brand</th> <!-- 1 -->
+                                <th data-priority="1">Name</th> <!-- 2 -->
+                                <th data-priority="1">Variant</th> <!-- 3 -->
+                                <th data-priority="2">Quantity</th> <!-- 4 -->
+                                <th data-priority="2">Price</th> <!-- 5 -->
+                                <th data-priority="2">Subtotal</th> <!-- 6 -->
+                                <th data-priority="3">In Orders</th> <!-- 7 -->
+                                <th data-priority="3">Remarks</th> <!-- 8 -->
+                                <th data-priority="2">Actions</th> <!-- 9 -->
+                                <th>Qty. Unit</th> <!-- 10 -->  
+                                <th>Validated</th> <!-- 11 -->
+                                <th>Orders</th> <!-- 12 -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="orderItemDetailsModal" tabindex="-1" aria-labelledby="orderItemDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemDetailsModalLabel">Order Item Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="itemDetailsModalBody">
+                <form>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_details_item_id">Item ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="item_details_item_id" name="item_details_item_id" readonly>
+                                <button class="btn btn-secondary" type="button" id="btnViewDetails"><i class="fas fa-info-circle"></i></button>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label for="item_details_item_name">Item Name</label>
+                            <input type="text" class="form-control" id="item_details_item_name" name="item_details_item_name" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_details_price">Price</label>
+                            <input type="text" class="form-control" id="item_details_price" name="item_details_price" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_details_quantity">Quantity</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control text-end" id="item_details_quantity" name="item_details_quantity" readonly>
+                                <span class="input-group-text" id="item_details_qty_unit"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_details_remarks">Remarks</label>
+                            <textarea class="form-control" id="item_details_remarks" name="item_details_remarks" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p>
+                                <span class="text-muted">Orders containing this item: </span>
+                                <span class="fw-bold" id="item_details_in_orders"></span>
+                                <a class="float-end text-muted" data-bs-toggle="collapse" href="#item_details_orders" role="button" aria-expanded="false" aria-controls="item_details_orders">
+                                    Show/hide orders containing this item
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <ul class="collapse list-group" id="item_details_orders"></ul>
+                        </div>
+                    </div>  
+                    <hr>
+                    <div class="row">
+                        <div class="col">
+                            <p class="float-end text-end">
+                                <span class="text-muted">Subtotal</span><br>
+                                <span class="fs-5 fw-bold" id="item_details_subtotal"></span>
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Item Details Modal -->
+<div class="modal fade" id="modalItemDetails" tabindex="-1" aria-labelledby="modalItemDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalItemDetailsLabel"><i class="fas fa-info-circle"></i> Item Details</h5>
+                <span class="badge bg-secondary mx-2" id="item_validated"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_id" class="form-label"><i class="fas fa-qrcode"></i> Item ID (SKU)</label>
+                        <input type="text" class="form-control" id="item_id" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="item_category" readonly>
+                    </div>
+                </div>
+                <a class="text-muted my-3" data-bs-toggle="collapse" href="#item_metadata" role="button" aria-expanded="false" aria-controls="item_metadata">
+                    <small>Show/Hide Metadata</small>
+                </a>
+                <div class="collapse my-3" id="item_metadata">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_created_at" class="form-label">Created At</label>
+                            <input type="text" class="form-control" id="item_created_at" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_created_by" class="form-label">Created By</label>
+                            <input type="text" class="form-control" id="item_created_by" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_modification_at" class="form-label">Last Modified At</label>
+                            <input type="text" class="form-control" id="item_modification_at" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_modified_by" class="form-label">Last Modified By</label>
+                            <input type="text" class="form-control" id="item_modified_by" readonly>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_brand" class="form-label">Brand</label>
+                        <input type="text" class="form-control" id="item_brand" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="item_name" readonly>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_variant" class="form-label">Variant</label>
+                        <input type="text" class="form-control" id="item_variant" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="item_description" rows="3" readonly></textarea>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_base_price" class="form-label">Base Price</label>
+                        <input type="text" class="form-control" id="item_base_price" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_qty_unit" class="form-label">Quantity Unit</label>
+                        <input type="text" class="form-control" id="item_qty_unit" readonly>
+                    </div>
+                </div>                
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+    const suggestedBudget = document.getElementById('suggested_budget');
+    const orderTotals = document.querySelectorAll('[id^="orderTotal_"]');
+    const periodTotal = document.getElementById('periodTotal');
+
+    const btnViewDetails = document.getElementById('btnViewDetails');
+
+    async function getOrderTotal(orderId, args = null)
+    {
+        try
+        {
+            var url = `/api/order/${orderId}/total`;
+            if (args)
+                url += `?${args}`;
+            const response = await fetch(url, { method: 'GET' });
+            const data = await response.json();
+
+            if (response.ok)
+            {
+                document.getElementById(`orderTotal_${orderId}`).textContent = formatCurrency(data.total);
+                document.getElementById(`orderTotal_${orderId}`).value = formatCurrency(data.total);
+            }
+            else
+                displayToast('Order Total Error', response.statusText, 'error');
+        }
+        catch (error)
+        {
+            displayToast('Failed to Retrieve Order Total', error, 'error');
+        }
+    }
+
+    async function getPeriodTotal(args = null)
+    {
+        try
+        {
+            var url = "/api/procurement/{{ period | replace('/', '') }}/total";
+            if (args)
+                url += `?${args}`;
+            const response = await fetch(url, { method: 'GET' });
+            const data = await response.json();
+
+            if (response.ok)
+                periodTotal.value = formatCurrency(data.total);
+            else
+                displayToast('Period Total Error', response.statusText, 'error');
+
+            return data.total;
+        }
+        catch (error)
+        {
+            displayToast('Failed to Retrieve Period Total', error, 'error');
+        }
+    }
+
+    async function calculateSuggestedBudget()
+    {
+        const currentTotal = await getPeriodTotal();
+        const suggestedBudgetValue = Math.ceil(currentTotal * 1.2);
+        suggestedBudget.value = formatCurrency(suggestedBudgetValue);
+    }
+
+    $(document).ready(function()
+    {
+        $('#data').DataTable(
+        {
+            ajax: 
+            {
+                url: "/api/procurement/{{ period | replace('/', '') }}/items",
+                dataSrc: "",
+                type: "GET"
+            },
+            columns: 
+            [
+                { 
+                    data: "item_id", // 0
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display') 
+                        {
+                            if (row.validated == 1)
+                                return `<span class="text-success"><i class="fa-solid fa-check-double"></i></span> ${data}`;
+                            else
+                                return `<span class="text-danger"><i class="fa-solid fa-xmark"></i></span> ${data}`;
+                        }
+
+                        return data;
+                    }
+                },
+                { data: "brand" }, // 1
+                { data: "name" }, // 2
+                { data: "variant" }, // 3
+                { 
+                    data: "quantity", // 4
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display')
+                            return `${data} ${row.qty_unit}`;
+
+                        return data;
+                    }
+                },
+                { 
+                    data: "price", // 5
+                    render: function(data, type, row, meta) 
+                        {
+                            if (type === 'display')
+                                return formatCurrency(data);
+
+                            return data;
+                        }
+                },
+                { 
+                    data: "sub_total", // 6
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display')
+                            return formatCurrency(data);
+
+                        return data;
+                    }
+                },
+                { data: "in_orders" }, // 7
+                { 
+                    data: "remarks", // 8
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display')
+                            data = data.replace(/;/g, '<br>');
+
+                        return data;
+                    }
+                },
+                {
+                    data: null, // 9
+                    render: function(data, type, row, meta) 
+                    {
+                        return `<button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.item_id}"><i class="fas fa-info-circle"></i></button>`;
+                    }
+                },
+                { data: "qty_unit" }, // 10
+                { 
+                    data: "validated", // 11
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display') 
+                        {
+                            if (data == 1)
+                                return "Validated Item";
+                            else
+                                return "Non-validated Item";
+                        }
+
+                        return data;
+                    }
+                },
+                { data: "orders" } // 12
+            ],
+            columnDefs: 
+            [
+                { visible: false, targets: [5, 10, 11, 12] },
+                { searchPanes: { show: true }, targets: [1, 2, 3, 11] },
+                { searchPanes: { show: false }, targets: [0, 4, 5, 6, 7, 8, 9, 10, 12] },
+                { width: '20%', targets: [0] },
+                { width: '25%', targets: [8] }
+            ],
+            order: [[0, 'asc']],
+            fixedHeader: true,
+            responsive: true,
+            language: 
+            {
+                searchBuilder: 
+                {
+                    button: 
+                    {
+                        0: 'Advanced Search',
+                        _: 'Advanced Search (%d)'
+                    },
+                    title:
+                    {
+                        _: 'Advanced Search (%d)',
+                        0: 'Advanced Search'
+                    },
+                    data: 'Item'
+                }
+            },
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            layout: 
+            {
+                top2Start: 'info',
+                top2End: 
+                {
+                    buttons: 
+                    [
+                        {
+                            extend: 'colvis',
+                            text: 'Columns',
+                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                        },
+                        {
+                            extend: 'searchBuilder',
+                            config: { columns: [1, 2, 3, 4, 5, 6, 7, 8] }
+                        },
+                        {
+                            extend: 'collection',
+                            text: 'Export…',
+                            buttons:
+                            [
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    sheetName: 'Network Clients',
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7] }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
+                                    download: 'open',
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    pageSize: 'A4',
+                                    orientation: 'landscape',
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7] }
+                                }
+                            ]
+                        },
+                        {
+                            text: 'Refresh',
+                            attr:  { id: 'btnRefresh' },
+                            action: function (e, dt, node, config) 
+                            {
+                                const btnRefresh = document.getElementById('btnRefresh');
+                                btnRefresh.disabled = true;
+                                btnRefresh.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+
+                                displayToast('Data Refresh', 'Refreshing data from the server...', 'info');
+                                dt.searchPanes.clearSelections();
+                                
+                                dt.ajax.reload(function() 
+                                {
+                                    setTimeout(() => dt.searchPanes.rebuildPane(), 2000);
+
+                                    btnRefresh.disabled = false;
+                                    btnRefresh.innerHTML = 'Refresh';
+
+                                    displayToast('Data Refresh', 'Data refreshed successfully.');
+                                });
+                            }
+                        }              
+                    ]
+                },
+                top1: { searchPanes: { show: true, initCollapsed: true, cascadePanes: true } },
+                bottomStart: null,
+                bottomEnd: 'paging',
+            }
+        });
+    });
+
+    $('#updated_at').val(new Date('{{ last_modification_date }} GMT').toLocaleString('en-US', DATE_OPTIONS));
+
+    calculateSuggestedBudget();
+    
+    orderTotals.forEach((orderTotal) => 
+    {
+        const orderId = orderTotal.id.split('_')[1];
+        getOrderTotal(orderId);
+    });
+
+    // View Details Button
+    $('#data').on('click', 'button[id^="btnViewDetails_"]', function() 
+    {
+        if (this.id.startsWith('btnViewDetails_') == false)
+            return;
+
+        const id = this.id.split('_')[1];
+        const item = $('#data').DataTable().row((idx, data) => data.item_id == id).data();
+
+        $('#item_details_item_id').val(item.item_id);
+        $('#item_details_item_name').val(`${item.brand} ${item.name} ${item.variant}`);
+        $('#item_details_price').val(formatCurrency(item.price));
+        $('#item_details_quantity').val(`${item.quantity}`);
+        $('#item_details_qty_unit').text(item.qty_unit);
+        $('#item_details_subtotal').text(formatCurrency(item.sub_total));
+        $('#item_details_in_orders').text(item.in_orders);
+
+        let remarks = item.remarks.replace(/;/g, '\n');
+        $('#item_details_remarks').val(remarks);
+        
+        // Orders
+        $('#item_details_orders').empty();
+        $('#item_details_orders').collapse('hide');
+
+        for (const order of item.orders)
+        {
+            $('#item_details_orders').append(`<li class="list-group-item"><a href="/order/${order}" target="_blank">${order}</a></li>`);
+        }
+
+        $('#orderItemDetailsModal').modal('show');
+    });
+
+    // View Item Details Button (Modal)
+    btnViewDetails.addEventListener('click', async () =>
+    {
+        const id = $('#item_details_item_id').val();
+        const response = await fetch(`/api/item/${id}?human_readable=true`, { method: 'GET' });
+        const data = await response.json();
+
+        // Preformat Date
+        const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        data.created_date = new Date(data.created_date).toLocaleString("en-GB", DATE_OPTIONS);
+        data.modification_date = new Date(data.modification_date).toLocaleString("en-GB", DATE_OPTIONS);
+
+        // Item Validation
+        if (data.validated == false)
+        {
+            $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Non-validated`);
+            $('#item_validated').removeClass('bg-success');
+            $('#item_validated').addClass('bg-danger');
+        }
+        else
+        {
+            $('#item_validated').html(`<i class="fa-solid fa-check-double"></i> Validated`);
+            $('#item_validated').removeClass('bg-danger');
+            $('#item_validated').addClass('bg-success');
+        }
+
+        // Item Metadata
+        $('#item_id').val(data.id);
+        $('#item_category').val(data.category);
+        $('#item_created_at').val(data.created_date);
+        $('#item_created_by').val(data.created_by);
+        $('#item_modification_at').val(data.modification_date);
+        $('#item_modified_by').val(data.modification_by);
+
+        // Item Information
+        $('#item_brand').val(data.brand);
+        $('#item_name').val(data.name);
+        $('#item_variant').val(data.variant);
+        $('#item_base_price').val(formatCurrency(data.base_price));
+        $('#item_qty_unit').val(data.qty_unit);
+
+        if (data.description == null || data.description == '')
+        {
+            $('#item_description').val('No description provided.');
+            $('#item_description').addClass('text-muted');
+            $('#item_description').attr('rows', 1);
+        }
+        else
+        {
+            $('#item_description').val(data.description);
+            $('#item_description').removeClass('text-muted');
+            $('#item_description').attr('rows', 3);
+        }
+
+        $('#modalItemDetails').modal('show');
+    });
+
+    // Details Modal Close Event
+    $('#orderItemDetailsModal').on('hidden.bs.modal', function() 
+    {
+        $('#item_details_remarks').val('');
+        $('#item_details_subtotal').text('');
+        btnModalUpdateRemarks.disabled = true;
+    });
+</script>
+{% endblock %}

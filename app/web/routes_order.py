@@ -183,3 +183,37 @@ def page_division_order_view(period, division_id):
 
     return render_template('orders/collection_detail.html', use_datatables = True, title = "Division Orders", can_do = can_do, sync = sync,
                            orders = orders, period = period, division = division, last_modification_date = orders[0].last_modification_date)
+
+@web.route('/procurement/<string:period>')
+@check_login
+@check_page_permission('order/fulfill')
+def page_procurement_order_view(period):
+    period = f"{period[:4]}/{period[4:]}"
+    orders = Orders.query.filter(Orders.period == period)\
+            .order_by(asc(Orders.division_id), desc(Orders.last_modification_date))\
+            .all()
+    
+    if len(orders) == 0:
+        return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
+
+    divisions = {}
+    for order in orders:
+        division = order.get_division()
+        if division not in divisions:
+            divisions[division] = order.division_id
+
+    grouped_orders = {}
+    for order in orders:
+        division = order.get_division()
+        if division not in grouped_orders:
+            grouped_orders[division] = []
+        grouped_orders[division].append(order)
+
+    statuses = [order.status for order in orders]
+    sync = len(set(statuses)) == 1
+    can_fulfill = True if sync and OrderStatus.FINANCE_APPROVED in statuses else False
+
+    print(sync, can_fulfill)
+
+    return render_template('orders/procurement_view.html', use_datatables = True, title = "Procurement Orders", can_fulfill = can_fulfill, sync = sync,
+                           orders = grouped_orders, period = period, division = divisions, last_modification_date = orders[0].last_modification_date)
