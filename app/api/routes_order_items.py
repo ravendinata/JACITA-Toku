@@ -10,6 +10,90 @@ from app.models.order_items import OrderItems, OrderNonvalItems
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 from helper.status import OrderStatus
 
+def collectItems(orders):
+    data = []
+    for order in orders:
+        order_items = OrderItems.query.filter_by(order_id = order.id).all()
+        order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order.id).all()
+
+        for order_item in order_items:
+            data_dict = {item_data['item_id']: item_data for item_data in data}
+            
+            item = Items.query.get(order_item.item_id)
+            
+            if item.id in data_dict:
+                item_data = data_dict[item.id]
+                item_data['quantity'] += order_item.quantity
+                item_data['sub_total'] += item.base_price * float(order_item.quantity)
+                item_data['in_orders'] += 1
+                item_data['orders'].append(order_item.order_id)
+
+                remarks = ''
+                if order_item.remarks and order_item.remarks != '':
+                    remarks = f"{order_item.order_id}: {order_item.remarks}"
+
+                item_data['remarks'] = item_data['remarks'] + ';' + remarks if item_data['remarks'] else remarks
+            else:
+                order_item_dict = order_item.to_dict()
+                order_item_dict.pop('order_id')
+                order_item_dict['brand'] = item.brand
+                order_item_dict['name'] = item.name
+                order_item_dict['variant'] = item.variant
+                order_item_dict['price'] = item.base_price
+                order_item_dict['qty_unit'] = QuantityUnit.query.get(item.qty_unit_id).unit
+                order_item_dict['validated'] = True
+                order_item_dict['sub_total'] = item.base_price * float(order_item_dict['quantity'])
+                order_item_dict['in_orders'] = 1
+                order_item_dict['orders'] = [order_item.order_id]
+            
+                if order_item.remarks and order_item.remarks != '':
+                    order_item_dict['remarks'] = f"{order_item.order_id}: {order_item.remarks}"
+                else:
+                    order_item_dict['remarks'] = ''
+
+                data.append(order_item_dict)
+                data_dict[item.id] = order_item_dict
+
+        for order_item in order_nonval_items:
+            data_dict = {item_data['item_id']: item_data for item_data in data}
+            
+            item = NonvalItems.query.get(order_item.item_id)
+            
+            if item.id in data_dict:
+                item_data = data_dict[item.id]
+                item_data['quantity'] += order_item.quantity
+                item_data['sub_total'] += item.base_price * float(order_item.quantity)
+                item_data['in_orders'] += 1
+                item_data['orders'].append(order_item.order_id)
+
+                remarks = ''
+                if order_item.remarks and order_item.remarks != '':
+                    remarks = f"{order_item.order_id}: {order_item.remarks}"
+
+                item_data['remarks'] = item_data['remarks'] + ';' + remarks if item_data['remarks'] else remarks
+            else:
+                order_item_dict = order_item.to_dict()
+                order_item_dict.pop('order_id')
+                order_item_dict['brand'] = item.brand
+                order_item_dict['name'] = item.name
+                order_item_dict['variant'] = item.variant
+                order_item_dict['price'] = item.base_price
+                order_item_dict['qty_unit'] = QuantityUnit.query.get(0).unit
+                order_item_dict['validated'] = False
+                order_item_dict['sub_total'] = item.base_price * float(order_item_dict['quantity'])
+                order_item_dict['in_orders'] = 1
+                order_item_dict['orders'] = [order_item.order_id]
+
+                if order_item.remarks and order_item.remarks != '':
+                    order_item_dict['remarks'] = f"{order_item.order_id}: {order_item.remarks}"
+                else:
+                    order_item_dict['remarks'] = ''
+            
+                data.append(order_item_dict)
+                data_dict[item.id] = order_item_dict
+
+    return data
+
 @api.route('/order/<string:order_id>/items', methods = ['GET'])
 def api_get_order_items(order_id):
     if Orders.query.get(order_id) is None:
@@ -217,86 +301,7 @@ def api_get_combined_order_items(period, division_id):
     if len(orders) == 0:
         return jsonify({ 'error': 'No orders found' }), HTTPStatus.NOT_FOUND
 
-    data = []
-    for order in orders:
-        order_items = OrderItems.query.filter_by(order_id = order.id).all()
-        order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order.id).all()
-
-        for order_item in order_items:
-            data_dict = {item_data['item_id']: item_data for item_data in data}
-            
-            item = Items.query.get(order_item.item_id)
-            
-            if item.id in data_dict:
-                item_data = data_dict[item.id]
-                item_data['quantity'] += order_item.quantity
-                item_data['sub_total'] += item.base_price * float(order_item.quantity)
-                item_data['in_orders'] += 1
-                item_data['orders'].append(order_item.order_id)
-
-                remarks = ''
-                if order_item.remarks and order_item.remarks != '':
-                    remarks = f"{order_item.order_id}: {order_item.remarks}"
-
-                item_data['remarks'] = item_data['remarks'] + ';' + remarks if item_data['remarks'] else remarks
-            else:
-                order_item_dict = order_item.to_dict()
-                order_item_dict.pop('order_id')
-                order_item_dict['brand'] = item.brand
-                order_item_dict['name'] = item.name
-                order_item_dict['variant'] = item.variant
-                order_item_dict['price'] = item.base_price
-                order_item_dict['qty_unit'] = QuantityUnit.query.get(item.qty_unit_id).unit
-                order_item_dict['validated'] = True
-                order_item_dict['sub_total'] = item.base_price * float(order_item_dict['quantity'])
-                order_item_dict['in_orders'] = 1
-                order_item_dict['orders'] = [order_item.order_id]
-            
-                if order_item.remarks and order_item.remarks != '':
-                    order_item_dict['remarks'] = f"{order_item.order_id}: {order_item.remarks}"
-                else:
-                    order_item_dict['remarks'] = ''
-
-                data.append(order_item_dict)
-                data_dict[item.id] = order_item_dict
-
-        for order_item in order_nonval_items:
-            data_dict = {item_data['item_id']: item_data for item_data in data}
-            
-            item = NonvalItems.query.get(order_item.item_id)
-            
-            if item.id in data_dict:
-                item_data = data_dict[item.id]
-                item_data['quantity'] += order_item.quantity
-                item_data['sub_total'] += item.base_price * float(order_item.quantity)
-                item_data['in_orders'] += 1
-                item_data['orders'].append(order_item.order_id)
-
-                remarks = ''
-                if order_item.remarks and order_item.remarks != '':
-                    remarks = f"{order_item.order_id}: {order_item.remarks}"
-
-                item_data['remarks'] = item_data['remarks'] + ';' + remarks if item_data['remarks'] else remarks
-            else:
-                order_item_dict = order_item.to_dict()
-                order_item_dict.pop('order_id')
-                order_item_dict['brand'] = item.brand
-                order_item_dict['name'] = item.name
-                order_item_dict['variant'] = item.variant
-                order_item_dict['price'] = item.base_price
-                order_item_dict['qty_unit'] = QuantityUnit.query.get(0).unit
-                order_item_dict['validated'] = False
-                order_item_dict['sub_total'] = item.base_price * float(order_item_dict['quantity'])
-                order_item_dict['in_orders'] = 1
-                order_item_dict['orders'] = [order_item.order_id]
-
-                if order_item.remarks and order_item.remarks != '':
-                    order_item_dict['remarks'] = f"{order_item.order_id}: {order_item.remarks}"
-                else:
-                    order_item_dict['remarks'] = ''
-            
-                data.append(order_item_dict)
-                data_dict[item.id] = order_item_dict
+    data = collectItems(orders)
     
     return jsonify(data), HTTPStatus.OK
 
@@ -327,3 +332,18 @@ def api_remove_combined_order_item(period, division_id, item_id):
         return jsonify({ 'error': 'Error while removing item from all orders', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Item removed from all orders successfully' }), HTTPStatus.OK
+
+# ============================
+# PERIOD ORDER ITEMS ENDPOINTS
+# ============================
+
+@api.route('/procurement/<string:period>/items', methods = ['GET'])
+def api_get_period_order_items(period):
+    period = f"{period[:4]}/{period[4:]}"
+    orders = Orders.query.filter(Orders.period == period).order_by(asc(Orders.division_id)).all()
+    if len(orders) == 0:
+        return jsonify({ 'error': 'No orders found' }), HTTPStatus.NOT_FOUND
+
+    data = collectItems(orders)
+
+    return jsonify(data), HTTPStatus.OK
