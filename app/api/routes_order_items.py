@@ -208,6 +208,13 @@ def api_update_order_item(order_id, item_id):
     check_field = check_fields(request, 'orderitem/update')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
+    
+    order = Orders.query.get(order_id)
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
+    
+    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
+        return jsonify({ 'error': 'Forbidden operation', 'details': 'The current active order is not able to accept item updates because of its status' }), HTTPStatus.FORBIDDEN
 
     item = OrderItems.query.get((order_id, item_id))
     if item is None:
@@ -228,6 +235,13 @@ def api_update_order_item(order_id, item_id):
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['DELETE'])
 @check_api_permission('orderitem/delete')
 def api_remove_order_item(order_id, item_id):
+    order = Orders.query.get(order_id)
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
+    
+    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
+        return jsonify({ 'error': 'Forbidden operation', 'details': 'The current active order is not able to accept item removals because of its status' }), HTTPStatus.FORBIDDEN
+
     item = OrderItems.query.get((order_id, item_id))
     if item is None:
         item = OrderNonvalItems.query.get((order_id, item_id))
