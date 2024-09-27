@@ -62,7 +62,7 @@ def page_order_administration():
                            orders = grouped_orders, can_do = can_do, division = user.division_id)
     
     if can_do['order/approve_finance']:
-        orders = Orders.query.filter(or_(Orders.status == OrderStatus.DIVISION_APPROVED, Orders.status == OrderStatus.FINANCE_REJECTED),
+        orders = Orders.query.filter(or_(Orders.status == OrderStatus.DIVISION_APPROVED),
                                      or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
     elif can_do['order/fulfill']:
         orders = Orders.query.filter(Orders.status == OrderStatus.FINANCE_APPROVED, 
@@ -141,7 +141,7 @@ def page_order_view(id):
 @check_login
 def page_division_order_view(period, division_id):
     period = f"{period[:4]}/{period[4:]}"
-    orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(desc(Orders.created_date)).all()
+    orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(desc(Orders.last_modification_date)).all()
 
     if len(orders) == 0:
         return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
