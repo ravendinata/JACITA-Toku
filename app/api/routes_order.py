@@ -323,11 +323,9 @@ def api_fulfill_orders(period, division_id):
 
     reject_ids = [ order.id for order in orders if not order.is_approved('finance') ]
     if reject_ids:
-        print(reject_ids)
         return jsonify({ 'error': 'Some orders not approved at finance level', 
                         'details': f"Orders {', '.join(reject_ids)} are not approved at finance level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
 
-    print(reject_ids)
     for order in orders:
         try:
             order.fulfill()

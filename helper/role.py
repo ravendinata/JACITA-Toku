@@ -166,7 +166,6 @@ def get_deny_string(operation):
     str
         The deny string for the operation.
     """
-    print(operation)
     return deny_string.get(operation, 'Unknown operation')
   
 def get_allowed_operations(user):
