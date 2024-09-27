@@ -85,6 +85,16 @@ function formatCurrency(value, rounding = 2, symbol = 'IDR')
     return `${symbol} ${formatted}`;
 }
 
+function flashField(fieldId) 
+{
+    const field = document.getElementById(fieldId);
+    if (field) 
+    {
+        field.classList.add('flash-error');
+        setTimeout(() => { field.classList.remove('flash-error'); }, 1000); // Remove the class after 1 second
+    }
+}
+
 function updateCartItemsCount(orderId)
 {
     const badge = document.getElementById('cartCount');
