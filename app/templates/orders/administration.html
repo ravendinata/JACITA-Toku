@@ -44,12 +44,12 @@
         <div class="card mb-3">
             <div class="card-body">
                 <span class="float-end">
-                    <a href="/order/{{ period | replace('/', '') }}/{{ orders[0].division_id }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Order</a>
+                    <a href="/order/{{ period | replace('/', '') }}/{{ orders[0].division_id }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Collection</a>
                     {% if can_do['order/approve_finance'] %}
-                        <button type="button" class="btn btn-success" id="btnApproveOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Approve Order</button>
-                        <button type="button" class="btn btn-danger" id="btnRejectOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-times"></i> Reject Order</button>
+                        <button type="button" class="btn btn-success" id="btnApproveOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Approve Collection</button>
+                        <button type="button" class="btn btn-danger" id="btnRejectOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-times"></i> Reject Collection</button>
                     {% elif can_do['order/fulfill'] %}
-                        <button type="button" class="btn btn-success" id="btnFulfillOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Fulfill Order</button>
+                        <button type="button" class="btn btn-success" id="btnFulfillOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Fulfill Collection</button>
                     {% endif %}
                 </span>
                 <h5 class="card-title">{{ division }}</b></h5>

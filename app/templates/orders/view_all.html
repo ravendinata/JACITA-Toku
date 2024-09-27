@@ -49,8 +49,9 @@
         </div>
     </div>
 {% else %}
-    <p>No active order found.</p>
+    <p>You don't have any active orders.</p>
 {% endif %}
+<hr class="my-3">
 <h2>Past Orders</h2>
 {% if past_orders %}
     <table class="table table-striped">
@@ -78,7 +79,7 @@
         </tbody>
     </table>
 {% else %}
-    <p>No past orders found.</p>
+    <p>You don't have any past orders.</p>
 {% endif %}
 </div>
 <!-- Create new order modal -->

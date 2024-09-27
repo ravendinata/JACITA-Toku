@@ -4,11 +4,11 @@
 <div class="container-fluid" style="padding-bottom: 48px;">
     <span>
         {% if can_do['order/approve_division'] or can_do['order/approve_finance'] %}
-        <button type="button" class="btn btn-success float-end ms-1" id="btnApproveOrder"><i class="fa-regular fa-circle-check"></i> Approve Order</button>
-        <button type="button" class="btn btn-danger float-end ms-1" id="btnRejectOrder"><i class="fa-solid fa-times"></i> Reject Order</button>
+        <button type="button" class="btn btn-success float-end ms-1" id="btnApproveOrder"><i class="fa-regular fa-circle-check"></i> Approve Collection</button>
+        <button type="button" class="btn btn-danger float-end ms-1" id="btnRejectOrder"><i class="fa-solid fa-times"></i> Reject Collection</button>
         {% endif %}
         {% if can_do['order/fulfill'] %}
-        <button type="button" class="btn btn-success float-end ms-1" id="btnFulfillOrder"><i class="fa-regular fa-circle-check"></i> Fulfill Order</button>
+        <button type="button" class="btn btn-success float-end ms-1" id="btnFulfillOrder"><i class="fa-regular fa-circle-check"></i> Fulfill Collection</button>
         {% endif %}
         <a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
     </span>
@@ -548,7 +548,7 @@
     {
         btnFulfillOrder.addEventListener('click', function() 
         {
-            displayPopupConfirm('Fulfill Order', 'Are you sure you want to fulfill this order? This action cannot be undone.',
+            displayPopupConfirm('Fulfill Collection', 'Are you sure you want to fulfill this order? This action cannot be undone.',
             confirmCallback = async () => { await updateOrderStatus('fulfill'); },
             denyCallback = () => {},
             confirmText = 'Yes, fulfill this order',
@@ -560,7 +560,7 @@
     {
         btnApproveOrder.addEventListener('click', function() 
         {
-            displayPopupConfirm('Approve Order', 'Are you sure you want to approve this order? This action cannot be undone.',
+            displayPopupConfirm('Approve Collection', 'Are you sure you want to approve this order? This action cannot be undone.',
             confirmCallback = async () => 
             { 
                 const formData = new FormData();
@@ -580,7 +580,7 @@
     {
         btnRejectOrder.addEventListener('click', function() 
         {
-            displayPopupConfirm('Reject Order', 'Are you sure you want to reject this order? This action cannot be undone.',
+            displayPopupConfirm('Reject Collection', 'Are you sure you want to reject this order? This action cannot be undone.',
             confirmCallback = async () =>
             {
                 const formData = new FormData();
