@@ -85,6 +85,11 @@ def page_order_administration():
                             period = {'this_month': this_month, 'next_month': next_month},
                             grouped_orders = grouped_orders, can_do = can_do)
 
+@web.route('/orders/history')
+@check_login
+def page_order_history():
+    return render_template('orders/history.html', use_datatables = True, title = "Order History")
+
 @web.route('/order/<string:id>')
 @check_login
 def page_order_view(id):
