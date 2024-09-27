@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from sqlalchemy import asc
 
 from app.api import api
 from app.extensions import db
@@ -303,7 +304,7 @@ def api_get_combined_order_items(period, division_id):
 @check_api_permission('orderitem/delete')
 def api_remove_combined_order_item(period, division_id, item_id):
     period = f"{period[:4]}/{period[4:]}"
-    orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).all()
+    orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(asc(Orders.id)).all()
     if len(orders) == 0:
         return jsonify({ 'error': 'No orders found' }), HTTPStatus.NOT_FOUND
     
