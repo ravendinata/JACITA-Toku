@@ -13,6 +13,7 @@ from helper.status import OrderStatus
 
 @web.route('/orders')
 @check_login
+@check_page_permission('order/create')
 def page_order_list():
     username = session['user']
     active_order = Orders.query.get(session['active_order']) if 'active_order' in session else None
@@ -87,6 +88,7 @@ def page_order_administration():
 
 @web.route('/orders/history')
 @check_login
+@check_page_permission('order/administer')
 def page_order_history():
     return render_template('orders/history.html', use_datatables = True, title = "Order History")
 
