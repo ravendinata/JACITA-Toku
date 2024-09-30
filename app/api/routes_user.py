@@ -4,9 +4,8 @@ from sqlalchemy import desc
 from app.api import api
 from app.extensions import db
 from app.models.user import User
-from app.models.orders import Orders
 from helper.auth import generate_password_hash, is_authenticated
-from helper.endpoint import HTTPStatus, check_fields
+from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 
 @api.route('/users', methods = ['GET'])
 def api_get_users():
@@ -108,6 +107,21 @@ def api_change_password(username):
     db.session.commit()
 
     return jsonify({ 'message': 'Password changed' }), HTTPStatus.OK
+
+@api.route('/user/<string:username>/change_password/bypass', methods = ['POST'])
+@check_api_permission('user/administer')
+def api_reset_password(username):
+    user = User.query.get(username)
+
+    if user is None:
+        return jsonify({ 'error': 'User not found' }), HTTPStatus.NOT_FOUND
+
+    password = request.form.get('password')
+
+    user.set_password(password)
+    db.session.commit()
+
+    return jsonify({ 'message': 'Password reset' }), HTTPStatus.OK
 
 @api.route('/auth/login', methods = ['POST'])
 def api_login_user():
