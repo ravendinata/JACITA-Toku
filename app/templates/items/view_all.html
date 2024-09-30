@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<span class="float-end"><a class="btn btn-primary" href="/items/add"><i class="fa-solid fa-plus"></i> Add New Item</a></span>
+<span class="float-end">
+    {% if "item_validated/create_bulk" in operations %}
+    <a class="btn btn-primary" href="/items/bulk_add"><i class="fa-solid fa-folder-plus"></i> Bulk Add Items</a>
+    {% endif %}
+    <a class="btn btn-primary" href="/items/add"><i class="fa-solid fa-plus"></i> Add New Item</a>
+</span>
 <h2>All Items</h2>
 <hr>
 <div class="container-fluid" style="padding-bottom: 48px;">

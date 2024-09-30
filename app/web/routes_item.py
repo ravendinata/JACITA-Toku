@@ -27,6 +27,19 @@ def page_items_add(user_operations):
 
     return render_template('items/add.html', title = "Add Item", 
                             units = units, categories = categories, operations = user_operations)
+
+@web.route('/items/bulk_add')
+@check_login
+@check_page_permission('item_validated/create')
+def page_items_bulk_add():
+    units = QuantityUnit.query.all()
+    units = [ unit.to_dict() for unit in units ]
+
+    categories = Category.query.all()
+    categories = [ category.to_dict() for category in categories ]
+    categories = sorted(categories, key = lambda x: x['id'])
+
+    return render_template('items/bulk_add.html', title = "Bulk Add Items", units = units, categories = categories)
     
 @web.route('/item/<string:id>/edit')
 @check_login

@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block content %}
+<span class="float-end">
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#helpModal"><i class="fa-solid fa-circle-question"></i> Help</button>
+    <a href="/items" class="btn btn-secondary"><i class="fa-solid fa-caret-left"></i> Back</a>
+</span>
+<h2>Bulk Addition Form</h2>
+<p>
+    Use this form to add multiple items at once.<br>
+    <span class="text-danger">*</span> Required fields.
+</p>
+<hr>
+<form id="bulkAddForm">
+    <input type="hidden" name="created_by" value="{{ data.user }}">
+	<table id="bulkAddTable" class="table">
+		<thead>
+			<tr>
+                <th>#</th>
+                <th>Category</th>
+                <th>Brand<span class="text-danger">*</span></th>
+				<th>Item Name<span class="text-danger">*</span></th>
+                <th>Variant</th>
+				<th>Price<span class="text-danger">*</span></th>
+				<th>Quantity Unit</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody style="vertical-align: middle;">
+			<tr>
+                <td>1</td>
+                <td>
+                    <select name="category_id[]" class="form-select" required>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.id }} - {{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td><input type="text" name="brand[]" class="form-control" required></td>
+				<td><input type="text" name="name[]" class="form-control" required></td>
+                <td><input type="text" name="variant[]" class="form-control"></td>
+				<td><input type="number" name="base_price[]" class="form-control" required></td>
+				<td>
+                    <select name="qty_unit_id[]" class="form-select" required>
+                        {% for unit in units %}
+                        <option value="{{ unit.id }}">{{ unit.unit }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+				<td>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="duplicateRow(this)"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button>
+                </td>
+			</tr>
+		</tbody>
+	</table>
+    <div class="float-end">
+        <button type="button" class="btn btn-secondary" onclick="addRow()"><i class="fa-solid fa-plus"></i> Add Row</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Bulk Add</button>
+    </div>
+</form>
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel"><i class="fa-solid fa-circle-question"></i> Bulk Addition Form Help</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Category</strong>: Select the category of the item.<br>
+                    <strong>Brand</strong>: Enter the brand of the item.<br>
+                    <strong>Item Name</strong>: Enter the name of the item.<br>
+                    <strong>Variant</strong>: Enter the variant of the item (if any).<br>
+                    <strong>Price</strong>: Enter the base price of the item.<br>
+                    <strong>Quantity Unit</strong>: Select the quantity unit of the item.<br>
+                    <strong>Actions</strong>: Use the buttons to duplicate or remove the row.<br>
+                    <hr>
+                    <strong>Keyboard Shortcuts</strong>:
+                    <ul>
+                        <li><kbd>Alt</kbd> + <kbd>N</kbd>: Add Row</li>
+                        <li><kbd>Alt</kbd> + <kbd>D</kbd>: Duplicate Row Where Cursor Is</li>
+                        <li><kbd>Alt</kbd> + <kbd>Backspace</kbd>: Remove Row Where Cursor Is</li>
+                        <li><kbd>Arrow Down</kbd>: Move Cursor to Next Row on the Same Column</li>
+                        <li><kbd>Arrow Up</kbd>: Move Cursor to Previous Row on the Same Column</li>
+                    </ul>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+	function addRow() 
+    {
+		const table = document.getElementById('bulkAddTable').getElementsByTagName('tbody')[0];
+
+        if (table.rows.length >= 20) 
+        {
+            displayPopupAlert('Error', 'Maximum of 20 rows allowed.', 'error');
+            return;
+        }
+
+		const newRow = table.insertRow();
+		newRow.innerHTML = `
+            <td>${table.rows.length}</td>
+            <td>
+                <select name="category_id[]" class="form-select" required>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.id }} - {{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="text" name="brand[]" class="form-control" required></td>
+            <td><input type="text" name="item_name[]" class="form-control" required></td>
+            <td><input type="text" name="variant[]" class="form-control"></td>
+            <td><input type="number" name="price[]" class="form-control" required></td>
+            <td>
+                <select name="qty_unit_id[]" class="form-select" required>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}">{{ unit.unit }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="duplicateRow(this)"><i class="fa-solid fa-copy"></i> Duplicate</button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button>
+            </td>
+		`;
+	}
+
+    function fixNumbering() 
+    {
+        const rows = document.getElementById('bulkAddTable').getElementsByTagName('tbody')[0].rows;
+        for (let i = 0; i < rows.length; i++) 
+        {
+            rows[i].cells[0].innerText = i + 1;
+        }
+    }
+
+    function duplicateRow(button) 
+    {
+        const table = document.getElementById('bulkAddTable').getElementsByTagName('tbody')[0];
+        if (table.rows.length >= 20) 
+        {
+            displayPopupAlert('Error', 'Maximum of 20 rows allowed.', 'error');
+            return;
+        }
+
+        const row = button.parentNode.parentNode;
+        const newRow = row.cloneNode(true);
+        row.parentNode.insertBefore(newRow, row.nextSibling);
+
+        fixNumbering();
+
+        // Sync the select elements
+        const selects = newRow.getElementsByTagName('select');
+        const selectsOrig = row.getElementsByTagName('select');
+        for (let i = 0; i < selects.length; i++) {
+            selects[i].value = selectsOrig[i].value;
+        }
+    }
+
+	function removeRow(button) 
+    {
+		const row = button.parentNode.parentNode;
+		row.parentNode.removeChild(row);
+
+        fixNumbering();
+	}
+
+    document.getElementById('bulkAddForm').addEventListener('submit', async function(e) 
+    {
+        e.preventDefault();
+
+        displayToast('Bulk Item Addition', 'Adding items...', 'info');
+
+        const formData = new FormData(this);
+        const response = await fetch('/api/items/validated/bulk', 
+        {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok)
+        {
+            setTimeout(() => { displayToast('Operation Success', data.message, ); }, 1000);
+            setTimeout(() => { window.location.href = '/items'; }, 3000);
+        }
+        else 
+        {
+            displayToast(data.error, data.details, 'error');
+        }
+    });
+
+    // Register keyboard shortcuts
+    document.addEventListener('keydown', function(e) 
+    {
+        // Alt + N
+        if (e.altKey && e.key === 'n')
+            addRow();
+
+        // Alt + D: Duplicate Row Where Cursor Is
+        if (e.altKey && e.key === 'd') 
+        {
+            e.preventDefault();
+            const cursor = document.activeElement;
+            if (cursor.tagName === 'INPUT' || cursor.tagName === 'SELECT')
+                duplicateRow(cursor);
+        }
+
+        // Alt + Backspace: Remove Row Where Cursor Is
+        if (e.altKey && e.key === 'Backspace') 
+        {
+            e.preventDefault();
+            const cursor = document.activeElement;
+            if (cursor.tagName === 'INPUT' || cursor.tagName === 'SELECT')
+                removeRow(cursor);
+        }
+
+        // Arrow Down: Move Cursor to Next Row on the Same Column
+        if (e.key === 'ArrowDown') 
+        {
+            e.preventDefault();
+            const cursor = document.activeElement;
+            const row = cursor.parentNode.parentNode;
+            const nextRow = row.nextElementSibling;
+            if (nextRow) 
+            {
+                const nextCell = nextRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                if (nextCell) nextCell.focus();
+            }
+        }
+
+        // Arrow Up: Move Cursor to Previous Row on the Same Column
+        if (e.key === 'ArrowUp') 
+        {
+            e.preventDefault();
+            const cursor = document.activeElement;
+            const row = cursor.parentNode.parentNode;
+            const prevRow = row.previousElementSibling;
+            if (prevRow) 
+            {
+                const prevCell = prevRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                if (prevCell) prevCell.focus();
+            }
+        }
+    });
+</script>
+{% endblock %}
