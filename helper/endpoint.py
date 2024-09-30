@@ -22,6 +22,7 @@ required_fields = {
     'order/approve': [ 'username' ],
     'order/reject': [ 'username' ],
     'item/create': [ 'category_id', 'brand', 'name', 'base_price', 'qty_unit_id', 'created_by' ],
+    'item/create_bulk': [ 'category_id[]', 'brand[]', 'name[]', 'base_price[]', 'qty_unit_id[]', 'created_by' ],
     'nonvalitem/create': [ 'category_id', 'brand', 'name', 'base_price', 'created_by' ],
     'orderitem/create': [ 'item_id', 'quantity' ],
     'user/create': [ 'username', 'first_name', 'division_id', 'role', 'password' ],
