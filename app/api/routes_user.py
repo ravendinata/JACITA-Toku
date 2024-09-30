@@ -102,7 +102,7 @@ def api_change_password(username):
     new_password = request.form.get('new_password')
 
     if user.check_password(old_password) is False:
-        return jsonify({ 'error': 'Invalid password' }), HTTPStatus.UNAUTHORIZED
+        return jsonify({ 'error': 'The old password is incorrect' }), HTTPStatus.UNAUTHORIZED
 
     user.set_password(new_password)
     db.session.commit()
