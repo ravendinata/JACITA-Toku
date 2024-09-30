@@ -57,6 +57,54 @@ def api_create_item():
 
     return jsonify({ 'message': 'Item created successfully' }), HTTPStatus.CREATED
 
+@api.route('/items/validated/bulk', methods = ['POST'])
+@check_api_permission('item_validated/create')
+def api_create_bulk_items():
+    check_field = check_fields(request, 'item/create_bulk')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+    
+    created_by = request.form.get('created_by')
+
+    brands = request.form.getlist('brand[]')
+    names = request.form.getlist('name[]')
+    variants = request.form.getlist('variant[]')
+    base_prices = request.form.getlist('base_price[]')
+    category_ids = request.form.getlist('category_id[]')
+    qty_unit_ids = request.form.getlist('qty_unit_id[]')
+
+    items = []
+    for i in range(len(brands)):
+        brand = brands[i]
+        name = names[i]
+        variant = variants[i]
+        base_price = base_prices[i]
+        category_id = category_ids[i]
+        qty_unit_id = qty_unit_ids[i]
+
+        check_item = Items.query.filter_by(brand = brand, name = name, variant = variant).first()
+        if check_item:
+            return jsonify({ 'error': 'Item already exists', 'details': f"{brand} {name} {variant} already exists" }), HTTPStatus.CONFLICT
+        
+        id = generate_item_id(brand, name, variant)
+
+        item = Items(id = id, created_by = created_by,
+                     brand = brand, name = name, variant = variant, 
+                     base_price = base_price,
+                     category_id = category_id, qty_unit_id = qty_unit_id)
+        
+        items.append(item)
+
+    try:
+        db.session.add_all(items)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while creating bulk items: {e}")
+        return jsonify({ 'error': 'Error while creating items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Bulk items created successfully' }), HTTPStatus.CREATED
+
+
 @api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
 @check_api_permission('item_validated/update')
 def api_update_item(item_id):
