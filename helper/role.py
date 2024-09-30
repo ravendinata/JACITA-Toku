@@ -6,6 +6,16 @@ class Role:
     PROCUREMENT_MANAGER = 30
     SYSTEM = 99
 
+    def get_roles():
+        return [
+            { 'id': Role.ADMINISTRATOR, 'text': RoleText.ADMINISTRATOR },
+            { 'id': Role.DIVISION_LEADER, 'text': RoleText.DIVISION_LEADER },
+            { 'id': Role.DIVISION_USER, 'text': RoleText.DIVISION_USER },
+            { 'id': Role.FINANCE_MANAGER, 'text': RoleText.FINANCE_MANAGER },
+            { 'id': Role.PROCUREMENT_MANAGER, 'text': RoleText.PROCUREMENT_MANAGER },
+            { 'id': Role.SYSTEM, 'text': RoleText.SYSTEM }
+        ]
+
 class RoleText:
     ADMINISTRATOR = 'Administrator'
     DIVISION_LEADER = 'Division Leader'
