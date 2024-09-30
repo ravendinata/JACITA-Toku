@@ -57,6 +57,7 @@ class NonExistentRuleError(Exception):
 required_role = {
     # Validated Item Related
     'item_validated/create': [ Role.PROCUREMENT_MANAGER ],
+    'item_validated/create_bulk': [ Role.PROCUREMENT_MANAGER ],
     'item_validated/update': [ Role.PROCUREMENT_MANAGER ],
     'item_validated/delete': [ Role.PROCUREMENT_MANAGER ],
     # Non-Validated Item Related
@@ -78,7 +79,9 @@ required_role = {
     # Order Item Related
     'orderitem/create': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'orderitem/update': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
-    'orderitem/delete': [ Role.DIVISION_LEADER, Role.DIVISION_USER ]
+    'orderitem/delete': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
+    # User Related
+    'user/administer': [ Role.ADMINISTRATOR ]
 }
 
 deny_string = {
