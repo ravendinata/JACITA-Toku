@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block content %}
+<span class="float-end"><a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newUserModal"><i class="fa-solid fa-user-plus"></i> Add New User</a></span>
+<h2>All Items</h2>
+<hr>
+<div class="container-fluid" style="padding-bottom: 48px;">
+    <table id="data" class="table table-striped" style="width: 100%;">
+        <thead style="vertical-align: middle;">
+            <tr>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Division</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+<!-- New User Modal -->
+<div class="modal fade" id="newUserModal" tabindex="-1" aria-labelledby="newUserDialogLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newUserDialogLabel">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="newUserForm">
+                <div class="modal-body" id="newUserModalBody">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="username" class="form-label">Username<span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="first_name" class="form-label">First Name<span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="col">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="division" class="form-label">Division<span class="text-danger">*</span></label>
+                            <select class="form-select" id="division" name="division" required>
+                                {% for division in divisions %}
+                                <option value="{{ division.id }}">{{ division.id }} - {{ division.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="role" class="form-label">Role<span class="text-danger">*</span></label>
+                            <select class="form-select" id="role" name="role" required>
+                                {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.id }} - {{ role.text }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="text" class="form-control" id="password" name="password" value="toku123" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <div></div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="btnSave"><i class="fa-solid fa-save"></i> Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordDialogLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordDialogLabel">Set New Password (Admin Bypass)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="hidden" id="username" name="username" data-username="">
+                    <div class="mb-3">
+                        <label for="password" class="form-label">New Password</label>
+                        <input type="text" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Set Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() 
+    {
+        $('#data').DataTable(
+        {
+            ajax: 
+            {
+                url: "/api/users",
+                dataSrc: "",
+                type: "GET"
+            },
+            columns: 
+            [
+                { data: "username" }, // 0
+                { data: "first_name" }, // 1
+                { data: "last_name" }, // 2
+                { data: "division.full_name" }, // 3
+                { data: "role.text" }, // 4
+                { data: "email" }, // 5
+                {
+                    data: null, // 6
+                    render: function(data, type, row) 
+                    {
+                        return `<a href="/user/${row.username}" class="btn btn-primary btn-sm"><i class="fa-solid fa-edit"></i> Edit</a>
+                                <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal" data-username="${row.username}"><i class="fa-solid fa-key"></i></button>`;
+                    }
+                }
+            ],
+            columnDefs: 
+            [
+                { searchPanes: { show: true }, targets: [3, 4] },
+                { searchPanes: { show: false }, targets: [0, 1, 2, 5, 6] },
+            ],
+            order: [[0, 'asc']],
+            fixedHeader: true,
+            language: 
+            {
+                searchBuilder: 
+                {
+                    button: 
+                    {
+                        0: 'Advanced Search',
+                        _: 'Advanced Search (%d)'
+                    },
+                    title:
+                    {
+                        _: 'Advanced Search (%d)',
+                        0: 'Advanced Search'
+                    },
+                    data: 'Item'
+                }
+            },
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            layout: 
+            {
+                top2Start: 'info',
+                top2End: 
+                {
+                    buttons: 
+                    [
+                        {
+                            extend: 'colvis',
+                            text: 'Columns',
+                            columns: [0, 1, 2, 3, 4, 5, 6],
+                        },
+                        {
+                            extend: 'collection',
+                            text: 'Export…',
+                            buttons:
+                            [
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    filename: `Toku_User_List_${new Date().toISOString().slice(0, 10)}`,
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    sheetName: 'Network Clients',
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    filename: `Toku_User_List_${new Date().toISOString().slice(0, 10)}`,
+                                    download: 'open',
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    pageSize: 'A4',
+                                    orientation: 'landscape',
+                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                                }
+                            ]
+                        },
+                        {
+                            extend: 'searchBuilder',
+                            config: { columns: [1, 2, 3, 4, 5] }
+                        },
+                        {
+                            text: 'Refresh',
+                            attr:  { id: 'btnRefresh' },
+                            action: function (e, dt, node, config) 
+                            {
+                                const btnRefresh = document.getElementById('btnRefresh');
+                                btnRefresh.disabled = true;
+                                btnRefresh.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+
+                                displayToast('Data Refresh', 'Refreshing data from the server...', 'info');
+                                dt.searchPanes.clearSelections();
+                                
+                                dt.ajax.reload(function() 
+                                {
+                                    setTimeout(() => dt.searchPanes.rebuildPane(), 2000);
+
+                                    btnRefresh.disabled = false;
+                                    btnRefresh.innerHTML = 'Refresh';
+
+                                    displayToast('Data Refresh', 'Data refreshed successfully.');
+                                });
+                            }
+                        }              
+                    ]
+                },
+                top1: { searchPanes: { show: true, initCollapsed: true, cascadePanes: true } },
+                bottomStart: null,
+                bottomEnd: 'paging',
+            }
+        });
+    });
+
+    document.getElementById('newUserForm').addEventListener('submit', async (e) => 
+    {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        displayToast("Operation in progress", "Please wait while we add this user", "info");
+
+        const response = await fetch('/api/users', { method: "POST", body: formData });
+        const data = await response.json();
+
+        if (response.ok) 
+        {
+            setTimeout(() => { displayToast("Operation success", data.message); }, 1000);
+            setTimeout(() => { window.location.reload(); }, 2000);
+        }
+        else
+        {
+            displayPopupAlert(data.error, data.details, "error");
+        }
+    });
+
+    document.getElementById('changePasswordModal').addEventListener('show.bs.modal', (e) => 
+    {
+        const username = e.relatedTarget.getAttribute('data-username');
+        document.getElementById('username').setAttribute('data-username', username);
+    });
+
+    document.getElementById('changePasswordModal').querySelector('form').addEventListener('submit', async (e) => 
+    {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+        const username = document.getElementById('username').getAttribute('data-username');
+
+        displayToast("Operation in progress", "Please wait while we change this user's password", "info");
+
+        const response = await fetch(`/api/user/${username}/change_password/bypass`, { method: "POST", body: formData });
+        const data = await response.json();
+
+        if (response.ok) 
+        {
+            setTimeout(() => { displayToast("Operation success", data.message); }, 1000);
+            setTimeout(() => { window.location.reload(); }, 2000);
+        }
+        else
+        {
+            displayPopupAlert("Operation failed", data.error, "error");
+        }
+    });
+</script>
+{% endblock %}
