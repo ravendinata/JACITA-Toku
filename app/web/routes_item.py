@@ -62,12 +62,13 @@ def page_items_edit(id):
     item_type = 'validated' if isinstance(item, Items) else 'nonvalidated'
 
     @check_page_permission(f"item_{item_type}/update")
-    def page():
+    @inject_allowed_operations
+    def page(user_operations):
         user = User.query.get(username)
         if item.created_by != username and not user.can_update_items():
             return render_template('error/standard.html', title = "Forbidden", code = 403, message = "You are not the creator of this item."), 403
         else:
-            return render_template('items/edit.html', title = "Edit Item", 
+            return render_template('items/edit.html', title = "Edit Item", operations = user_operations,
                                     item_type = item_type, units = units, categories = categories, item = item.to_dict())
 
     return page()

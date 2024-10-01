@@ -3,7 +3,13 @@
 {% block content %}
 <span class="float-end">
     {% if "item_validated/create_bulk" in operations %}
-    <a class="btn btn-primary" href="/items/bulk_add"><i class="fa-solid fa-folder-plus"></i> Bulk Add Items</a>
+    <a class="btn btn-success" href="/items/bulk_add"><i class="fa-solid fa-folder-plus"></i> Bulk Add Items</a>
+    {% endif %}
+    {% if "item_validated/update_bulk" in operations %}
+    <button class="btn btn-success" id="btnBulkEdit" hidden><i class="fa-solid fa-edit"></i> Bulk Edit Items</button>
+    {% endif %}
+    {% if "item_validated/delete_bulk" in operations %}
+    <button class="btn btn-danger" id="btnBulkDelete" hidden><i class="fa-solid fa-trash"></i> Bulk Delete Items</button>
     {% endif %}
     <a class="btn btn-primary" href="/items/add"><i class="fa-solid fa-plus"></i> Add New Item</a>
 </span>
@@ -13,6 +19,7 @@
     <table id="data" class="table table-striped" style="width: 100%;">
         <thead style="vertical-align: middle;">
             <tr>
+                <th><input type="checkbox" id="chkAllItems"></th>
                 <th>ID</th>
                 <th>Category</th>
                 <th>Brand</th>
@@ -167,6 +174,12 @@
     const btnAddToCart = document.getElementById('btnAddToCartFinal');
     const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
     const btnEditItem = document.getElementById('btnEditItem');
+    const btnBulkEdit = document.getElementById('btnBulkEdit');
+    const btnBulkDelete = document.getElementById('btnBulkDelete');
+    var table = null;
+
+    const checkAllItems = document.getElementById('chkAllItems');
+    checkAllItems.checked = false; // Uncheck the "Check All" checkbox by default
     
     const formAddToCart = document.getElementById('formAddToCart');
 
@@ -179,7 +192,7 @@
 
     $(document).ready(function() 
     {
-        $('#data').DataTable(
+        table = $('#data').DataTable(
         {
             ajax: 
             {
@@ -189,8 +202,19 @@
             },
             columns: 
             [
+                // Checkbox for selection
                 { 
-                    data: "id", // 0
+                    data: null, // 0
+                    render: function(data, type, row, meta) 
+                    {
+                        if (type === 'display' && row.validated == 1)
+                            return `<input type="checkbox" id="chkItem_${row.id}" name="chkItem_${row.id}">`;
+                        else
+                            return '';
+                    }
+                },
+                { 
+                    data: "id", // 1
                     render: function(data, type, row, meta) 
                     {
                         if (type === 'display') 
@@ -204,12 +228,12 @@
                         return data;
                     }
                 },
-                { data: "category" }, // 1
-                { data: "brand" }, // 2
-                { data: "name" }, // 3
-                { data: "variant" }, // 4
+                { data: "category" }, // 2
+                { data: "brand" }, // 3
+                { data: "name" }, // 4
+                { data: "variant" }, // 5
                 { 
-                    data: "base_price", // 5
+                    data: "base_price", // 6
                     render: function(data, type, row, meta) 
                         {
                             if (type === 'display')
@@ -219,7 +243,7 @@
                         }
                 },
                 { 
-                    data: "qty_unit",// 6
+                    data: "qty_unit",// 7
                     render: function(data, type, row, meta) 
                         {
                             if (type === 'display') 
@@ -234,7 +258,7 @@
                         }
                 },
                 {
-                    data: null, // 7
+                    data: null, // 8
                     render: function(data, type, row, meta) 
                     {
                         var buttons = `<button class="btn btn-primary btn-sm" id="btnAddToCart_${row.id}"><i class="fas fa-cart-plus"></i> Add to Order</button>
@@ -247,7 +271,7 @@
                     }
                 },
                 { 
-                    data: "validated", // 8
+                    data: "validated", // 9
                     render: function(data, type, row, meta) 
                     {
                         if (type === 'display') 
@@ -264,11 +288,12 @@
             ],
             columnDefs: 
             [
-                { visible: false, targets: [1, 8] },
-                { searchPanes: { show: true }, targets: [1, 2, 6, 8] },
-                { searchPanes: { show: false }, targets: [0, 3, 4, 5, 7] },
+                { visible: false, targets: [2, 9] },
+                { searchPanes: { show: true }, targets: [2, 3, 7, 9] },
+                { searchPanes: { show: false }, targets: [1, 4, 5, 6, 8] },
+                { orderable: false, targets: [0, 8] }
             ],
-            order: [[0, 'asc']],
+            order: [[1, 'asc']],
             fixedHeader: true,
             language: 
             {
@@ -299,7 +324,7 @@
                         {
                             extend: 'colvis',
                             text: 'Columns',
-                            columns: [0, 1, 2, 3, 4, 5, 6],
+                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8],
                         },
                         {
                             extend: 'collection',
@@ -313,7 +338,7 @@
                                     filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
                                     messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
                                     sheetName: 'Network Clients',
-                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                    exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] }
                                 },
                                 {
                                     extend: 'pdfHtml5',
@@ -323,13 +348,13 @@
                                     messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
                                     pageSize: 'A4',
                                     orientation: 'landscape',
-                                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                                    exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] }
                                 }
                             ]
                         },
                         {
                             extend: 'searchBuilder',
-                            config: { columns: [1, 2, 3, 4, 5] }
+                            config: { columns: [2, 3, 4, 5, 6] }
                         },
                         {
                             text: 'Refresh',
@@ -361,7 +386,11 @@
                 bottomEnd: 'paging',
             }
         });
+        
+        if (!operations.includes('item_validated/update_bulk') && !operations.includes('item_validated/delete_bulk'))
+            table.columns([0]).visible(false);
     });
+
 
     function resetForm(item_id = null)
     {
@@ -391,6 +420,191 @@
             $('#cart_remarks').val(cart_item.remarks);
         }
     }
+
+    function clearSelection()
+    {
+        const table = $('#data').DataTable();
+        table.rows().every(function() 
+        {
+            const row = this.data();
+            const chkItem = document.getElementById(`chkItem_${row.id}`);
+            if (chkItem != null)
+                chkItem.checked = false;
+        });
+
+        checkAllItems.indeterminate = false;
+        checkAllItems.checked = false;
+        btnBulkEdit.hidden = true;
+        btnBulkDelete.hidden = true;
+    }
+
+    if (btnBulkEdit != null)
+    {
+        btnBulkEdit.addEventListener('click', async function() 
+        {
+            const selectedItems = [];
+            const table = $('#data').DataTable();
+
+            table.rows().every(function() 
+            {
+                const row = this.data();
+                const chkItem = document.getElementById(`chkItem_${row.id}`);
+
+                if (chkItem != null && chkItem.checked)
+                    selectedItems.push(row.id);
+            });
+
+            if (selectedItems.length > 20)
+            {
+                displayPopupAlert('Bulk Edit Error', `You have selected ${selectedItems.length} items. Please select 20 items or less.`, 'error');
+                return;
+            }
+
+            window.location.href = `/items/bulk_edit?items=${JSON.stringify(selectedItems)}`;
+        });
+    }
+
+    if (btnBulkDelete != null)
+    {
+
+        btnBulkDelete.addEventListener('click', async function() 
+        {
+            const selectedItems = [];
+            const table = $('#data').DataTable();
+
+            table.rows().every(function() 
+            {
+                const row = this.data();
+                const chkItem = document.getElementById(`chkItem_${row.id}`);
+
+                if (chkItem != null && chkItem.checked)
+                    selectedItems.push(row.id);
+            });
+
+            if (selectedItems.length > 20)
+            {
+                displayPopupAlert('Bulk Delete Error', `You have selected ${selectedItems.length} items. Please select 20 items or less.`, 'error');
+                return;
+            }
+
+            await displayPopupConfirm('Bulk Delete Warning', `You are about to delete ${selectedItems.length} items. This action cannot be undone. Do you want to proceed?`,
+            confirmCallback = async function() 
+            {
+                displayToast('Bulk Item Deletion', 'Deleting selected items...', 'info');
+
+                const formData = new FormData();
+                selectedItems.forEach(item_id => formData.append('item_id[]', item_id));
+
+                const response = await fetch('/api/items/validated/bulk/delete', { method: 'DELETE', body: formData });
+                const data = await response.json();
+
+                if (response.ok)
+                {
+                    setTimeout(() => displayToast('Bulk Item Deletion', data.message, 'success'), 1000);
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+                else
+                {
+                    displayPopupAlert(data.error, data.details, 'error');
+                }
+            },
+            cancelCallback = function() {},
+            confirmText = 'Yes, delete items',
+            cancelText = 'No, keep items');
+        });
+    }
+
+    checkAllItems.addEventListener('change', async function() 
+    {
+        const table = $('#data').DataTable();
+        
+        // Check or uncheck all items that are visible
+        const toSelect = [];
+        var selectedItems = 0;
+        table.rows().every(function() 
+        {
+            const row = this.data();
+            const chkItem = document.getElementById(`chkItem_${row.id}`);
+            if (chkItem != null)
+            {
+                toSelect.push(chkItem);
+                selectedItems++;
+            }
+        });
+
+        if (selectedItems > 20)
+        {
+            await displayPopupConfirm('Bulk Edit Warning', `You are trying to select ${selectedItems} items. Please select 20 items or less. Do you want to clear the selection?`,
+            confirmCallback = function() { clearSelection(); },
+            cancelCallback = function() {},
+            confirmText = 'Yes, clear selection',
+            cancelText = 'No, keep selection');
+
+            return;
+        }
+
+        console.info("Clearing selection...");
+
+        toSelect.forEach(chkItem => chkItem.checked = checkAllItems.checked);
+
+        if (!checkAllItems.checked)
+        {
+            btnBulkEdit.hidden = true;
+        }
+        else
+        {
+            const selectedItems = table.rows().nodes().to$().find('input[type="checkbox"]:checked').length;
+            
+            btnBulkEdit.innerHTML = `<i class="fa-solid fa-edit"></i> Bulk Edit (${selectedItems} items)`;
+            btnBulkEdit.hidden = false;
+
+            btnBulkDelete.innerHTML = `<i class="fa-solid fa-trash"></i> Bulk Delete (${selectedItems} items)`;
+            btnBulkDelete.hidden = false;
+        }
+    });
+
+    // Check or uncheck the "Check All" checkbox based on the selection excluding non-validated items
+    $('#data').on('change', 'input[type="checkbox"]', function() 
+    {
+        const table = $('#data').DataTable();
+        const checkedItems = table.rows().nodes().to$().find('input[type="checkbox"]:checked').length;
+        const totalItems = table.rows().nodes().to$().find('input[type="checkbox"]').length;
+
+        if (checkedItems > 20)
+        {
+            displayPopupAlert('Bulk Edit Error', `You are trying to select ${checkedItems} items. Please select 20 items or less.`, 'error');
+            this.checked = false;
+            return;
+        }
+        
+        if (checkedItems == totalItems)
+        {
+            checkAllItems.checked = true;
+        }
+        else if (checkedItems == 0)
+        {
+            checkAllItems.checked = false;
+            checkAllItems.indeterminate = false;
+        }
+        else
+        {
+            checkAllItems.indeterminate = true;
+        }
+
+        if (checkedItems > 1)
+        {
+            btnBulkEdit.innerHTML = `<i class="fa-solid fa-edit"></i> Bulk Edit (${checkedItems} items)`;
+            btnBulkEdit.hidden = false;
+
+            btnBulkDelete.innerHTML = `<i class="fa-solid fa-trash"></i> Bulk Delete (${checkedItems} items)`;
+            btnBulkDelete.hidden = false;
+        }
+        else
+        {
+            btnBulkEdit.hidden = true;
+            btnBulkDelete.hidden = true;
+        }
+    });
 
     // Add to cart button handler
     $('#data').on('click', 'button', function() 
