@@ -193,7 +193,14 @@ def api_update_item(item_id):
     item.base_price = request.form.get('base_price', item.base_price)
     item.category_id = request.form.get('category_id', item.category_id)
     item.qty_unit_id = request.form.get('qty_unit_id', item.qty_unit_id)
-    item.description = request.form.get('description', item.description)
+
+    original_creator = item.description.split('(Originally Created by ')[1].split(')')[0] if "Originally Created by" in item.description else None
+    
+    if f"(Originally Created by {original_creator})" in item.description and f"(Originally Created by {original_creator})" not in request.form.get('description'):
+        return jsonify({ 'error': 'Cannot change description of validated item', 
+                         'details': f"You should not remove or change the '(Originally Created by ...)' part of the description" }), HTTPStatus.BAD_REQUEST
+    else:
+        item.description = request.form.get('description', item.description)
 
     item.modification_by = username
 
