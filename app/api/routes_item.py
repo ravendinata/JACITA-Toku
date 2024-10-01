@@ -318,6 +318,34 @@ def api_delete_nonval_item(item_id):
     
     return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.OK
 
+@api.route('/items/nonvalidated/<string:item_id>/validate', methods = ['POST'])
+@check_api_permission('item_nonvalidated/validate')
+def api_validate_nonval_item(item_id):
+    item = NonvalItems.query.get(item_id)
+    if item is None:
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+    
+    validator = session.get('user')
+
+    if validator != request.form.get('validator'):
+        return jsonify({ 'error': 'Validator does not match the current user', 'details': f"User in Form: {request.form.get('validator')}, Session User: {validator}" }), HTTPStatus.FORBIDDEN
+
+    description = f"{item.description} (Originally Created by {item.created_by})"
+
+    item_val = Items(id = item.id, brand = item.brand, name = item.name, variant = item.variant,
+                     base_price = item.base_price, category_id = item.category_id, qty_unit_id = 0,
+                     created_by = validator, description = description)
+
+    try:
+        db.session.add(item_val)
+        db.session.delete(item)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while validating non-validated item: {e}")
+        return jsonify({ 'error': 'Error while validating non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Non-validated item validated successfully' }), HTTPStatus.CREATED
+
 # ======================
 # AGGREGATED ITEM ROUTES
 # ======================
