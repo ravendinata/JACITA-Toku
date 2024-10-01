@@ -104,6 +104,73 @@ def api_create_bulk_items():
     
     return jsonify({ 'message': 'Bulk items created successfully' }), HTTPStatus.CREATED
 
+@api.route('/items/validated/bulk/edit', methods = ['PATCH'])
+@check_api_permission('item_validated/update_bulk')
+def api_update_bulk_items():
+    check_field = check_fields(request, 'item_validated/update_bulk')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+    
+    username = session.get('user')
+
+    item_ids = request.form.getlist('item_id[]')
+    brands = request.form.getlist('brand[]')
+    names = request.form.getlist('name[]')
+    variants = request.form.getlist('variant[]')
+    base_prices = request.form.getlist('base_price[]')
+    category_ids = request.form.getlist('category_id[]')
+    qty_unit_ids = request.form.getlist('qty_unit_id[]')
+
+    items = []
+    for i in range(len(item_ids)):
+        item_id = item_ids[i]
+        brand = brands[i]
+        name = names[i]
+        variant = variants[i]
+        base_price = base_prices[i]
+        category_id = category_ids[i]
+        qty_unit_id = qty_unit_ids[i]
+
+        item = Items.query.get(item_id)
+        if item is None:
+            return jsonify({ 'error': 'Item not found', 'details': f"Item with ID {item_id} not found" }), HTTPStatus.NOT_FOUND
+        
+        item.brand = brand
+        item.name = name
+        item.variant = variant
+        item.base_price = base_price
+        item.category_id = category_id
+        item.qty_unit_id = qty_unit_id
+        item.modification_by = username
+
+        items.append(item)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while updating bulk items: {e}")
+        return jsonify({ 'error': 'Error while updating items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Bulk items updated successfully' }), HTTPStatus.OK
+
+@api.route('/items/validated/bulk/delete', methods = ['DELETE'])
+@check_api_permission('item_validated/delete_bulk')
+def api_delete_bulk_items():
+    item_ids = request.form.getlist('item_id[]')
+
+    for item_id in item_ids:
+        item = Items.query.get(item_id)
+        if item is None:
+            return jsonify({ 'error': 'Item not found', 'details': f"Item with ID {item_id} not found" }), HTTPStatus.NOT_FOUND
+
+        try:
+            db.session.delete(item)
+            db.session.commit()
+        except Exception as e:
+            print(f"Error while deleting bulk items: {e}")
+            return jsonify({ 'error': 'Error while deleting items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    return jsonify({ 'message': 'Bulk items deleted successfully' }), HTTPStatus.OK
 
 @api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
 @check_api_permission('item_validated/update')
