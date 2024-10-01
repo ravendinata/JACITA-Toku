@@ -2,7 +2,11 @@
 
 {% block content %}
 {% if can_do['order/approve_division'] %}
-    <span class="float-end"><a href="/order/{{ period.next_month|replace('/', '') }}/{{ division }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Coming Month's Order Collection</a></span>
+    <span class="float-end">
+        View Division Order Collection:&nbsp;
+        <a href="/order/{{ period.this_month|replace('/', '') }}/{{ division }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> This Month ({{ period.this_month }})</a>
+        <a href="/order/{{ period.next_month|replace('/', '') }}/{{ division }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> Next Month ({{ period.next_month }})</a>
+    </span>
 {% endif %}
 {% if can_do['order/fulfill'] %}
     <span class="float-end">
