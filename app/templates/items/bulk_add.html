@@ -206,7 +206,13 @@
     {
         // Alt + N
         if (e.altKey && e.key === 'n')
+        {
             addRow();
+
+            const newRow = document.getElementById('bulkAddTable').getElementsByTagName('tbody')[0].lastElementChild;
+            const firstCell = newRow.cells[1].querySelector('select');
+            if (firstCell) firstCell.focus();
+        }
 
         // Alt + D: Duplicate Row Where Cursor Is
         if (e.altKey && e.key === 'd') 
@@ -215,6 +221,17 @@
             const cursor = document.activeElement;
             if (cursor.tagName === 'INPUT' || cursor.tagName === 'SELECT')
                 duplicateRow(cursor);
+
+            const nextRow = cursor.parentNode.parentNode.nextElementSibling;
+            if (nextRow)
+            {
+                const nextCell = nextRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                if (nextCell) 
+                {
+                    nextCell.focus();
+                    nextCell.setSelectionRange(nextCell.value.length, nextCell.value.length);
+                }
+            }
         }
 
         // Alt + Backspace: Remove Row Where Cursor Is
@@ -223,7 +240,35 @@
             e.preventDefault();
             const cursor = document.activeElement;
             if (cursor.tagName === 'INPUT' || cursor.tagName === 'SELECT')
+            {
+                const row = cursor.parentNode.parentNode;
+                const nextRow = row.nextElementSibling;
+                const prevRow = row.previousElementSibling;
+            
                 removeRow(cursor);
+
+                if (nextRow)
+                {
+                    const nextCell = nextRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                    if (nextCell) 
+                    {
+                        nextCell.focus();
+                        nextCell.setSelectionRange(nextCell.value.length, nextCell.value.length);
+                    }
+                }
+                else
+                {
+                    if (prevRow)
+                    {
+                        const prevCell = prevRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                        if (prevCell) 
+                        {
+                            prevCell.focus();
+                            prevCell.setSelectionRange(prevCell.value.length, prevCell.value.length);
+                        }
+                    }
+                }
+            }
         }
 
         // Arrow Down: Move Cursor to Next Row on the Same Column
@@ -236,7 +281,11 @@
             if (nextRow) 
             {
                 const nextCell = nextRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
-                if (nextCell) nextCell.focus();
+                if (nextCell) 
+                {
+                    nextCell.focus();
+                    nextCell.setSelectionRange(nextCell.value.length, nextCell.value.length);
+                }
             }
         }
 
@@ -250,7 +299,11 @@
             if (prevRow) 
             {
                 const prevCell = prevRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
-                if (prevCell) prevCell.focus();
+                if (prevCell) 
+                {
+                    prevCell.focus();
+                    prevCell.setSelectionRange(prevCell.value.length, prevCell.value.length);
+                }
             }
         }
     });
