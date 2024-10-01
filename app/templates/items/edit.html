@@ -94,8 +94,18 @@
                 <textarea class="form-control" id="description" name="description" rows="4"></textarea>
             </div>
         </div>
-        <button type="button" id="btnDelete" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete Item</button>
-        <button type="submit" class="btn btn-primary float-end"><i class="fa-solid fa-save"></i> Save Changes</button>
+        <div class="row">
+            <div class="col">
+                <button type="button" id="btnDelete" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete Item</button>
+                {% if item_type == 'nonvalidated' and 'item_nonvalidated/validate' in operations %}
+                <button type="button" id="btnValidate" class="btn btn-outline-success"><i class="fa-solid fa-check-double"></i> Validate Item</button>
+                {% endif %}
+            </div>
+            <div class="col justify-content-end text-end">
+                <button type="button" id="btnReset" class="btn btn-secondary"><i class="fa-solid fa-undo"></i> Undo Changes</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Changes</button>
+            </div>
+        </div>
     </form>
 </div>
 {% endblock %}
@@ -103,6 +113,23 @@
 {% block scripts %}
 <script>
     const item_type = '{{ item_type }}';
+
+    const btnDefault = document.querySelector('#brand-default');
+    const btnDelete = document.querySelector('#btnDelete');
+    const btnReset = document.querySelector('#btnReset');
+    const btnValidate = document.querySelector('#btnValidate');
+    const form = document.querySelector('form');
+
+    const originalData = 
+    {
+        brand: '{{ item.brand }}',
+        name: '{{ item.name }}',
+        variant: '{{ item.variant }}',
+        base_price: parseInt('{{ item.base_price }}'),
+        category_id: '{{ item.category_id }}',
+        qty_unit_id: '{{ item.qty_unit_id }}',
+        description: '{{ item.description }}'
+    };
 
     $(document).ready(function() 
     {
@@ -129,9 +156,7 @@
     // Keep track of fields that changed
     const fields = ['brand', 'name', 'variant', 'base_price', 'category_id', 'qty_unit_id', 'description'];
     if (item_type == 'nonvalidated')
-    {
         fields.splice(fields.indexOf('qty_unit_id'), 1);
-    }
 
     fields.forEach(field => 
     {   
@@ -141,11 +166,8 @@
         });
     });
 
-    const btnDefault = document.querySelector('#brand-default');
-    const btnDelete = document.querySelector('#btnDelete');
-    const form = document.querySelector('form');
-
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => 
+    {
         displayToast('Submitting changes', 'Please wait while we process your changes...', 'info');
 
         e.preventDefault();
@@ -154,17 +176,10 @@
         fields.forEach(field => 
         {
             if (document.querySelector(`#${field}`).classList.contains('is-dirty')) 
-            {
                 formData.append(field, document.querySelector(`#${field}`).value);
-            }
         });
         
-        const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', 
-        {
-            method: 'PATCH',
-            body: formData
-        });
-
+        const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', { method: 'PATCH', body: formData });
         const data = await response.json();
         
         if (response.ok) 
@@ -178,21 +193,16 @@
         }
     });
 
-    btnDefault.addEventListener('click', () => {
-        document.querySelector('#brand').value = 'Any Brand';
-    });
+    btnDefault.addEventListener('click', () => { document.querySelector('#brand').value = 'Any Brand'; });
 
-    btnDelete.addEventListener('click', async () => {
+    btnDelete.addEventListener('click', async () => 
+    {
         await displayPopupConfirm('Delete item', 'Are you sure you want to delete this item? This action cannot be undone.',
         confirmCallback = async () => 
         {
             displayToast('Deleting item', 'Please wait while we delete the item...', 'info');
 
-            const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', 
-            {
-                method: 'DELETE'
-            });
-
+            const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', { method: 'DELETE' });
             const data = await response.json();
 
             if (response.ok)
@@ -208,6 +218,42 @@
         denyCallback = () => {},
         confirmText = 'Yes, delete this item', 
         denyText = 'No, keep this item');
+    });
+
+    btnValidate.addEventListener('click', async () => 
+    {
+        await displayPopupConfirm('Validate item', 'Are you sure you want to validate this item? This action cannot be undone.',
+        confirmCallback = async () => 
+        {
+            displayToast('Validating item', 'Please wait while we validate the item...', 'info');
+
+            const formData = new FormData();
+            formData.append('validator', '{{ data.user }}');
+
+            const response = await fetch('/api/items/nonvalidated/{{ item.id }}/validate', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            if (response.ok)
+            {
+                setTimeout(() => displayToast('Operation success', data.message), 1000);
+                setTimeout(() => window.location.reload(), 2000);
+            } 
+            else
+            {
+                displayPopupAlert(data.error, data.details, 'error');
+            }
+        },
+        denyCallback = () => {},
+        confirmText = 'Yes, validate this item', 
+        denyText = 'No, keep this item');
+    });
+
+    btnReset.addEventListener('click', () => {
+        fields.forEach(field => 
+        {
+            document.querySelector(`#${field}`).value = originalData[field];
+            document.querySelector(`#${field}`).classList.remove('is-dirty');
+        });
     });
 </script>
 {% endblock %}
