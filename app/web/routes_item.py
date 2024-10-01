@@ -1,4 +1,6 @@
-from flask import render_template, session, redirect, url_for
+import json
+
+from flask import render_template, session, redirect, request, url_for
 
 from app.web import web
 from app.models.items import Items, NonvalItems
@@ -69,3 +71,25 @@ def page_items_edit(id):
                                     item_type = item_type, units = units, categories = categories, item = item.to_dict())
 
     return page()
+
+@web.route('/items/bulk_edit')
+@check_login
+def page_items_bulk_edit():
+    item_ids = request.args.get('items')
+    item_ids = json.loads(item_ids)
+
+    units = QuantityUnit.query.all()
+    units = [ unit.to_dict() for unit in units ]
+
+    categories = Category.query.all()
+    categories = [ category.to_dict() for category in categories ]
+    categories = sorted(categories, key = lambda x: x['id'])
+
+    items = []
+    for item_id in item_ids:
+        item = Items.query.get(item_id)
+        if item is not None:
+            items.append(item.to_dict())
+
+    return render_template('items/bulk_edit.html', title = "Bulk Edit Items", items = items,
+                           units = units, categories = categories)

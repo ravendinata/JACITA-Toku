@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+<span class="float-end">
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#helpModal"><i class="fa-solid fa-circle-question"></i> Help</button>
+    <a href="/items" class="btn btn-secondary"><i class="fa-solid fa-caret-left"></i> Back</a>
+</span>
+<h2>Bulk Addition Form</h2>
+<p>
+    Use this form to edit multiple items at once.<br>
+    <span class="text-muted">Note: Only validated items can be bulk edited. If you selected an item that is not validated, it will not be included in the form.</span><br>
+    <span class="text-danger">*</span> Required fields.
+</p>
+<hr>
+<form id="bulkEditForm">
+    <input type="hidden" name="created_by" value="{{ data.user }}">
+	<table id="bulkEditTable" class="table">
+		<thead>
+			<tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Brand<span class="text-danger">*</span></th>
+				<th>Item Name<span class="text-danger">*</span></th>
+                <th>Variant</th>
+				<th>Price<span class="text-danger">*</span></th>
+				<th>Qty. Unit</th>
+			</tr>
+            <tr>
+                <th></th>
+                <th><button type="button" class="btn btn-sm btn-secondary" onclick="sync('category_id')"><i class="fa-solid fa-sync"></i> Sync Top</button></th>
+                <th><button type="button" class="btn btn-sm btn-secondary" onclick="sync('brand')"><i class="fa-solid fa-sync"></i> Sync Top</button></th>
+                <th><button type="button" class="btn btn-sm btn-secondary" onclick="sync('name')"><i class="fa-solid fa-sync"></i> Sync Top</button></th>
+                <th></th>
+                <th><button type="button" class="btn btn-sm btn-secondary" onclick="sync('base_price')"><i class="fa-solid fa-sync"></i> Sync Top</button></th>
+                <th><button type="button" class="btn btn-sm btn-secondary" onclick="sync('qty_unit_id')"><i class="fa-solid fa-sync"></i> Sync Top</button></th>
+            </tr>
+		</thead>
+		<tbody style="vertical-align: middle;">
+            {% for item in items %}
+			<tr>
+                <td><input type="text" name="item_id[]" class="form-control" value="{{ item.id }}" readonly></td>
+                <td>
+                    <select name="category_id[]" class="form-select" required>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.id }} - {{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td><input type="text" name="brand[]" class="form-control" value="{{ item.brand }}" required></td>
+				<td><input type="text" name="name[]" class="form-control" value="{{ item.name }}" required></td>
+                <td><input type="text" name="variant[]" class="form-control" value="{{ item.variant }}"></td>
+				<td><input type="number" name="base_price[]" class="form-control" required></td>
+				<td>
+                    <select name="qty_unit_id[]" class="form-select" required>
+                        {% for unit in units %}
+                        <option value="{{ unit.id }}">{{ unit.unit }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+			</tr>
+            {% endfor %}
+		</tbody>
+	</table>
+    <div class="float-end">
+        <button type="button" class="btn btn-secondary" onclick="window.location.reload(true)"><i class="fa-solid fa-undo"></i> Undo All Changes</button>
+        <button type="submit" class="btn btn-primary" tabindex="1"><i class="fa-solid fa-save"></i> Save Changes</button>
+    </div>
+</form>
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel"><i class="fa-solid fa-circle-question"></i> Bulk Edit Form Help</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Category</strong>: Select the category of the item.<br>
+                    <strong>Brand</strong>: Enter the brand of the item.<br>
+                    <strong>Item Name</strong>: Enter the name of the item.<br>
+                    <strong>Variant</strong>: Enter the variant of the item (if any).<br>
+                    <strong>Price</strong>: Enter the base price of the item.<br>
+                    <strong>Quantity Unit</strong>: Select the quantity unit of the item.<br>
+                    <hr>
+                    <strong>Sync Top</strong>: Use the button to sync the value of the top row to all rows.<br>
+                    <hr>
+                    <strong>Keyboard Shortcuts</strong>:
+                    <ul>
+                        <li><kbd>Arrow Down</kbd>: Move Cursor to Next Row on the Same Column</li>
+                        <li><kbd>Arrow Up</kbd>: Move Cursor to Previous Row on the Same Column</li>
+                    </ul>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const COL_INDEX_MAP = 
+    {
+        'category_id': 1,
+        'brand': 2,
+        'name': 3,
+        'base_price': 5,
+        'qty_unit_id': 6
+    };
+
+    function sync(columnName)
+    {
+        const rows = document.getElementById('bulkEditTable').getElementsByTagName('tbody')[0].rows;
+        const base_value = rows[0].cells[COL_INDEX_MAP[columnName]].querySelector('input, select').value;
+        for (let i = 1; i < rows.length; i++) 
+        {
+            const cell = rows[i].cells[COL_INDEX_MAP[columnName]].querySelector('input, select');
+            cell.value = base_value;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() 
+    {
+        const items = {{ items|tojson }};
+        const table = document.getElementById('bulkEditTable').getElementsByTagName('tbody')[0];
+        for (let i = 0; i < items.length; i++) 
+        {
+            // Update the row with the item data
+            const row = table.rows[i];
+            row.cells[1].querySelector('select').value = items[i].category_id;
+            row.cells[5].querySelector('input').value = items[i].base_price;
+            row.cells[6].querySelector('select').value = items[i].qty_unit_id;
+        }
+    });
+
+    document.getElementById('bulkEditForm').addEventListener('submit', async function(e) 
+    {
+        e.preventDefault();
+
+        displayToast('Bulk Item Edit', 'Saving changes...', 'info');
+
+        const formData = new FormData(this);
+        const response = await fetch('/api/items/validated/bulk/edit', 
+        {
+            method: 'PATCH',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok)
+        {
+            setTimeout(() => { displayToast('Operation Success', data.message, ); }, 1000);
+            setTimeout(() => { window.location.href = '/items'; }, 3000);
+        }
+        else 
+        {
+            displayToast(data.error, data.details, 'error');
+        }
+    });
+
+    // Register keyboard shortcuts
+    document.addEventListener('keydown', function(e) 
+    {
+        // Arrow Down: Move Cursor to Next Row on the Same Column
+        if (e.key === 'ArrowDown') 
+        {
+            e.preventDefault();
+            const cursor = document.activeElement;
+            const row = cursor.parentNode.parentNode;
+            const nextRow = row.nextElementSibling;
+            if (nextRow) 
+            {
+                const nextCell = nextRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                if (nextCell) 
+                {
+                    nextCell.focus();
+                    nextCell.setSelectionRange(nextCell.value.length, nextCell.value.length);
+                }
+            }
+        }
+
+        // Arrow Up: Move Cursor to Previous Row on the Same Column
+        if (e.key === 'ArrowUp') 
+        {
+            e.preventDefault();
+            const cursor = document.activeElement;
+            const row = cursor.parentNode.parentNode;
+            const prevRow = row.previousElementSibling;
+            if (prevRow) 
+            {
+                const prevCell = prevRow.cells[cursor.parentNode.cellIndex].querySelector('input, select');
+                if (prevCell) 
+                {
+                    prevCell.focus();
+                    prevCell.setSelectionRange(prevCell.value.length, prevCell.value.length);
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
