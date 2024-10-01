@@ -59,7 +59,9 @@ required_role = {
     'item_validated/create': [ Role.PROCUREMENT_MANAGER ],
     'item_validated/create_bulk': [ Role.PROCUREMENT_MANAGER ],
     'item_validated/update': [ Role.PROCUREMENT_MANAGER ],
+    'item_validated/update_bulk': [ Role.PROCUREMENT_MANAGER ],
     'item_validated/delete': [ Role.PROCUREMENT_MANAGER ],
+    'item_validated/delete_bulk': [ Role.ADMINISTRATOR ],
     # Non-Validated Item Related
     'item_nonvalidated/create': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'item_nonvalidated/update': [ Role.PROCUREMENT_MANAGER, Role.DIVISION_LEADER, Role.DIVISION_USER ],
