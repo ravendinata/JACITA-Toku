@@ -26,7 +26,7 @@ class Items(db.Model):
     modification_by = db.Column(db.String, db.ForeignKey(User.username), nullable = True)
 
     def __repr__(self):
-        return f'<Items: {self.brand} {self.name} {self.variant} [{self.id}]>'
+        return f'<Item: {self.brand} {self.name} {self.variant} [{self.id}]>'
     
     def to_dict(self):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
@@ -49,7 +49,7 @@ class ViewItems(db.Model):
     description = db.Column(db.String, nullable = True)
 
     def __repr__(self):
-        return f'<ViewItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
+        return f'<ViewItem: {self.brand} {self.name} {self.variant} [{self.id}]>'
     
     def to_dict(self):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
@@ -75,7 +75,7 @@ class NonvalItems(db.Model):
     modification_by = db.Column(db.String, db.ForeignKey(User.username), nullable = True)
 
     def __repr__(self):
-        return f'<NonvalItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
+        return f'<NonvalItem: {self.brand} {self.name} {self.variant} [{self.id}]>'
     
     def to_dict(self):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
@@ -97,7 +97,7 @@ class ViewNonvalItems(db.Model):
     description = db.Column(db.String, nullable = True)
 
     def __repr__(self):
-        return f'<ViewNonvalItems: {self.brand} {self.name} {self.variant} [{self.id}]>'
+        return f'<ViewNonvalItem: {self.brand} {self.name} {self.variant} [{self.id}]>'
     
     def to_dict(self):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
