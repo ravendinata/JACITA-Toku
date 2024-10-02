@@ -1,4 +1,5 @@
 import random
+import re
 import uuid
 
 from app.models.items import Items, NonvalItems
@@ -148,6 +149,8 @@ def generate_order_id(period, division_id):
 def generate_item_id(brand, name, variant):
     """
     Generate an item ID from the brand, name, and variant.
+    The generated ID is in the format of T9-converted brand, name, and variant.
+    It will check if the generated ID already exists in the database and jumble the variant if it does.
 
     Parameters:
     brand : str
@@ -186,5 +189,8 @@ def generate_item_id(brand, name, variant):
         print(f"Item ID {result} already exists, jumbling the name to generate a new ID.")
         random_id = str(uuid.uuid4().int)[:7].upper()
         result = generate_item_id(brand, name, random_id)
+
+    # If there is a consecutive dot, replace it with a zero
+    result = re.sub(r'\.{2,}', '.0', result)
 
     return result
