@@ -5,6 +5,14 @@
     <span><a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a></span>
     <h1>Add Item</h1>
     <hr class="mb-3">
+    {% if 'item_nonvalidated/create' in operations and 'item_validated/create' not in operations %}
+    <div class="alert alert-info" role="alert">
+        <i class="fa-solid fa-file-circle-exclamation"></i>
+        <b>Non-Validated Item</b><br>
+        This item will be added as a non-validated item. This means that the item is not officially endorsed by the system and may not be available for purchase in the future.<br>
+        Only add non-validated items if you are sure that the item is not available in the system and you really need to order the item.
+    </div>
+    {% endif %}
     <form>
         <input type="hidden" name="created_by" value="{{ data.user }}">
         <div class="row mb-3">
