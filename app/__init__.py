@@ -18,19 +18,21 @@ def create_app():
     # ==========
     # Extensions
     # ==========
-    db.init_app(app)
+    db.init_app(app)    # SQLAlchemy Database Connection Object (app.extensions.db)
 
     # =================
     # Context Processor
     # =================
-    app.context_processor(inject_session_data)
+    app.context_processor(inject_session_data)  # Inject session data to all templates (app.context_processor.inject_session_data)
 
     # ==========
     # Blueprints
     # ==========
+    # Web Blueprint: Contains all web page routes (app.web)
     from app.web import web
     app.register_blueprint(web)
 
+    # API Blueprint: Contains all API routes (app.api)
     from app.api import api
     app.register_blueprint(api, url_prefix = '/api')
 

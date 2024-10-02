@@ -38,9 +38,35 @@ modifiable_fields = {
 }
 
 def get_endpoint_fields(endpoint):
+    """
+    Get the required and modifiable fields for an endpoint.
+    
+    Parameters:
+    endpoint : str
+        The endpoint name to get the fields for. Refer to the required_fields and modifiable_fields dictionaries in this module.
+        
+    Returns:
+    list
+        The list of required and modifiable fields for the endpoint.
+    """
     return required_fields.get(endpoint, []) + modifiable_fields.get(endpoint, [])
 
 def check_fields(request, endpoint):
+    """
+    Check if the required fields are present in the request.
+
+    Parameters:
+    request : Request
+        The request object to check the fields from.
+
+    endpoint : str
+        The endpoint name to check the fields for. Refer to the required_fields and modifiable_fields dictionaries in this module.
+
+    Returns:
+    dict
+        The result of the check. This will always have a 'pass' key that is True if the check passed, False otherwise.
+        If the check failed, it will also have an 'error' key with the error message and an 'available_fields' key with the available fields.
+    """
     if endpoint in required_fields:
         required = required_fields[endpoint]
         
@@ -56,6 +82,17 @@ def check_fields(request, endpoint):
     return { 'pass': True }
 
 def check_page_permission(permission: str):
+    """
+    [Decorator] Check if the user has the permission to access the page.
+    
+    Parameters:
+    permission : str
+        The permission name to check. Refer to the role module for the list of permissions.
+        
+    Returns:
+    function
+        The decorated function.
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -69,6 +106,17 @@ def check_page_permission(permission: str):
     return decorator
 
 def check_api_permission(permission: str):
+    """
+    [Decorator] Check if the user has the permission to access the API endpoint.
+
+    Parameters:
+    permission : str
+        The permission name to check. Refer to the role module for the list of permissions.
+
+    Returns:
+    function
+        The decorated function.
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -84,6 +132,17 @@ def check_api_permission(permission: str):
     return decorator
 
 def check_page_permissions(permissions: list):
+    """
+    [Decorator] Check if the user has the permissions to access the page.
+
+    Parameters:
+    permissions : list
+        The list of permission names to check. Refer to the role module for the list of permissions.
+
+    Returns:
+    function
+        The decorated function.
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -102,6 +161,16 @@ def check_page_permissions(permissions: list):
     return decorator
 
 def inject_allowed_operations(func):
+    """
+    [Decorator] Inject the allowed operations of the user to the function.
+
+    Pre-requisites:
+    - The function to be decorated must have a user_operations parameter.
+
+    Returns:
+    function
+        The decorated function.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         user = User.query.get(session['user'])

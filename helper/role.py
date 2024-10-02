@@ -25,6 +25,19 @@ class RoleText:
     SYSTEM = 'System'
 
 class InsufficientPermissionError(Exception):
+    """
+    Exception raised when the user does not have enough permission to perform the operation.
+    
+    Attributes:
+    user : User
+        The user object.
+    operation : str or list
+        The operation name(s) that the user is trying to perform.
+    error : str
+        The error title.
+    message : str
+        The error message.
+    """
     def __init__(self, user, operation):
         if type(operation) is list:
             required = []
@@ -50,6 +63,15 @@ class InsufficientPermissionError(Exception):
         super().__init__(self.message)
 
 class NonExistentRuleError(Exception):
+    """
+    Exception raised when the operation does not have a rule defined.
+    
+    Attributes:
+    operation : str
+        The operation that does not have a rule defined.
+    message : str
+        The error message.
+    """
     def __init__(self, operation):
         self.message = f'The operation {operation} does not have a rule defined. Please contact the system administrator.'
         super().__init__(self.message)
@@ -195,7 +217,6 @@ def get_allowed_operations(user):
     list
         The list of operations that the user is allowed to perform.
     """
-
     operations = []
     
     for operation, roles in required_role.items():

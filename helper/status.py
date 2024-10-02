@@ -19,6 +19,13 @@ class OrderStatusText:
     CANCELLED = 'Cancelled'
 
 class OrderStatusTransitionError(Exception):
+    """
+    Exception raised when an invalid status transition is attempted.
+    
+    Attributes:
+    message : str
+        The error message.
+    """
     def __init__(self, current, new):
         self.message = get_status_error_message(current, new)
         super().__init__(self.message)
