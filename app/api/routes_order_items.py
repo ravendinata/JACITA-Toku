@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 from sqlalchemy import asc
 
 from app.api import api
@@ -7,8 +7,10 @@ from app.models.misc import QuantityUnit
 from app.models.orders import Orders
 from app.models.items import Items, NonvalItems
 from app.models.order_items import OrderItems, OrderNonvalItems
+from app.models.user import User
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 from helper.status import OrderStatus
+from helper.role import Role
 
 def collectItems(orders):
     data = []
@@ -213,8 +215,12 @@ def api_update_order_item(order_id, item_id):
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
     
-    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
+    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
         return jsonify({ 'error': 'Forbidden operation', 'details': 'The current active order is not able to accept item updates because of its status' }), HTTPStatus.FORBIDDEN
+
+    user = User.query.get(session['user'])
+    if order.status == OrderStatus.FINANCE_REJECTED and user.role not in [Role.DIVISION_LEADER, Role.ADMINISTRATOR]:
+        return jsonify({ 'error': 'Insufficient permissions', 'details': 'Only division leaders can update items in a finance-rejected order' }), HTTPStatus.FORBIDDEN
 
     item = OrderItems.query.get((order_id, item_id))
     if item is None:
@@ -239,9 +245,13 @@ def api_remove_order_item(order_id, item_id):
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
     
-    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
+    if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
         return jsonify({ 'error': 'Forbidden operation', 'details': 'The current active order is not able to accept item removals because of its status' }), HTTPStatus.FORBIDDEN
 
+    user = User.query.get(session['user'])
+    if order.status == OrderStatus.FINANCE_REJECTED and user.role not in [Role.DIVISION_LEADER, Role.ADMINISTRATOR]:
+        return jsonify({ 'error': 'Insufficient permissions', 'details': 'Only division leaders can update items in a finance-rejected order' }), HTTPStatus.FORBIDDEN
+    
     item = OrderItems.query.get((order_id, item_id))
     if item is None:
         item = OrderNonvalItems.query.get((order_id, item_id))
