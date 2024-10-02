@@ -175,12 +175,16 @@ def generate_item_id(brand, name, variant):
 
     result = f"{t9_brand}-{t9_name}-{t9_variant}"
 
-    check_item = Items.query.get(result)
-    if not check_item:
-        check_item = NonvalItems.query.get(result)
-
+    check_item = Items.query.get(result) or NonvalItems.query.get(result)
     if check_item:
         print(f"Item ID {result} already exists but item is different, jumbling the variant to generate a new ID.")
         result = generate_item_id(brand, name, jumble_string(variant))
+
+    # Secondary check - If still exists, use a random ID for the variant
+    check_item = Items.query.get(result) or NonvalItems.query.get(result)
+    if check_item:
+        print(f"Item ID {result} already exists, jumbling the name to generate a new ID.")
+        random_id = str(uuid.uuid4().int)[:7].upper()
+        result = generate_item_id(brand, name, random_id)
 
     return result
