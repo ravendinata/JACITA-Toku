@@ -1,9 +1,11 @@
+import re
+
 from flask import jsonify, request, session
 
 from app.api import api
 from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
-from helper.core import generate_item_id
+from helper.core import generate_item_id, jumble_string
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 
 # =====================
@@ -87,11 +89,15 @@ def api_create_bulk_items():
             return jsonify({ 'error': 'Item already exists', 'details': f"{brand} {name} {variant} already exists" }), HTTPStatus.CONFLICT
         
         id = generate_item_id(brand, name, variant)
+        print(f"Generated ID for {brand} {name} {variant}: {id}")
 
         item = Items(id = id, created_by = created_by,
                      brand = brand, name = name, variant = variant, 
                      base_price = base_price,
                      category_id = category_id, qty_unit_id = qty_unit_id)
+        
+        if item.id in [ i.id for i in items ]:
+            item.id = generate_item_id(brand, name, jumble_string(variant))
         
         items.append(item)
 
@@ -193,12 +199,15 @@ def api_update_item(item_id):
     item.base_price = request.form.get('base_price', item.base_price)
     item.category_id = request.form.get('category_id', item.category_id)
     item.qty_unit_id = request.form.get('qty_unit_id', item.qty_unit_id)
-
-    original_creator = item.description.split('(Originally Created by ')[1].split(')')[0] if "Originally Created by" in item.description else None
     
-    if f"(Originally Created by {original_creator})" in item.description and f"(Originally Created by {original_creator})" not in request.form.get('description'):
-        return jsonify({ 'error': 'Cannot change description of validated item', 
-                         'details': f"You should not remove or change the '(Originally Created by ...)' part of the description" }), HTTPStatus.BAD_REQUEST
+    if item.description:
+        match = re.search(r'\(Originally Created by (.*?)\)', item.description)
+        if match:
+            original_creator = match.group(1)
+            new_description = request.form.get('description', '')
+            if f"(Originally Created by {original_creator})" not in new_description:
+                return jsonify({'error': 'Cannot change description of validated item',
+                                'details': "You should not remove or change the '(Originally Created by ...)' part of the description"}), HTTPStatus.BAD_REQUEST
     else:
         item.description = request.form.get('description', item.description)
 
