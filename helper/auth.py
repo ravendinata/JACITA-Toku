@@ -1,7 +1,7 @@
 import bcrypt
 from functools import wraps
 
-from flask import session, redirect, request, url_for
+from flask import session, redirect, request, session, url_for
 
 def generate_password_hash(password):
     """
@@ -30,7 +30,7 @@ def check_password_hash(hashed_password, raw_password):
     
     return bcrypt.checkpw(raw_password, hashed_password)
 
-def is_authenticated(session):
+def is_authenticated():
     """
     Check if a user is authenticated.
 
@@ -49,7 +49,7 @@ def check_login(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if not is_authenticated(session):
+        if not is_authenticated():
             print('User not authenticated, redirecting to login page')
             session['next'] = request.url
             return redirect(url_for('web.page_login'))

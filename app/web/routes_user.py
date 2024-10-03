@@ -8,7 +8,7 @@ from helper.role import Role
 
 @web.route('/login')
 def page_login():
-    if is_authenticated(session):
+    if is_authenticated():
         return redirect(url_for('web.index'))
     else:
         return render_template('user/login.html', title = "Login", next_url = session.get('next'))

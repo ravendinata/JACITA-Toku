@@ -139,7 +139,7 @@ def api_login_user():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    if is_authenticated(session):
+    if is_authenticated():
         return jsonify({ 'success': False, 'error': 'User already logged in', 'session': session['user'] }), HTTPStatus.CONFLICT
 
     user = User.query.get(username)
@@ -161,7 +161,7 @@ def api_login_user():
 
 @api.route('/auth/logout', methods = ['POST'])
 def api_logout_user():
-    if not is_authenticated(session):
+    if not is_authenticated():
         return jsonify({ 'success': False, 'error': 'User not logged in' }), HTTPStatus.UNAUTHORIZED
 
     user = session.get('user')
