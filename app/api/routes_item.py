@@ -101,6 +101,7 @@ def api_create_bulk_items():
         
         if item.id in [ i.id for i in items ]:
             item.id = generate_item_id(brand, name, jumble_string(variant))
+            print(f"Generated ID for {brand} {name} {variant} (Jumbled): {item.id}")
         
         items.append(item)
 
