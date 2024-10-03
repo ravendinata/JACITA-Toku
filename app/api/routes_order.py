@@ -119,8 +119,8 @@ def api_delete_order(order_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while deleting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    return jsonify({ 'message': 'Order deleted successfully' }), HTTPStatus.NO_CONTENT
     trail.log_deletion(order, session.get('user'))
+    return jsonify({ 'message': 'Order deleted successfully' }), HTTPStatus.OK
 
 # ==================================
 # ORDER-SPECIFIC OPERATION ENDPOINTS
