@@ -140,11 +140,9 @@ def api_get_order_items(order_id):
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['GET'])
 def api_get_order_item(order_id, item_id):
-    item = OrderItems.query.get((order_id, item_id))
+    item = OrderItems.query.get((order_id, item_id)) or OrderNonvalItems.query.get((order_id, item_id))
     if item is None:
-        item = OrderNonvalItems.query.get((order_id, item_id))
-        if item is None:
-            return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
+        return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
     
     return jsonify(item.to_dict()), HTTPStatus.OK
 
@@ -176,9 +174,7 @@ def api_add_order_item(order_id):
             item_type = 'nonvalidated'
 
     # Check if item already exists in order
-    check_order_item = OrderItems.query.get((order_id, item_id))
-    if check_order_item is None:
-        check_order_item = OrderNonvalItems.query.get((order_id, item_id))
+    check_order_item = OrderItems.query.get((order_id, item_id)) or OrderNonvalItems.query.get((order_id, item_id))
 
     # If item already exists, update the quantity instead of adding a new item
     if check_order_item is not None:
@@ -222,11 +218,9 @@ def api_update_order_item(order_id, item_id):
     if order.status == OrderStatus.FINANCE_REJECTED and user.role not in [Role.DIVISION_LEADER, Role.ADMINISTRATOR]:
         return jsonify({ 'error': 'Insufficient permissions', 'details': 'Only division leaders can update items in a finance-rejected order' }), HTTPStatus.FORBIDDEN
 
-    item = OrderItems.query.get((order_id, item_id))
+    item = OrderItems.query.get((order_id, item_id)) or OrderNonvalItems.query.get((order_id, item_id))
     if item is None:
-        item = OrderNonvalItems.query.get((order_id, item_id))
-        if item is None:
-            return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
+        return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
     
     item.quantity = request.form.get('quantity', item.quantity)
     item.remarks = request.form.get('remarks', item.remarks)
@@ -252,11 +246,9 @@ def api_remove_order_item(order_id, item_id):
     if order.status == OrderStatus.FINANCE_REJECTED and user.role not in [Role.DIVISION_LEADER, Role.ADMINISTRATOR]:
         return jsonify({ 'error': 'Insufficient permissions', 'details': 'Only division leaders can update items in a finance-rejected order' }), HTTPStatus.FORBIDDEN
     
-    item = OrderItems.query.get((order_id, item_id))
+    item = OrderItems.query.get((order_id, item_id)) or OrderNonvalItems.query.get((order_id, item_id))
     if item is None:
-        item = OrderNonvalItems.query.get((order_id, item_id))
-        if item is None:
-            return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
+        return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
     
     try:
         db.session.delete(item)
@@ -339,13 +331,9 @@ def api_remove_combined_order_item(period, division_id, item_id):
     
     order_items_to_remove = []
     for order in orders:
-        item = OrderItems.query.get((order.id, item_id))
-        if item is None:
-            item = OrderNonvalItems.query.get((order.id, item_id))
-            if item is None:
-                continue
-
-        order_items_to_remove.append(item)
+        item = OrderItems.query.get((order.id, item_id)) or OrderNonvalItems.query.get((order.id, item_id))
+        if item is not None:
+            order_items_to_remove.append(item)
 
     try:
         for item in order_items_to_remove:
@@ -354,7 +342,7 @@ def api_remove_combined_order_item(period, division_id, item_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({ 'error': 'Error while removing item from all orders', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
-    
+
     return jsonify({ 'message': 'Item removed from all orders successfully' }), HTTPStatus.OK
 
 # ============================
