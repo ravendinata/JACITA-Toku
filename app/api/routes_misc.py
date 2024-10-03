@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from app.api import api
 from app.models.misc import Category, QuantityUnit
@@ -41,3 +41,7 @@ def api_generate_item_id():
 @api.route('helper/test_cookies', methods = ['GET'])
 def api_test_cookies():
     return jsonify({ 'cookies': request.cookies }), HTTPStatus.OK
+
+@api.route('helper/test_session', methods = ['GET'])
+def api_test_session():
+    return jsonify({ 'session': session }), HTTPStatus.OK
