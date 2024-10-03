@@ -21,10 +21,6 @@ class OrderStatusText:
 class OrderStatusTransitionError(Exception):
     """
     Exception raised when an invalid status transition is attempted.
-    
-    Attributes:
-    message : str
-        The error message.
     """
     def __init__(self, current, new):
         self.message = get_status_error_message(current, new)
@@ -44,13 +40,8 @@ def get_order_status_text(status):
     """
     Get the text representation of an order status.
 
-    Parameters:
-    status : int
-        The order status.
-
-    Returns:
-    str
-        The text representation of the order status.
+    :param status: The status name to get the text representation of.
+    :returns: The text representation of the status.
     """
     return {
         OrderStatus.PENDING: OrderStatusText.PENDING,
@@ -67,16 +58,9 @@ def can_transition(current, new):
     """
     Test if the new status is valid based on the current status.
 
-    Parameters:
-    current : int
-        The current status of the order.
-
-    new : int
-        The new status of the order.
-
-    Returns:
-    bool
-        True if the new status is valid, False otherwise.
+    :param current: The current status of the order.
+    :param new: The new status of the order.
+    :returns: True if the transition is valid, False otherwise.
     """
     return current in required_transition_states.get(new, [])
 
@@ -84,16 +68,9 @@ def get_status_error_message(current, new):
     """
     Get the error message for an invalid status transition.
 
-    Parameters:
-    current : int
-        The current status of the order.
-
-    new : int
-        The new status of the order.
-
-    Returns:
-    str
-        The error message for the status transition.
+    :param current: The current status of the order.
+    :param new: The new status of the order.
+    :returns: The error message for the invalid status transition
     """
     if current == new:
         return f"Invalid status transition: Order is already in {get_order_status_text(current)} state"

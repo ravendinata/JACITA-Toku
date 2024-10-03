@@ -13,12 +13,7 @@ def get_navbar_items(role: Role|int):
     """
     Get the navbar items for the role.
     
-    Parameters:
-    role : Role|int
-        The role code/id.
-
-    Returns:
-    list
-        The list of navbar items.
+    :param role: The role to get the navbar items for. Refer to the Role enum in helper/role.py.
+    :returns: The list of navbar items for the role.
     """
     return navbar_items.get(role, [])

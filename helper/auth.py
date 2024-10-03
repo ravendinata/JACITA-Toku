@@ -7,13 +7,8 @@ def generate_password_hash(password):
     """
     Generate a password hash from a password.
 
-    Parameters:
-    password : str
-        The password to hash.
-
-    Returns:
-    str
-        The hashed password.
+    :params password: The password to hash.
+    :returns: The hashed password.
     """
 
     password = password.encode('utf-8')
@@ -25,16 +20,9 @@ def check_password_hash(hashed_password, raw_password):
     """
     Check if a password matches a hashed password.
 
-    Parameters:
-    hashed_password : str
-        The hashed password to check against.
-
-    password : str
-        The password to check.
-
-    Returns:
-    bool
-        True if the password matches the hashed password, False otherwise.
+    :param hashed_password: The hashed password.
+    :param raw_password: The raw password to check.
+    :returns: True if the password matches, False otherwise.
     """
 
     hashed_password = hashed_password.encode('utf-8')
@@ -46,13 +34,8 @@ def is_authenticated(session):
     """
     Check if a user is authenticated.
 
-    Parameters:
-    session : dict
-        The session object.
-
-    Returns:
-    bool
-        True if the user is authenticated, False otherwise.
+    :param session: The session object to check.
+    :returns: True if the user is authenticated, False otherwise.
     """
 
     return 'user' in session and session['user'] is not None
@@ -61,9 +44,8 @@ def check_login(func):
     """
     A decorator that checks if the user is logged in.
 
-    Returns:
-    function
-        The decorated function.
+    :param func: The function to decorate.
+    :returns: The decorated function.
     """
     @wraps(func)
     def wrapper(*args, **kwargs):

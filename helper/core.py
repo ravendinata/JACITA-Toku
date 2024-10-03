@@ -13,13 +13,8 @@ def is_a_number(value):
     """
     Check if a value is a number.
 
-    Parameters:
-    value : any
-        The value to check.
-
-    Returns:
-    bool
-        True if the value is a number, False otherwise.
+    :param value: The value to check.
+    :returns: True if the value is a number, False otherwise.
     """
     try:
         float(value)
@@ -31,13 +26,8 @@ def convert_t9(string):
     """
     Convert a string to T9 format.
 
-    Parameters:
-    string : str
-        The string to convert.
-
-    Returns:
-    str
-        The string in T9 format.
+    :param string: The string to convert.
+    :returns: The T9-converted string.
     """
     t9 = {
         'a': '2', 'b': '2', 'c': '2',
@@ -58,19 +48,10 @@ def zero_pad(string, length, direction = 'right'):
     """
     Zero-pad a T9 string to a specified length. Trims the string if it exceeds the length.
 
-    Parameters:
-    string : str
-        The string to zero-pad.
-
-    length : int
-        The length to zero-pad the string to.
-
-    direction : str
-        The direction to zero-pad the string to. Default is 'right'.
-
-    Returns:
-    str
-        The zero-padded string.
+    :param string: The string to zero-pad.
+    :param length: The length to zero-pad the string to.
+    :param direction: The direction to zero-pad the string to. Can be 'left' or 'right'.
+    :returns: The zero-padded string.
     """
 
     if len(string) > length:
@@ -85,13 +66,8 @@ def replace_start_end_dot(string: str):
     """
     Replace the starting and ending dot of a string with a zero.
 
-    Parameters:
-    string : str
-        The string to replace the starting and ending dot.
-
-    Returns:
-    str
-        The string with the starting and ending dot replaced.
+    :param string: The string to replace the starting and ending dot.
+    :returns: The string with the starting and ending dot replaced
     """
 
     if string[0] == '.':
@@ -105,13 +81,8 @@ def jumble_string(string):
     """
     Jumble a string.
 
-    Parameters:
-    string : str
-        The string to jumble.
-
-    Returns:
-    str
-        The jumbled string.
+    :param string: The string to jumble.
+    :returns: The jumbled string.
     """
 
     return ''.join(random.sample(string, len(string)))
@@ -124,16 +95,9 @@ def generate_order_id(period, division_id):
     """
     Generate an order ID from the period and division.
 
-    Parameters:
-    period : str
-        The period of the order.
-
-    division : str
-        The division of the order.
-
-    Returns:
-    str
-        The generated order ID.
+    :param period: The period of the order.
+    :param division_id: The ID of the division.
+    :returns: The generated order ID.
     """
 
     period_formatted = period.replace("/", ".")
@@ -152,19 +116,10 @@ def generate_item_id(brand, name, variant):
     The generated ID is in the format of T9-converted brand, name, and variant.
     It will check if the generated ID already exists in the database and jumble the variant if it does.
 
-    Parameters:
-    brand : str
-        The brand of the item.
-
-    name : str
-        The name of the item.
-
-    variant : str
-        The variant of the item.
-
-    Returns:
-    str
-        The generated item ID.
+    :param brand: The brand of the item.
+    :param name: The name of the item.
+    :param variant: The variant of the item.
+    :returns: The generated item ID.
     """
 
     t9_brand = zero_pad(convert_t9(brand), 5) if brand else "99"

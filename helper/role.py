@@ -27,16 +27,6 @@ class RoleText:
 class InsufficientPermissionError(Exception):
     """
     Exception raised when the user does not have enough permission to perform the operation.
-    
-    Attributes:
-    user : User
-        The user object.
-    operation : str or list
-        The operation name(s) that the user is trying to perform.
-    error : str
-        The error title.
-    message : str
-        The error message.
     """
     def __init__(self, user, operation):
         if type(operation) is list:
@@ -65,12 +55,6 @@ class InsufficientPermissionError(Exception):
 class NonExistentRuleError(Exception):
     """
     Exception raised when the operation does not have a rule defined.
-    
-    Attributes:
-    operation : str
-        The operation that does not have a rule defined.
-    message : str
-        The error message.
     """
     def __init__(self, operation):
         self.message = f'The operation {operation} does not have a rule defined. Please contact the system administrator.'
@@ -132,13 +116,8 @@ def get_role_text(role):
     """
     Get the text representation of a role.
     
-    Parameters:
-    role : int
-        The role code/id.
-        
-    Returns:
-    str
-        The text representation of the role.
+    :param role: The role to get the text representation of.
+    :returns: The text representation of the role.
     """
     return {
         Role.ADMINISTRATOR: RoleText.ADMINISTRATOR,
@@ -153,16 +132,9 @@ def check_permission(user, operation):
     """
     Check if the user has permission to perform the operation.
     
-    Parameters:
-    user : User
-        The user object.
-        
-    operation : str
-        The operation to be performed.
-        
-    Returns:
-    bool
-        True if the user has permission, False otherwise
+    :param user: The user object.
+    :param operation: The operation to perform. Refer to the required_role dictionary in this module.
+    :returns: True if the user has permission, raises an exception otherwise.
     """
     if user.role == Role.SYSTEM or user.role == Role.ADMINISTRATOR:
         return True
@@ -181,13 +153,8 @@ def get_required_role(operation):
     """
     Get the required role for the operation.
     
-    Parameters:
-    operation : str
-        The operation to be performed.
-        
-    Returns:
-    list
-        The list of roles required to perform the operation.
+    :param operation: The operation to get the required role for. Refer to the required_role dictionary in this module.
+    :returns: The required role for the operation.
     """
     return required_role.get(operation, [])
 
@@ -195,13 +162,8 @@ def get_deny_string(operation):
     """
     Get the deny string for the operation.
     
-    Parameters:
-    operation : str
-        The operation to be performed.
-        
-    Returns:
-    str
-        The deny string for the operation.
+    :param operation: The operation to get the deny string for. Refer to the deny_string dictionary in this module.
+    :returns: The deny string for the operation.
     """
     return deny_string.get(operation, 'Unknown operation')
   
@@ -209,13 +171,8 @@ def get_allowed_operations(user):
     """
     Get the operations that the user is allowed to perform.
     
-    Parameters:
-    user : User
-        The user object.
-
-    Returns:
-    list
-        The list of operations that the user is allowed to perform.
+    :param user: The user object.
+    :returns: The list of operations that the user is allowed to perform.
     """
     operations = []
     
