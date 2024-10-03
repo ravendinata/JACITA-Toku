@@ -162,6 +162,7 @@ cython_debug/
 # Custom
 .vscode/
 _dumps/
+logs/
 
 config.json
 test.py
