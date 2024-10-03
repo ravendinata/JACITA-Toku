@@ -1,7 +1,9 @@
+import copy
 import re
 
 from flask import jsonify, request, session
 
+import helper.trail as trail
 from app.api import api
 from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
@@ -57,6 +59,7 @@ def api_create_item():
         print(f"Error while creating item: {e}")
         return jsonify({ 'error': 'Error while creating item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
 
+    trail.log_creation(item, created_by)
     return jsonify({ 'message': 'Item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/validated/bulk', methods = ['POST'])
@@ -108,6 +111,9 @@ def api_create_bulk_items():
         print(f"Error while creating bulk items: {e}")
         return jsonify({ 'error': 'Error while creating items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    for item in items:
+        trail.log_creation(item, created_by)
+
     return jsonify({ 'message': 'Bulk items created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/validated/bulk/edit', methods = ['PATCH'])
@@ -128,6 +134,8 @@ def api_update_bulk_items():
     qty_unit_ids = request.form.getlist('qty_unit_id[]')
 
     items = []
+    old_items = []
+
     for i in range(len(item_ids)):
         item_id = item_ids[i]
         brand = brands[i]
@@ -141,6 +149,8 @@ def api_update_bulk_items():
         if item is None:
             return jsonify({ 'error': 'Item not found', 'details': f"Item with ID {item_id} not found" }), HTTPStatus.NOT_FOUND
         
+        old_item = copy.deepcopy(item)
+        
         item.brand = brand
         item.name = name
         item.variant = variant
@@ -149,6 +159,7 @@ def api_update_bulk_items():
         item.qty_unit_id = qty_unit_id
         item.modification_by = username
 
+        old_items.append(old_item)
         items.append(item)
 
     try:
@@ -157,6 +168,9 @@ def api_update_bulk_items():
         print(f"Error while updating bulk items: {e}")
         return jsonify({ 'error': 'Error while updating items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    for i in range(len(items)):
+        trail.log_update(items[i], old_items[i], username)
+
     return jsonify({ 'message': 'Bulk items updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/validated/bulk/delete', methods = ['DELETE'])
@@ -172,6 +186,7 @@ def api_delete_bulk_items():
         try:
             db.session.delete(item)
             db.session.commit()
+            trail.log_deletion(item, session.get('user'))
         except Exception as e:
             print(f"Error while deleting bulk items: {e}")
             return jsonify({ 'error': 'Error while deleting items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
@@ -189,6 +204,7 @@ def api_update_item(item_id):
     username = session.get('user')
     
     item = Items.query.get(item_id)
+    old_item = copy.deepcopy(item)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
@@ -219,6 +235,7 @@ def api_update_item(item_id):
         print(f"Error while updating item: {e}")
         return jsonify({ 'error': 'Error while updating item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(item, old_item, username)
     return jsonify({ 'message': 'Item updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/validated/<string:item_id>', methods = ['DELETE'])
@@ -235,6 +252,7 @@ def api_delete_item(item_id):
         print(f"Error while deleting item: {e}")
         return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_deletion(item, session.get('user'))
     return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.OK
 
 # =========================
@@ -285,6 +303,7 @@ def api_create_nonval_item():
         print(f"Error while creating non-validated item: {e}")
         return jsonify({ 'error': 'Error while creating non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_creation(item, created_by)
     return jsonify({ 'message': 'Non-validated item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['PATCH'])
@@ -297,6 +316,7 @@ def api_update_nonval_item(item_id):
     username = session.get('user')
     
     item = NonvalItems.query.get(item_id)
+    old_item = copy.deepcopy(item)
 
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
@@ -316,6 +336,7 @@ def api_update_nonval_item(item_id):
         print(f"Error while updating non-validated item: {e}")
         return jsonify({ 'error': 'Error while updating non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(item, old_item, username)
     return jsonify({ 'message': 'Non-validated item updated successfully' }), HTTPStatus.OK
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['DELETE'])
@@ -332,6 +353,7 @@ def api_delete_nonval_item(item_id):
         print(f"Error while deleting non-validated item: {e}")
         return jsonify({ 'error': 'Error while deleting non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_deletion(item, session.get('user'))
     return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.OK
 
 @api.route('/items/nonvalidated/<string:item_id>/validate', methods = ['POST'])

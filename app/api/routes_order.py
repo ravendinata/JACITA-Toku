@@ -1,6 +1,9 @@
+import copy
+
 from flask import jsonify, request, session
 from sqlalchemy import desc, or_
 
+import helper.trail as trail
 from app.api import api
 from app.extensions import db
 from app.models.orders import Orders
@@ -77,6 +80,7 @@ def api_create_order():
     except Exception as e:
         return jsonify({ 'error': 'Error while creating order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_creation(order, created_by)
     return jsonify({ 'message': 'Order created successfully', 'order_details': order.to_dict() }), HTTPStatus.CREATED
 
 @api.route('/order/<string:order_id>', methods = ['PATCH'])
@@ -86,6 +90,7 @@ def api_update_order(order_id):
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
     order = Orders.query.get(order_id)
+    old_order = copy.deepcopy(order)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -98,6 +103,7 @@ def api_update_order(order_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while updating order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(order, old_order, session.get('user'))
     return jsonify({ 'message': 'Order updated successfully', 'order_details': order.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>', methods = ['DELETE'])
@@ -114,6 +120,7 @@ def api_delete_order(order_id):
         return jsonify({ 'error': 'Error while deleting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Order deleted successfully' }), HTTPStatus.NO_CONTENT
+    trail.log_deletion(order, session.get('user'))
 
 # ==================================
 # ORDER-SPECIFIC OPERATION ENDPOINTS
@@ -139,6 +146,7 @@ def api_get_order_total(order_id):
 @api.route('/order/<string:order_id>/submit', methods = ['POST'])
 def api_submit_order(order_id):
     order = Orders.query.get(order_id)
+    old_order = copy.deepcopy(order)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -151,11 +159,13 @@ def api_submit_order(order_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while submitting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(order, old_order, session.get('user'))
     return jsonify({ 'message': 'Order submitted successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/cancel', methods = ['POST'])
 def api_cancel_order(order_id):
     order = Orders.query.get(order_id)
+    old_order = copy.deepcopy(order)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -168,6 +178,7 @@ def api_cancel_order(order_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while cancelling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(order, old_order, session.get('user'))
     return jsonify({ 'message': 'Order cancelled successfully', 'order_details': order.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/approve/<string:by>', methods = ['POST'])
@@ -177,6 +188,7 @@ def api_approve_order(order_id, by):
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
     order = Orders.query.get(order_id)
+    old_order = copy.deepcopy(order)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -192,6 +204,7 @@ def api_approve_order(order_id, by):
     except Exception as e:
         return jsonify({ 'error': 'Error while approving order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(order, old_order, request.form.get('username'))
     return jsonify({ 'message': 'Order approved successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/reject/<string:by>', methods = ['POST'])
@@ -201,6 +214,7 @@ def api_reject_order(order_id, by):
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
     order = Orders.query.get(order_id)
+    old_order = copy.deepcopy(order)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -213,11 +227,13 @@ def api_reject_order(order_id, by):
     except Exception as e:
         return jsonify({ 'error': 'Error while rejecting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(order, old_order, request.form.get('username'))
     return jsonify({ 'message': 'Order rejected successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/fulfill', methods = ['POST'])
 def api_fulfill_order(order_id):
     order = Orders.query.get(order_id)
+    old_order = copy.deepcopy(order)
     
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -233,6 +249,7 @@ def api_fulfill_order(order_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(order, old_order, session.get('user'))
     return jsonify({ 'message': 'Order fulfilled successfully' }), HTTPStatus.OK
 
 # ==================================
@@ -278,8 +295,10 @@ def api_approve_orders(period, division_id, by):
 
     for order in orders:
         try:
+            old_order = copy.deepcopy(order)
             order.approve(by, request.form.get('username'))
             db.session.commit()
+            trail.log_update(order, old_order, request.form.get('username'))
         except OrderStatusTransitionError as e:
             return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
         except Exception as e:
@@ -312,8 +331,10 @@ def api_reject_orders(period, division_id, by):
 
     for order in orders:
         try:
+            old_order = copy.deepcopy(order)
             order.reject(by, request.form.get('username'))
             db.session.commit()
+            trail.log_update(order, old_order, request.form.get('username'))
         except OrderStatusTransitionError as e:
             return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
         except Exception as e:
@@ -333,8 +354,10 @@ def api_fulfill_orders(period, division_id):
 
     for order in orders:
         try:
+            old_order = copy.deepcopy(order)
             order.fulfill()
             db.session.commit()
+            trail.log_update(order, old_order, session.get('user'))
         except OrderStatusTransitionError as e:
             return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
         except Exception as e:

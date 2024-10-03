@@ -1,6 +1,9 @@
+import copy
+
 from flask import jsonify, request, session
 from sqlalchemy import desc
 
+import helper.trail as trail
 from app.api import api
 from app.extensions import db
 from app.models.user import User
@@ -53,6 +56,7 @@ def api_create_user():
         print(f"Error while creating user: {e}")
         return jsonify({ 'error': 'Error while creating user', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
 
+    trail.log_creation(user, session.get('user'))
     return jsonify({ 'message': 'User created', 'user_details': user.to_dict() }), HTTPStatus.CREATED
 
 @api.route('/user/<string:username>', methods = ['PATCH'])
@@ -62,6 +66,7 @@ def api_update_user(username):
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
     user = User.query.get(username)
+    old_user = copy.deepcopy(user)
 
     if user is None:
         return jsonify({ 'error': 'User not found' }), HTTPStatus.NOT_FOUND
@@ -73,6 +78,7 @@ def api_update_user(username):
 
     db.session.commit()
 
+    trail.log_update(user, old_user, session.get('user'))
     return jsonify({ 'message': 'User updated', 'new_user_details': user.to_dict() }), HTTPStatus.OK
 
 @api.route('/user/<string:username>', methods = ['DELETE'])
@@ -88,6 +94,7 @@ def api_delete_user(username):
     if 'user' in session:
         session.pop('user')
 
+    trail.log_deletion(user, session.get('user'))
     return jsonify({ 'message': 'User deleted' }), HTTPStatus.OK
 
 @api.route('/user/<string:username>/change_password', methods = ['POST'])
@@ -149,6 +156,7 @@ def api_login_user():
     if 'next' in session:
         session.pop('next')
 
+    trail.log_login(user.username, request.remote_addr)
     return jsonify({ 'success': True, 'message': 'Login successful' }), HTTPStatus.OK
 
 @api.route('/auth/logout', methods = ['POST'])
@@ -156,6 +164,8 @@ def api_logout_user():
     if not is_authenticated(session):
         return jsonify({ 'success': False, 'error': 'User not logged in' }), HTTPStatus.UNAUTHORIZED
 
+    user = session.get('user')
     session.clear()
 
+    trail.log_logout(user)
     return jsonify({ 'success': True, 'message': 'Logout successful' }), HTTPStatus.OK
