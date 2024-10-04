@@ -115,3 +115,69 @@ class ViewNonvalItems(db.Model):
     
     def to_dict(self):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
+    
+# ==========================================================================
+# GROUPED ITEMS MODELS : Items are grouped into product lines (brand + name)  
+# ==========================================================================
+
+class ViewGroupedItems(db.Model):
+    """
+    A model for the database view that shows grouped validated items
+    
+    Groups items by brand and name, and shows the price range and number of variants.
+
+    Basically a read-only version of the Items model with joins
+    connecting to the Category tables to fetch the category names instead of their IDs.
+    """
+    __tablename__ = 'view_grouped_items'
+    __table_args__ = { 'schema': 'toku' }
+
+    category = db.Column(db.String, nullable = False, default = 99)
+    brand = db.Column(db.String, primary_key = True)
+    name = db.Column(db.String, primary_key = True)
+    min_price = db.Column(db.Float, nullable = False)
+    max_price = db.Column(db.Float, nullable = False)
+    variants = db.Column(db.Integer, nullable = False)    
+
+    def __repr__(self):
+        return f'<ViewGroupedItem: {self.brand} {self.name}>'
+    
+    def to_dict(self):
+        return { c.name: getattr(self, c.name) for c in self.__table__.columns }
+    
+    def get_price_range(self):
+        if self.min_price == self.max_price:
+            return f'{self.min_price}'
+        else:
+            return f'{self.min_price} - {self.max_price}'
+        
+class ViewGroupedNonvalItems(db.Model):
+    """
+    A model for the database view that shows grouped non-validated items
+    
+    Groups items by brand and name, and shows the price range and number of variants.
+    
+    Basically a read-only version of the NonvalItems model with joins
+    connecting to the Category tables to fetch the category names instead of their IDs.
+    """
+    __tablename__ = 'view_grouped_nonval_items'
+    __table_args__ = { 'schema': 'toku' }
+
+    category = db.Column(db.String, nullable = False, default = 99)
+    brand = db.Column(db.String, primary_key = True)
+    name = db.Column(db.String, primary_key = True)
+    min_price = db.Column(db.Float, nullable = False)
+    max_price = db.Column(db.Float, nullable = False)
+    variants = db.Column(db.Integer, nullable = False)    
+
+    def __repr__(self):
+        return f'<ViewGroupedNonvalItem: {self.brand} {self.name}>'
+    
+    def to_dict(self):
+        return { c.name: getattr(self, c.name) for c in self.__table__.columns }
+    
+    def get_price_range(self):
+        if self.min_price == self.max_price:
+            return f'{self.min_price}'
+        else:
+            return f'{self.min_price} - {self.max_price}'
