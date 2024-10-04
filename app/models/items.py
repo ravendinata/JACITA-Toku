@@ -32,6 +32,13 @@ class Items(db.Model):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
     
 class ViewItems(db.Model):
+    """
+    A model for the database view that shows validated items
+    
+    Basically a read-only version of the Items model with joins
+    connecting to the Category and QuantityUnit tables to fetch the
+    category and quantity unit names instead of their IDs.
+    """
     __tablename__ = 'view_items'
     __table_args__ = { 'schema': 'toku' }
 
@@ -81,6 +88,13 @@ class NonvalItems(db.Model):
         return { c.name: getattr(self, c.name) for c in self.__table__.columns }
     
 class ViewNonvalItems(db.Model):
+    """
+    A model for the database view that shows non-validated items
+    
+    Basically a read-only version of the NonvalItems model with joins
+    connecting to the Category and QuantityUnit tables to fetch the
+    category names instead of their IDs.
+    """
     __tablename__ = 'view_nonval_items'
     __table_args__ = { 'schema': 'toku' }
 
