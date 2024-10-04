@@ -74,14 +74,13 @@ required_role = {
     'item_nonvalidated/delete': [ Role.PROCUREMENT_MANAGER ],
     'item_nonvalidated/validate': [ Role.PROCUREMENT_MANAGER ],
     # Order Related
+    'order/administer': [ Role.DIVISION_LEADER, Role.FINANCE_MANAGER, Role.PROCUREMENT_MANAGER ],
     'order/create': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'order/update': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'order/delete': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
-    'order/administer': [ Role.DIVISION_LEADER, Role.FINANCE_MANAGER, Role.PROCUREMENT_MANAGER ],
+    'order/submit': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     'order/approve_division': [ Role.DIVISION_LEADER ],
-    'order/reject_division': [ Role.DIVISION_LEADER ],
     'order/approve_finance': [Role.FINANCE_MANAGER ],
-    'order/reject_finance': [ Role.FINANCE_MANAGER ],
     'order/fulfill': [ Role.PROCUREMENT_MANAGER ],
     'order/cancel': [ Role.DIVISION_LEADER, Role.DIVISION_USER ],
     # Order Item Related
@@ -93,20 +92,28 @@ required_role = {
 }
 
 deny_string = {
+    # Validated Item Related
     'item_validated/create': 'Insufficient permission to create validated item',
+    'item_validated/create_bulk': 'Insufficient permission to create validated item in bulk',
     'item_validated/update': 'Insufficient permission to update validated item',
+    'item_validated/update_bulk': 'Insufficient permission to update validated item in bulk',
     'item_validated/delete': 'Insufficient permission to delete validated item',
+    'item_validated/delete_bulk': 'Insufficient permission to delete validated item in bulk',
+    # Non-Validated Item Related
     'item_nonvalidated/create': 'Insufficient permission to create non-validated item',
     'item_nonvalidated/update': 'Insufficient permission to update non-validated item',
     'item_nonvalidated/delete': 'Insufficient permission to delete non-validated item',
     'item_nonvalidated/validate': 'Insufficient permission to validate non-validated item',
+    # Order Related
     'order/create': 'Insufficient permission to create order',
     'order/update': 'Insufficient permission to update order',
     'order/delete': 'Insufficient permission to delete order',
+    'order/submit': 'Insufficient permission to submit order',
     'order/approve_division': 'Insufficient permission to approve or reject order (Division)',
     'order/approve_finance': 'Insufficient permission to approve or reject order (Finance)',
     'order/fulfill': 'Insufficient permission to fulfill order',
     'order/cancel': 'Insufficient permission to cancel order',
+    # Order Item Related
     'orderitem/create': 'Insufficient permission to create order item',
     'orderitem/update': 'Insufficient permission to update order item',
     'orderitem/delete': 'Insufficient permission to delete order item'
