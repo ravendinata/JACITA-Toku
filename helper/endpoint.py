@@ -133,6 +133,32 @@ def check_page_permissions(permissions: list):
         return wrapper
     return decorator
 
+def check_api_permissions(permissions: list):
+    """
+    [Decorator] Check if the user has the permissions to access the API endpoint.
+
+    :param permissions: The list of permission names to check. Refer to the role module for the list of permissions.
+    :returns: The decorated function.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                user = User.query.get(session['user'])
+                for permission in permissions:
+                    try:
+                        if user.can_do(permission):
+                            return func(*args, **kwargs)
+                    except InsufficientPermissionError:
+                        continue
+                raise InsufficientPermissionError(user, permissions)
+            except InsufficientPermissionError as e:
+                return jsonify({ 'error': e.error, 'details': e.message }), HTTPStatus.FORBIDDEN
+            except KeyError as e:
+                return jsonify({ 'error': 'Unauthorized' }), HTTPStatus.UNAUTHORIZED
+        return wrapper
+    return decorator
+
 def inject_allowed_operations(func):
     """
     [Decorator] Inject the allowed operations of the user to the function.
