@@ -61,9 +61,14 @@ def log_update(object_post, object_pre, user):
         if key in object_pre_dict and object_post_dict[key] != object_pre_dict[key] and key != 'modification_date' and key != 'modification_by':
             changed_fields[key] = { 'before': object_pre_dict[key], 'after': object_post_dict[key] }
 
+    if len(changed_fields) == 0:
+        return
+
     data = {
         'timestamp': timestamp,
         'user': user,
+        'object_id': object_post.id,
+        'type': object_post.__class__.__name__,
         'changed_fields': changed_fields
     }
     
