@@ -6,7 +6,8 @@ from flask import jsonify, request, session
 import helper.trail as trail
 from app.api import api
 from app.extensions import db
-from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems
+from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems, ViewGroupedItems, ViewGroupedNonvalItems
+from app.models.misc import QuantityUnit
 from helper.core import generate_item_id, jumble_string
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 
@@ -433,3 +434,55 @@ def api_get_item(item_id):
         obj['validated'] = False
         obj['qty_unit'] = None
         return jsonify(obj), HTTPStatus.OK
+    
+
+# ===================
+# GROUPED ITEM ROUTES
+# ===================
+
+@api.route('/items/grouped', methods = ['GET'])
+def api_get_grouped_items():
+    items = ViewGroupedItems.query.all()
+    nonval_items = ViewGroupedNonvalItems.query.all()
+
+    data = []
+    for item in items:
+        obj = item.to_dict()
+        obj['validated'] = True
+        data.append(obj)
+
+    for item in nonval_items:
+        obj = item.to_dict()
+        obj['validated'] = False
+        data.append(obj)
+
+    return jsonify(data), HTTPStatus.OK
+
+@api.route('/items/grouped/variants', methods = ['POST'])
+def api_get_grouped_variants():
+    brand = request.form.get('brand')
+    name = request.form.get('name')
+
+    qty_unit = QuantityUnit.query.all()
+
+    items = Items.query.filter_by(brand = brand, name = name).all() or NonvalItems.query.filter_by(brand = brand, name = name).all()
+    if not items:
+        return jsonify({ 'error': 'No items found' }), HTTPStatus.NOT_FOUND
+    
+    data = []
+    for item in items:
+        obj = item.to_dict()
+        
+        remove_keys = ['brand', 'name', 'category_id', 'created_by', 'created_date', 'modification_by', 'modification_date']
+        for key in remove_keys:
+            obj.pop(key)
+
+        if 'qty_unit_id' in obj:
+            obj['qty_unit'] = [ unit.to_dict() for unit in qty_unit if unit.id == item.qty_unit_id ][0]
+            obj.pop('qty_unit_id')
+        else:
+            obj['qty_unit'] = [ unit.to_dict() for unit in qty_unit if unit.id == 0 ][0]
+
+        data.append(obj)
+
+    return jsonify(data), HTTPStatus.OK
