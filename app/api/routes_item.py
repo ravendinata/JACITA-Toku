@@ -465,7 +465,9 @@ def api_get_grouped_variants():
 
     qty_unit = QuantityUnit.query.all()
 
-    items = Items.query.filter_by(brand = brand, name = name).all() or NonvalItems.query.filter_by(brand = brand, name = name).all()
+    items = Items.query.filter_by(brand = brand, name = name).order_by(Items.variant).all() or \
+            NonvalItems.query.filter_by(brand = brand, name = name).order_by(NonvalItems.variant).all()
+    
     if not items:
         return jsonify({ 'error': 'No items found' }), HTTPStatus.NOT_FOUND
     
