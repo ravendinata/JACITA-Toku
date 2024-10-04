@@ -1,0 +1,599 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Items Catalogue</h2>
+<p>Grouped by Brand and Name (Product Line)</p>
+<hr>
+<div class="container-fluid" style="padding-bottom: 48px;">
+    <table id="data" class="table table-striped" style="width: 100%;">
+        <thead style="vertical-align: middle;">
+            <tr>
+                <th>Category</th>
+                <th>Product Line</th>
+                <th>Price</th>
+                <th>Actions</th>
+                <th>Validated</th>
+                <th>Brand</th>
+                <th>Name</th>
+                <th>Min Price</th>
+                <th>Max Price</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+<!-- Add to Cart Modal -->
+<div class="modal fade" id="modalAddToCart" tabindex="-1" aria-labelledby="modalAddToCartLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAddToCartLabel"><i class="fas fa-cart-plus"></i> Add to Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formAddToCart" action="#" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cart_item" class="form-label">Item</label>
+                        <input type="text" class="form-control" id="cart_item" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="items" class="form-label">Variant</label>
+                        <div class="input-group">
+                            <select class="form-select" id="items"></select>
+                            <button class="btn btn-secondary" type="button" id="btnViewDetails"><i class="fas fa-info-circle"></i> Item Details</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cart_price" class="form-label">Price</label>
+                        <input type="text" class="form-control" id="cart_price" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="cart_qty">Quantity</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" id="btnMinus10Qty"><i class="fas fa-minus"></i> 10</button>
+                            <button class="btn btn-outline-secondary" type="button" id="btnMinusQty"><i class="fas fa-minus"></i></button>
+                            <input type="number" class="form-control" id="cart_qty" value="1" min="1" max="100">
+                            <span class="input-group-text" id="qty_update_qty_unit"></span>
+                            <button class="btn btn-outline-secondary" type="button" id="btnPlusQty"><i class="fas fa-plus"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" id="btnPlus10Qty"><i class="fas fa-plus"></i> 10</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="cart_remarks">Remarks</label>
+                        <textarea class="form-control" id="cart_remarks" aria-label="Remarks"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()"><i class="fas fa-undo"></i> Reset</button>
+                    <button type="submit" class="btn btn-primary" id="btnAddToCartFinal"><i class="fas fa-cart-plus"></i> Add to Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Item Details Modal -->
+<div class="modal fade" id="modalItemDetails" tabindex="-1" aria-labelledby="modalItemDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalItemDetailsLabel"><i class="fas fa-info-circle"></i> Item Details</h5>
+                <span class="badge bg-secondary mx-2" id="item_validated"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_id" class="form-label"><i class="fas fa-qrcode"></i> Item ID (SKU)</label>
+                        <input type="text" class="form-control" id="item_id" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="item_category" readonly>
+                    </div>
+                </div>
+                <a class="text-muted my-3" data-bs-toggle="collapse" href="#item_metadata" role="button" aria-expanded="false" aria-controls="item_metadata">
+                    <small>Show/Hide Metadata</small>
+                </a>
+                <div class="collapse my-3" id="item_metadata">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_created_at" class="form-label">Created At</label>
+                            <input type="text" class="form-control" id="item_created_at" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_created_by" class="form-label">Created By</label>
+                            <input type="text" class="form-control" id="item_created_by" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="item_modification_at" class="form-label">Last Modified At</label>
+                            <input type="text" class="form-control" id="item_modification_at" readonly>
+                        </div>
+                        <div class="col">
+                            <label for="item_modified_by" class="form-label">Last Modified By</label>
+                            <input type="text" class="form-control" id="item_modified_by" readonly>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_brand" class="form-label">Brand</label>
+                        <input type="text" class="form-control" id="item_brand" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="item_name" readonly>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_variant" class="form-label">Variant</label>
+                        <input type="text" class="form-control" id="item_variant" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="item_description" rows="3" readonly></textarea>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="item_base_price" class="form-label">Base Price</label>
+                        <input type="text" class="form-control" id="item_base_price" readonly>
+                    </div>
+                    <div class="col">
+                        <label for="item_qty_unit" class="form-label">Quantity Unit</label>
+                        <input type="text" class="form-control" id="item_qty_unit" readonly>
+                    </div>
+                </div>                
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div></div>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const btnAddToCart = document.getElementById('btnAddToCartFinal');
+    const btnDetailAddToCart = document.getElementById('btnDetailAddToCart');
+    const btnViewDetails = document.getElementById('btnViewDetails');
+    var table = null;
+    
+    const formAddToCart = document.getElementById('formAddToCart');
+
+    const btnMinusQty = document.getElementById('btnMinusQty');
+    const btnPlusQty = document.getElementById('btnPlusQty');
+    const btnMinus10Qty = document.getElementById('btnMinus10Qty');
+    const btnPlus10Qty = document.getElementById('btnPlus10Qty');
+
+    const operations = {{ operations|tojson }};
+
+    var _temp_price = [];
+    var _temp_units = [];
+
+    $(document).ready(function() 
+    {
+        table = $('#data').DataTable(
+        {
+            ajax: 
+            {
+                url: "/api/items/grouped",
+                dataSrc: "",
+                type: "GET"
+            },
+            columns: 
+            [
+                { data: "category" }, // 0
+                { 
+                    data: null, // 1
+                    render: function(data, type, row) 
+                    {
+                        return row.brand + ' ' + row.name;
+                    }
+                },
+                { 
+                    data: null, // 2
+                    render: function(data, type, row) 
+                    {
+                        if (type === 'display' || type === 'filter')
+                        {
+                            if (row.min_price == row.max_price)
+                                return formatCurrency(row.min_price);
+                            else
+                                return `${formatCurrency(row.min_price)} - ${formatCurrency(row.max_price)}`;
+                        }
+                        
+                        return row.min_price;
+                    }
+                },
+                {
+                    data: null, // 3
+                    render: function(data, type, row) 
+                    {
+                        return `<button type="button" class="btn btn-sm btn-primary" id="btnAddToCart_${row.brand}_${row.name}"><i class="fas fa-cart-plus"></i> Add to Cart</button>`;
+                    }
+                },
+                { 
+                    data: 'validated', // 4
+                    render: function(data, type, row) 
+                    {
+                        if (data == true)
+                            return `<span class="badge bg-success">Validated</span>`;
+                        else
+                            return `<span class="badge bg-danger">Non-validated</span>`;
+                    }
+                },
+                { data: "brand" }, // 5
+                { data: "name" }, // 6
+                { data: 'min_price' }, // 7
+                { data: 'max_price' } // 8
+            ],
+            columnDefs: 
+            [
+                { visible: false, targets: [4, 5, 6, 7, 8] },
+                { searchPanes: { show: true }, targets: [0, 4, 5] },
+                { searchPanes: { show: false }, targets: [1, 2, 3, 6, 7, 8] },
+                { className: 'dt-center', targets: [0, 3] }
+            ],
+            order: [[0, 'asc'], [1, 'asc']],
+            fixedHeader: true,
+            language: 
+            {
+                searchBuilder: 
+                {
+                    button: 
+                    {
+                        0: 'Advanced Search',
+                        _: 'Advanced Search (%d)'
+                    },
+                    title:
+                    {
+                        _: 'Advanced Search (%d)',
+                        0: 'Advanced Search'
+                    },
+                    data: 'Item'
+                }
+            },
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            layout: 
+            {
+                top2Start: 'info',
+                top2End: 
+                {
+                    buttons: 
+                    [
+                        {
+                            extend: 'colvis',
+                            text: 'Columns',
+                            columns: [0, 1, 2, 3]
+                        },
+                        {
+                            extend: 'collection',
+                            text: 'Export…',
+                            buttons:
+                            [
+                                {
+                                    extend: 'excelHtml5',
+                                    text: 'Excel',
+                                    autoFilter: true,
+                                    filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    sheetName: 'Network Clients',
+                                    exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] }
+                                },
+                                {
+                                    extend: 'pdfHtml5',
+                                    text: 'PDF',
+                                    filename: `Toku_Items_List_${new Date().toISOString().slice(0, 10)}`,
+                                    download: 'open',
+                                    messageBottom: `Exported on ${new Date().toISOString().slice(0, 10)}. Generated by JACITA Toku.`,
+                                    pageSize: 'A4',
+                                    orientation: 'landscape',
+                                    exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7] }
+                                }
+                            ]
+                        },
+                        {
+                            extend: 'searchBuilder',
+                            config: { columns: [2, 3, 4, 5, 6] }
+                        },
+                        {
+                            text: 'Refresh',
+                            attr:  { id: 'btnRefresh' },
+                            action: function (e, dt, node, config) 
+                            {
+                                const btnRefresh = document.getElementById('btnRefresh');
+                                btnRefresh.disabled = true;
+                                btnRefresh.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+
+                                displayToast('Data Refresh', 'Refreshing data from the server...', 'info');
+                                dt.searchPanes.clearSelections();
+                                
+                                dt.ajax.reload(function() 
+                                {
+                                    setTimeout(() => dt.searchPanes.rebuildPane(), 2000);
+
+                                    btnRefresh.disabled = false;
+                                    btnRefresh.innerHTML = 'Refresh';
+
+                                    displayToast('Data Refresh', 'Data refreshed successfully.');
+                                });
+                            }
+                        }              
+                    ]
+                },
+                top1: { searchPanes: { show: true, initCollapsed: true, cascadePanes: true } },
+                bottomStart: null,
+                bottomEnd: 'paging',
+            }
+        });
+        
+        if (!operations.includes('item_validated/update_bulk') && !operations.includes('item_validated/delete_bulk'))
+            table.columns([0]).visible(false);
+    });
+
+    function resetForm(item_id = null)
+    {
+        $('#cart_qty').val(1);
+        $('#cart_remarks').val('');
+    }
+
+    async function populateAddToCartModal(item_brand, item_name)
+    {
+        const formData = new FormData();
+        formData.append('brand', item_brand);
+        formData.append('name', item_name);
+
+        const response = await fetch('/api/items/grouped/variants', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (response.ok)
+        {
+            $('#cart_item').val(`${item_brand} ${item_name}`);
+
+            if (data.length == 1)
+            {
+                if (data[0].variant == null || data[0].variant == '')
+                    $('#items').append(`<option value="${data[0].id}">This item has no variants</option>`);
+                else
+                    $('#items').append(`<option value="${data[0].id}">${data[0].variant}</option>`);
+
+                $('#items').prop('disabled', true);
+                $('#cart_price').val(formatCurrency(data[0].base_price));
+                $('#qty_update_qty_unit').text(data[0].qty_unit.unit);
+
+                return;
+            }
+
+            data.forEach((variant) => 
+            {
+                $('#items').append(`<option value="${variant.id}">${variant.variant}</option>`);
+                _temp_price[variant.id] = variant.base_price;
+                _temp_units[variant.id] = variant.qty_unit.unit;
+            });
+
+            $('#items').prop('disabled', false);
+            $('#cart_price').val(formatCurrency(_temp_price[data[0].id]));
+            $('#qty_update_qty_unit').text(_temp_units[data[0].id]);
+        }
+        else
+        {
+            displayPopupAlert(data.error, data.details, 'error');
+        }
+    }
+
+    // Add to cart button handler
+    $('#data').on('click', 'button', function() 
+    {
+        if (this.id.startsWith('btnAddToCart_') == false)
+            return;
+
+        const brand = this.id.split('_')[1];
+        const name = this.id.split('_')[2];
+        const item = $('#data').DataTable().row((idx, data) => data.brand == brand && data.name == name).data();
+        
+        populateAddToCartModal(item.brand, item.name);
+        
+        $('#modalAddToCart').modal('show');
+    });
+
+    // View details button handler
+    btnViewDetails.addEventListener('click', async function()
+    {
+        const id = $('#items').val();
+        const response = await fetch(`/api/item/${id}?human_readable=true`, { method: 'GET' });
+        const data = await response.json();
+
+        // Preformat Date
+        const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        data.created_date = new Date(data.created_date).toLocaleString("en-GB", DATE_OPTIONS);
+        data.modification_date = new Date(data.modification_date).toLocaleString("en-GB", DATE_OPTIONS);
+
+        // Item Validation
+        if (data.validated == false)
+        {
+            $('#item_validated').html(`<i class="fa-solid fa-xmark"></i> Non-validated`);
+            $('#item_validated').removeClass('bg-success');
+            $('#item_validated').addClass('bg-danger');
+
+            if (operations.includes('item_nonvalidated/update'))
+                $('#btnEditItem').show();
+            else
+                $('#btnEditItem').hide();
+        }
+        else
+        {
+            $('#item_validated').html(`<i class="fa-solid fa-check-double"></i> Validated`);
+            $('#item_validated').removeClass('bg-danger');
+            $('#item_validated').addClass('bg-success');
+
+            if (operations.includes('item_validated/update'))
+                $('#btnEditItem').show();
+            else
+                $('#btnEditItem').hide();
+        }
+
+        // Item Metadata
+        $('#item_id').val(data.id);
+        $('#item_category').val(data.category);
+        $('#item_created_at').val(data.created_date);
+        $('#item_created_by').val(data.created_by);
+        $('#item_modification_at').val(data.modification_date);
+        $('#item_modified_by').val(data.modification_by);
+
+        // Item Information
+        $('#item_brand').val(data.brand);
+        $('#item_name').val(data.name);
+        $('#item_variant').val(data.variant);
+        $('#item_base_price').val(formatCurrency(data.base_price));
+        $('#item_qty_unit').val(data.qty_unit);
+
+        if (data.description == null || data.description == '')
+        {
+            $('#item_description').val('No description provided.');
+            $('#item_description').addClass('text-muted');
+            $('#item_description').attr('rows', 1);
+        }
+        else
+        {
+            $('#item_description').val(data.description);
+            $('#item_description').removeClass('text-muted');
+            $('#item_description').attr('rows', 3);
+        }
+
+        $('#modalItemDetails').modal('show');
+    });
+
+    // Select item variant change event handler
+    $('#items').on('change', function() 
+    {
+        const item_id = $('#items').val();
+        $('#cart_price').val(formatCurrency(_temp_price[item_id]));
+        $('#qty_update_qty_unit').text(_temp_units[item_id]);
+    });
+
+    // Add to cart close event handler
+    $('#modalAddToCart').on('hidden.bs.modal', function() 
+    {
+        const select = document.getElementById('items');
+        select.innerHTML = '';
+
+        _temp_price = [];
+        _temp_units = [];
+
+        resetForm();
+    });
+
+    // Add to cart finalizer button handler
+    formAddToCart.addEventListener('submit', async (event) =>
+    {
+        event.preventDefault();
+        
+        const order_id = "{{ data.active_order }}";
+        const item_id = $('#items').val();
+        const qty = parseInt($('#cart_qty').val());
+        const remarks = $('#cart_remarks').val();
+
+        if (isNaN(qty))
+        {
+            displayPopupAlert('Quantity error', 'Quantity must be a number.', 'error');            
+            return;
+        }
+
+        if (order_id == null)
+        {
+            displayPopupAlert('Operation error', 'No active order found. Please create a new order.', 'error');
+            return;
+        }
+
+        btnAddToCart.disabled = true;
+        btnAddToCart.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding to Cart...';
+
+        // Convert the collected variables into a Form Data object
+        const formData = new FormData();
+        formData.append('item_id', item_id);
+        formData.append('quantity', qty);
+        formData.append('remarks', remarks);
+
+        const response = await fetch(`/api/order/${order_id}/item`, 
+        {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        $('#modalAddToCart').modal('hide');
+        
+        if (response.ok)
+        {
+            displayToast('Operation success', data.message);
+            resetForm(item_id);
+            updateNavbarCart('{{ data.active_order }}');
+        }
+        else
+        {
+            displayPopupAlert(data.error, data.details, 'error');
+        }
+    
+        btnAddToCart.disabled = false;
+        btnAddToCart.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Order';
+    });
+
+    // Quantity Manipulation
+    btnMinusQty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+
+        if (qty == 1)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be less than 1.', 'error');
+
+        qtyInput.val(qty - 1).trigger('change');
+    });
+
+    btnPlusQty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+
+        if (qty == 100)
+            displayPopupAlert('Quantity Error', 'Quantity cannot be more than 100.', 'error');
+            
+        qtyInput.val(qty + 1).trigger('change');
+    });
+
+    btnMinus10Qty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+
+        if (qty == 1)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be less than 1.', 'error');
+
+        qty = Math.max(qty - 10, 1);
+        qtyInput.val(qty).trigger('change');
+    });
+
+    btnPlus10Qty.addEventListener('click', function() 
+    {
+        const qtyInput = $('#cart_qty');
+        let qty = parseInt(qtyInput.val());
+    
+        if (qty >= 100)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be more than 100.', 'error');
+    
+        qty = Math.min(qty + 10, 100);
+        qtyInput.val(qty).trigger('change');
+    });
+</script>
+{% endblock %}

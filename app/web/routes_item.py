@@ -14,6 +14,12 @@ from helper.endpoint import inject_allowed_operations, check_page_permission, ch
 @inject_allowed_operations
 def page_items_view_all(user_operations):
     return render_template('items/view_all.html', use_datatables = True, title = "Items", operations = user_operations)
+
+@web.route('/items/grouped')
+@check_login
+@inject_allowed_operations
+def page_items_view_grouped(user_operations):
+    return render_template('items/view_grouped.html', use_datatables = True, title = "Items", operations = user_operations)
     
 @web.route('/items/add')
 @check_login
