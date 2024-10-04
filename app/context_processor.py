@@ -23,4 +23,4 @@ def inject_session_data():
     for key in session_data_keys:
         data[key] = session.get(key, None)
 
-    return { 'data': data, 'navbar': navbar}
+    return { 'data': data, 'navbar': navbar }
