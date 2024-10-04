@@ -10,7 +10,7 @@ from app.models.orders import Orders
 from app.models.order_items import OrderItems, OrderNonvalItems
 from app.models.items import Items, NonvalItems
 from helper.core import generate_order_id
-from helper.endpoint import HTTPStatus, check_fields
+from helper.endpoint import HTTPStatus, check_fields, check_api_permission, check_api_permissions
 from helper.status import OrderStatusTransitionError
 
 def calculateTotal(orders):
@@ -56,6 +56,7 @@ def api_get_order(order_id):
     return jsonify(order.to_dict()), HTTPStatus.OK
 
 @api.route('/order', methods = ['POST'])
+@check_api_permission('order/create')
 def api_create_order():
     check_field = check_fields(request, 'order/create')
     if not check_field['pass']:
@@ -84,6 +85,7 @@ def api_create_order():
     return jsonify({ 'message': 'Order created successfully', 'order_details': order.to_dict() }), HTTPStatus.CREATED
 
 @api.route('/order/<string:order_id>', methods = ['PATCH'])
+@check_api_permission('order/update')
 def api_update_order(order_id):
     check_field = check_fields(request, 'order/update')
     if not check_field['pass']:
@@ -107,6 +109,7 @@ def api_update_order(order_id):
     return jsonify({ 'message': 'Order updated successfully', 'order_details': order.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>', methods = ['DELETE'])
+@check_api_permission('order/delete')
 def api_delete_order(order_id):
     order = Orders.query.get(order_id)
     
@@ -144,6 +147,7 @@ def api_get_order_total(order_id):
     return jsonify({ 'total': total }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/submit', methods = ['POST'])
+@check_api_permission('order/submit')
 def api_submit_order(order_id):
     order = Orders.query.get(order_id)
     old_order = copy.deepcopy(order)
@@ -163,6 +167,7 @@ def api_submit_order(order_id):
     return jsonify({ 'message': 'Order submitted successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/cancel', methods = ['POST'])
+@check_api_permission('order/cancel')
 def api_cancel_order(order_id):
     order = Orders.query.get(order_id)
     old_order = copy.deepcopy(order)
@@ -182,6 +187,7 @@ def api_cancel_order(order_id):
     return jsonify({ 'message': 'Order cancelled successfully', 'order_details': order.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/approve/<string:by>', methods = ['POST'])
+@check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
 def api_approve_order(order_id, by):
     check_field = check_fields(request, 'order/approve')
     if not check_field['pass']:
@@ -208,6 +214,7 @@ def api_approve_order(order_id, by):
     return jsonify({ 'message': 'Order approved successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/reject/<string:by>', methods = ['POST'])
+@check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
 def api_reject_order(order_id, by):
     check_field = check_fields(request, 'order/reject')
     if not check_field['pass']:
@@ -231,6 +238,7 @@ def api_reject_order(order_id, by):
     return jsonify({ 'message': 'Order rejected successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/fulfill', methods = ['POST'])
+@check_api_permission('order/fulfill')
 def api_fulfill_order(order_id):
     order = Orders.query.get(order_id)
     old_order = copy.deepcopy(order)
@@ -271,6 +279,7 @@ def api_get_total_order(period, division_id):
     return jsonify({ 'total': total }), HTTPStatus.OK
 
 @api.route('/order/<string:period>/<string:division_id>/approve/<string:by>', methods = ['POST'])
+@check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
 def api_approve_orders(period, division_id, by):
     check_field = check_fields(request, 'order/approve')
     if not check_field['pass']:
@@ -307,6 +316,7 @@ def api_approve_orders(period, division_id, by):
     return jsonify({ 'message': 'Orders approved successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:period>/<string:division_id>/reject/<string:by>', methods = ['POST'])
+@check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
 def api_reject_orders(period, division_id, by):
     check_field = check_fields(request, 'order/reject')
     if not check_field['pass']:
@@ -343,6 +353,7 @@ def api_reject_orders(period, division_id, by):
     return jsonify({ 'message': 'Orders rejected successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:period>/<string:division_id>/fulfill', methods = ['POST'])
+@check_api_permission('order/fulfill')
 def api_fulfill_orders(period, division_id):
     period = f"{period[:4]}/{period[4:]}"
     orders = Orders.query.filter_by(period = period, division_id = division_id).all()
