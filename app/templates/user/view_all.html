@@ -53,8 +53,8 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col">
-                            <label for="division" class="form-label">Division<span class="text-danger">*</span></label>
-                            <select class="form-select" id="division" name="division" required>
+                            <label for="division_id" class="form-label">Division<span class="text-danger">*</span></label>
+                            <select class="form-select" id="division_id" name="division_id" required>
                                 {% for division in divisions %}
                                 <option value="{{ division.id }}">{{ division.id }} - {{ division.full_name }}</option>
                                 {% endfor %}
