@@ -71,11 +71,11 @@
                 <div class="accordion mt-4" id="accordion">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingOne">
-                            <button class="accordion-button collapsed bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}" aria-expanded="false" aria-controls="childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}">
+                            <button class="accordion-button collapsed bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#childOrderContainer_{{ period | replace('/', '') }}{{ orders[0].division_id }}" aria-expanded="false" aria-controls="childOrderContainer_{{ period | replace('/', '') }}{{ orders[0].division_id }}">
                                 Child Orders
                             </button>
                         </h2>
-                        <div id="childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}" class="accordion-collapse collapse m-3" aria-labelledby="childOrderContainer_{{ period | replace('/', '') }}_{{ orders[0].division_id }}">
+                        <div id="childOrderContainer_{{ period | replace('/', '') }}{{ orders[0].division_id }}" class="accordion-collapse collapse m-3" aria-labelledby="childOrderContainer_{{ period | replace('/', '') }}{{ orders[0].division_id }}">
                             <div id="accordion-body">
                                 <table class="table table-striped">
                                     <thead>
@@ -108,6 +108,28 @@
     {% else %}
         <p>No active orders to administer for this period.</p>
     {% endif %}
+    </div>
+</div>
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectionModalLabel">Reject Orders Collection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are rejecting <span id="rejectionCount"></span> orders. Please provide a reason for the rejection.</p>
+                <form id="rejectionForm">
+                    <input type="hidden" name="rejectionOrderID" id="rejectionOrderID" value="">
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Rejection Reason</label>
+                        <textarea class="form-control" id="rejectionReason" name="rejectionReason" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger float-end"><i class="fa-solid fa-times"></i> Reject Collection</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -188,9 +210,10 @@
     btnRejectOrder.forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.id.split('_')[1];
-            const formData = new FormData();
-            formData.append('username', '{{ data.user }}');
-            updateOrderStatus('reject/finance', id, formData);
+            const childOrders = document.querySelectorAll(`#childOrderContainer_${id.replace('/', '')} tbody tr`);
+            $('#rejectionCount').text(childOrders.length);
+            $('#rejectionOrderID').val(id);
+            $('#rejectionModal').modal('show');
         });
     });
 
@@ -200,6 +223,18 @@
             const formData = new FormData();
             updateOrderStatus('fulfill', id);
         });
+    });
+
+    $('#rejectionForm').submit(async (event) => 
+    {
+        event.preventDefault();
+
+        const id = $('#rejectionOrderID').val();
+        const formData = new FormData()
+        formData.append('username', '{{ data.user }}');
+        formData.append('reason', $('#rejectionReason').val());
+        
+        updateOrderStatus('reject/finance', id, formData);
     });
 </script>
 {% endblock %}

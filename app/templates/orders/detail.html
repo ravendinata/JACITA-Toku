@@ -352,6 +352,27 @@
         </div>
     </div>
 </div>
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectionModalLabel">Reject Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are rejecting this order. Please provide a reason for the rejection.</p>
+                <form id="rejectionForm">
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Rejection Reason</label>
+                        <textarea class="form-control" id="rejectionReason" name="rejectionReason" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger float-end"><i class="fa-solid fa-times"></i> Reject This Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -709,21 +730,24 @@
     {
         btnRejectOrder.addEventListener('click', function() 
         {
-            displayPopupConfirm('Reject Order', 'Are you sure you want to reject this order? This action cannot be undone.',
-            confirmCallback = async () =>
-            {
-                const formData = new FormData();
-                formData.append('username', '{{ data.user }}');
-                if ("{{ can_do['order/approve_finance'] }}" == "True")
-                    await updateOrderStatus('reject/finance', formData);
-                else if ("{{ can_do['order/approve_division'] }}" == "True")
-                    await updateOrderStatus('reject/division', formData);
-            },
-            denyCallback = () => {},
-            confirmText = 'Yes, reject this order',
-            denyText = 'No, keep this order');
+            $('#rejectionModal').modal('show');
         });
     }
+
+    $('#rejectionForm').submit(async (event) =>
+    {
+        console.info('Rejecting Order');
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append('username', '{{ data.user }}');
+        formData.append('reason', $('#rejectionReason').val());
+
+        if ("{{ can_do['order/approve_finance'] }}" == "True")
+            await updateOrderStatus('reject/finance', formData);
+        else if ("{{ can_do['order/approve_division'] }}" == "True")
+            await updateOrderStatus('reject/division', formData);
+    });
 
     // Update Quantity Button
     $('#data').on('click', 'button[id^="btnUpdateQty_"]', function() 
