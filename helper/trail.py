@@ -19,11 +19,16 @@ def log_creation(object, user):
     date_today = datetime.now().strftime("%Y%m%d")
     timestamp = str(datetime.now().isoformat())
 
+    if hasattr(object, 'id'):
+        id = object.id
+    elif hasattr(object, 'username'):
+        id = object.username
+
     data = {
         'timestamp': timestamp,
         'user': user,
         'type': object.__class__.__name__,
-        'object_id': object.id
+        'object_id': id
     }
 
     with open(f"{OUTPUT_DIR}/{date_today}_creations.tokulog", 'a') as f:
