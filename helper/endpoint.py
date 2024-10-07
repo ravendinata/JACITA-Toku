@@ -21,7 +21,7 @@ class HTTPStatus:
 required_fields = {
     'order/create': [ 'period', 'division_id', 'created_by' ],
     'order/approve': [ 'username' ],
-    'order/reject': [ 'username' ],
+    'order/reject': [ 'username', 'reason' ],
     'item/create': [ 'category_id', 'brand', 'name', 'base_price', 'qty_unit_id', 'created_by' ],
     'item/create_bulk': [ 'category_id[]', 'brand[]', 'name[]', 'base_price[]', 'qty_unit_id[]', 'created_by' ],
     'nonvalitem/create': [ 'category_id', 'brand', 'name', 'base_price', 'created_by' ],
