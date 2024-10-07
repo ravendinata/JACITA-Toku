@@ -4,6 +4,7 @@ from flask import render_template, session
 from sqlalchemy import asc, desc, or_
 
 from app.web import web
+from app.models.logs import OrderRejectLog
 from app.models.orders import Orders
 from app.models.user import User
 from helper.auth import check_login
@@ -142,7 +143,11 @@ def page_order_view(id):
     if order.status == OrderStatus.FINANCE_APPROVED:
         can_do['order/fulfill'] = check_permission('order/fulfill')
 
-    return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, can_do = can_do)
+    if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
+        latest_rejection = OrderRejectLog.query.filter(OrderRejectLog.order_id == id).order_by(desc(OrderRejectLog.date)).first()
+
+    return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, can_do = can_do, 
+                           reject_reason = latest_rejection.reason if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED] else None)
 
 @web.route('/order/<string:period>/<int:division_id>')
 @check_login

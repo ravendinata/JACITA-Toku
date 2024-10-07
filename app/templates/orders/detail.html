@@ -109,6 +109,14 @@
                                 <input type="text" class="form-control" id="finance_approved_at" name="finance_approved_at" readonly>
                             </div>
                         </div>
+                        {% if order.status == 2 or order.status == 6 %}
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="reject_reason">Rejection Reason</label>
+                                <textarea class="form-control" id="reject_reason" name="reject_reason" readonly>{{ reject_reason }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
                     </form>
                 </div>
             </div>
