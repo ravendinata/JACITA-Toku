@@ -35,9 +35,13 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navItems" role="button" data-bs-toggle="dropdown" aria-expanded="false">Items</a>
                         <ul class="dropdown-menu" aria-labelledby="navItems">
-                            <li><a class="dropdown-item" href="/items/grouped">Catalogue by Product Line</a></li>
+                            <li><h6 class="dropdown-header">Catalogue</h6></li>
+                            <li><a class="dropdown-item" href="/items/grouped">Grouped By Product Line</a></li>
+                            <li><a class="dropdown-item" href="/items">All Items (Individual SKUs)</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/items">All Items</a></li>
+                            <li><h6 class="dropdown-header">Administration</h6></li>
+                            <li><a class="dropdown-item" href="/items/add">Add Item</a></li>
+                            <li><a class="dropdown-item" href="/items/bulk_add">Bulk Add Items</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -49,6 +53,16 @@
                     {% if 'order_administration' in navbar %}
                     <li class="nav-item">
                         <a class="nav-link" href="/orders/administration">Order Administration</a>
+                    </li>
+                    {% endif %}
+                    {% if 'order_history' in navbar %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders/history">All Orders History</a>
+                    </li>
+                    {% endif %}
+                    {% if 'users' in navbar %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="/users">Users</a>
                     </li>
                     {% endif %}
                 </ul>
