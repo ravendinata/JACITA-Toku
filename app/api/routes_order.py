@@ -306,17 +306,22 @@ def api_approve_orders(period, division_id, by):
             return jsonify({ 'error': 'Some orders not submitted', 
                             'details': f"Orders {', '.join(reject_ids)} are not yet submitted or have gone beyond submission level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
 
+    old_orders = []
     for order in orders:
-        try:
-            old_order = copy.deepcopy(order)
-            order.approve(by, request.form.get('username'))
-            db.session.commit()
-            trail.log_update(order, old_order, request.form.get('username'))
-        except OrderStatusTransitionError as e:
-            return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
-        except Exception as e:
-            return jsonify({ 'error': 'Error while approving order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+        old_order = copy.deepcopy(order)
+        old_orders.append(old_order)
+        order.approve(by, request.form.get('username'))
     
+    try:
+        db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
+    except Exception as e:
+        return jsonify({ 'error': 'Error while approving order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    for order, old_order in zip(orders, old_orders):
+        trail.log_update(order, old_order, request.form.get('username'))
+
     return jsonify({ 'message': 'Orders approved successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:period>/<string:division_id>/reject/<string:by>', methods = ['POST'])
@@ -379,16 +384,21 @@ def api_fulfill_orders(period, division_id):
         return jsonify({ 'error': 'Some orders not approved at finance level', 
                         'details': f"Orders {', '.join(reject_ids)} are not approved at finance level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
 
+    old_orders = []
     for order in orders:
-        try:
-            old_order = copy.deepcopy(order)
-            order.fulfill()
-            db.session.commit()
-            trail.log_update(order, old_order, session.get('user'))
-        except OrderStatusTransitionError as e:
-            return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
-        except Exception as e:
-            return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+        old_order = copy.deepcopy(order)
+        old_orders.append(old_order)
+        order.fulfill()
+    
+    try:
+        db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
+    except Exception as e:
+        return jsonify({ 'error': 'Error while fulfilling order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    for order, old_order in zip(orders, old_orders):
+        trail.log_update(order, old_order, session.get('user'))
     
     return jsonify({ 'message': 'Orders fulfilled successfully' }), HTTPStatus.OK
 
