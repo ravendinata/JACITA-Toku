@@ -6,26 +6,164 @@
     <p>JACITA Toku is an internal application for managing and creating procurement draft orders.</p>
 </div>
 <hr>
-<div class="container-md">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Create Draft Order</h5>
-                    <p class="card-text">Create a new draft order for procurement.</p>
-                    <a href="#" class="btn btn-primary">Create Order</a>
+<div class="container-fluid" style="margin-bottom: 48px;">
+    <h1>Hello, {{ data.user }}</h1>
+    <small class="text-muted">Current Period: {{ current_period.short }} ({{ current_period.long}})</small>
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h1 class="display-5"><i class="fa-solid fa-book-bookmark"></i></h1>
+                            <h5 class="card-title">Grouped Catalogue</h5>
+                            <p class="card-text">View a catalogue of all items available for procurement grouped by the product line.</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/items/grouped" class="btn btn-primary float-end"><i class="fa-solid fa-book-bookmark"></i> View Grouped Catalogue</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h1 class="display-5"><i class="fa-solid fa-book"></i></h1>
+                            <h5 class="card-title">All SKU Catalogue</h5>
+                            <p class="card-text">View a catalogue of all individual items available for procurement without grouping. This shows all variants of a product without grouping.</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/items" class="btn btn-primary float-end"><i class="fa-solid fa-book"></i> View All SKUs</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h1 class="display-5"><i class="fa-solid fa-list"></i></h1>
+                            <h5 class="card-title">My Orders</h5>
+                            <p class="card-text">View all your orders (past and current). This will only show your own orders.</p>
+                            <small class="text-muted fst-italic">
+                                If you are a Division Leader and want to see your division's orders, you need to go to the Order Administration page.
+                            </small>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/orders" class="btn btn-primary float-end"><i class="fa-solid fa-list"></i> View My Orders</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h1 class="display-5"><i class="fa-solid fa-user"></i></h1>
+                            <h5 class="card-title">My Profile</h5>
+                            <p class="card-text">View and update your profile information.</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/user/profile" class="btn btn-primary float-end"><i class="fa-solid fa-user"></i> View My Profile</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    {% if 'order_administration' in navbar %}
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h1 class="display-5"><i class="fa-solid fa-list-check"></i></h1>
+                            <h5 class="card-title">Administer Orders</h5>
+                            <p class="card-text">Administer (manage, approve, reject, and fulfill) orders in the system.</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/orders/administration" class="btn btn-primary float-end"><i class="fa-solid fa-list-check"></i> Order Administration</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                {% if 'order_history' in navbar %}
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h1 class="display-5"><i class="fa-solid fa-clock-rotate-left"></i></h1>
+                            <h5 class="card-title">Order History</h5>
+                            <p class="card-text">View all orders in the system up to the current date.</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/orders/history" class="btn btn-primary float-end"><i class="fa-solid fa-clock-rotate-left"></i> View Order History</a>
+                        </div>
+                    </div>
+                {% endif %}
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">View Draft Orders</h5>
-                    <p class="card-text">View all draft orders created.</p>
-                    <a href="#" class="btn btn-primary">View Orders</a>
+                    <h5 class="card-title">Your active order</h5>
+                    {% if data.active_order %}
+                    <p class="card-text">ID: {{ data.active_order }}</p>
+                    <a href="/order/{{ data.active_order }}" class="btn btn-success"><i class="fa-solid fa-eye"></i> View Order</a>
+                    <hr>
+                    <p>
+                        <b>Order Details</b><br>
+                        Status: <span id="orderStatus"></span><br>
+                        Total Value: <span id="orderTotal"></span>
+                    </p>
+                    <hr>
+                    <p>
+                        <b>Order Items</b><br>
+                        <ul id="orderItems"></ul>
+                    </p>
+                    {% else %}
+                    <p class="card-text">You don't have any active order.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const orderStatus = document.getElementById('orderStatus');
+    const orderTotal = document.getElementById('orderTotal');
+    const orderItems = document.getElementById('orderItems');
+
+    async function getStatus() 
+    {
+        const response = await fetch('/api/order/{{ data.active_order }}', { method: 'GET' });
+        const data = await response.json();
+        orderStatus.innerText = data.status.text;
+    }
+
+    async function getTotal() 
+    {
+        const response = await fetch('/api/order/{{ data.active_order }}/total', { method: 'GET' });
+        const data = await response.json();
+        orderTotal.innerText = formatCurrency(data.total);
+    }
+    
+    async function getItems() 
+    {
+        const response = await fetch('/api/order/{{ data.active_order }}/items', { method: 'GET' });
+        const data = await response.json();
+
+        if (data.length === 0) {
+            const li = document.createElement('li');
+            li.innerText = 'No items in this order.';
+            orderItems.appendChild(li);
+            return;
+        }
+
+        data.forEach(item => {
+            const li = document.createElement('li');
+            li.innerText = `${item.quantity} x ${item.name} - ${formatCurrency(item.sub_total)}`;
+            orderItems.appendChild(li);
+        });
+    }
+
+    getStatus();
+    getTotal();
+    getItems();
+</script>
 {% endblock %}
