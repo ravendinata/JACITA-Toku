@@ -126,6 +126,7 @@ def log_login(user, ip_address):
             'operation': 'login',
             'ip_address': ip_address
         }))
+        f.write("\n")
 
 def log_logout(user):
     """
@@ -142,6 +143,7 @@ def log_logout(user):
             'user': user,
             'operation': 'logout'
         }))
+        f.write("\n")
 
 def log_system_event(module, event):
     """
@@ -159,3 +161,4 @@ def log_system_event(module, event):
             'module': module,
             'event': event
         }))
+        f.write("\n")
