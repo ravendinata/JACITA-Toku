@@ -1,4 +1,5 @@
 import copy
+from uuid import uuid4
 
 from flask import jsonify, request, session
 from sqlalchemy import desc, or_
@@ -9,6 +10,7 @@ from app.extensions import db
 from app.models.orders import Orders
 from app.models.order_items import OrderItems, OrderNonvalItems
 from app.models.items import Items, NonvalItems
+from app.models.logs import OrderRejectLog
 from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission, check_api_permissions
 from helper.status import OrderStatusTransitionError
@@ -228,6 +230,8 @@ def api_reject_order(order_id, by):
 
     try:
         order.reject(by, request.form.get('username'))
+        log = OrderRejectLog(order_id = order_id, reason = request.form.get('reason'), user = request.form.get('username'), level = by, id = str(uuid4()))
+        db.session.add(log)
         db.session.commit()
     except OrderStatusTransitionError as e:
         return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
@@ -339,16 +343,28 @@ def api_reject_orders(period, division_id, by):
             return jsonify({ 'error': 'Some orders not submitted', 
                             'details': f"Orders {', '.join(reject_ids)} are not yet submitted or have gone beyond submission level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
 
+    logs = []
+    old_orders = []
     for order in orders:
-        try:
-            old_order = copy.deepcopy(order)
-            order.reject(by, request.form.get('username'))
-            db.session.commit()
-            trail.log_update(order, old_order, request.form.get('username'))
-        except OrderStatusTransitionError as e:
-            return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
-        except Exception as e:
-            return jsonify({ 'error': 'Error while rejecting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+        old_order = copy.deepcopy(order)
+        old_orders.append(old_order)
+        
+        order.reject(by, request.form.get('username'))
+
+        log = OrderRejectLog(order_id = order.id, reason = request.form.get('reason'), user = request.form.get('username'), level = by, id = str(uuid4()))
+        logs.append(log)
+    
+    try:
+        db.session.add_all(logs)
+        db.session.commit()
+    except OrderStatusTransitionError as e:
+        return jsonify({ 'error': 'Forbidden transition', 'details': f"{e}" }), HTTPStatus.BAD_REQUEST
+    except Exception as e:
+        return jsonify({ 'error': 'Error while rejecting order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    for order, old_order in zip(orders, old_orders):
+        print(order, old_order)
+        trail.log_update(order, old_order, request.form.get('username'))
     
     return jsonify({ 'message': 'Orders rejected successfully' }), HTTPStatus.OK
 
