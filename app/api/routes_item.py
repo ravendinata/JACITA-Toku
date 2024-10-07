@@ -102,7 +102,12 @@ def api_create_bulk_items():
         
         if item.id in [ i.id for i in items ]:
             item.id = generate_item_id(brand, name, jumble_string(variant))
-            print(f"Generated ID for {brand} {name} {variant} (Jumbled): {item.id}")
+            
+            module = "api.item.create_bulk"
+            event_text = f"ID clash! Regenerated ID {brand} {name} {variant} (Jumbled): {item.id}"
+            
+            print(f"[{module}] {event_text}")
+            trail.log_system_event(module, event_text)
         
         items.append(item)
 

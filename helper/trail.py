@@ -137,3 +137,20 @@ def log_logout(user):
             'user': user,
             'operation': 'logout'
         }))
+
+def log_system_event(module, event):
+    """
+    Log a system event to a local log JSON file
+
+    :param event: The event that occurred.
+    :param module: The module that the event occurred in.
+    """
+    date_today = datetime.now().strftime("%Y%m%d")
+    timestamp = str(datetime.now().isoformat())
+
+    with open(f"{OUTPUT_DIR}/{date_today}_system_events.tokulog", 'a') as f:
+        f.write(json.dumps({
+            'timestamp': timestamp,
+            'module': module,
+            'event': event
+        }))

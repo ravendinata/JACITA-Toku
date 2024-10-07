@@ -2,6 +2,7 @@ from functools import wraps
 
 from flask import jsonify, render_template, session
 
+import helper.trail as trail
 from app.models.user import User
 from helper.role import InsufficientPermissionError
 
@@ -172,7 +173,16 @@ def inject_allowed_operations(func):
     def wrapper(*args, **kwargs):
         user = User.query.get(session['user'])
         operations = user.allowed_operations()
-        
-        return func(*args, user_operations = operations, **kwargs)
+
+        try:
+            return func(*args, user_operations = operations, **kwargs)
+        except TypeError:
+            module = "endpoint.inject_allowed_operations"
+            error_text = f"Pre-requisite not met: Function {func.__name__} does not have a user_operations parameter. Please add the parameter to the function to use this decorator."
+            
+            print(f"[{module}] {error_text}")
+            trail.log_system_event(module, error_text)
+            
+            return func(*args, **kwargs)
     
     return wrapper
