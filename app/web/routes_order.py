@@ -201,7 +201,7 @@ def page_division_order_view(period, division_id):
 @check_page_permission('order/fulfill')
 def page_procurement_order_view(period):
     period = f"{period[:4]}/{period[4:]}"
-    orders = Orders.query.filter(Orders.period == period)\
+    orders = Orders.query.filter(Orders.period == period, Orders.status > 6)\
             .order_by(asc(Orders.division_id), desc(Orders.last_modification_date))\
             .all()
     

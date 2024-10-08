@@ -8,7 +8,11 @@
         {% endif %}
         <a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
     </span>
-    <h1 class="mb-3">Procurement View</h1>
+    <h1>Procurement View</h1>
+    <p class="text-muted mb-3">
+        This view only shows orders that are in the <span class="text-success">Finance Approved</span> or <span class="text-success">Fulfilled</span> status.
+        Orders in the any other statuses will not be shown here as they are treated as non-procurable.
+    </p>
     {% if not sync %}
     <div class="alert alert-warning" role="alert">
         <h5><i class="fa-solid fa-exclamation-triangle"></i> Orders in this collection are not in a synchronized state</h5>
@@ -570,7 +574,10 @@
     orderTotals.forEach((orderTotal) => 
     {
         const orderId = orderTotal.id.split('_')[1];
-        getOrderTotal(orderId);
+        if (orderId.includes('/'))
+            getOrderTotal(orderId, 'status=6');
+        else
+            getOrderTotal(orderId);
     });
 
     // View Details Button
