@@ -13,7 +13,7 @@ from app.models.items import Items, NonvalItems
 from app.models.logs import OrderRejectLog
 from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission, check_api_permissions
-from helper.status import OrderStatusTransitionError
+from helper.status import OrderStatusTransitionError, OrderStatus
 
 def calculateTotal(orders):
     total = 0
@@ -157,6 +157,10 @@ def api_submit_order(order_id):
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
     
+    items = OrderItems.query.filter_by(order_id = order_id).all() + OrderNonvalItems.query.filter_by(order_id = order_id).all()
+    if not items:
+        return jsonify({ 'error': 'No items in order', 'details': 'Order must have at least one item to be submitted.' }), HTTPStatus.BAD_REQUEST
+    
     try:
         order.submit()
         db.session.commit()
@@ -274,7 +278,7 @@ def api_get_total_order(period, division_id):
     period = f"{period[:4]}/{period[4:]}"
 
     if status:
-        orders = Orders.query.filter_by(period = period, division_id = division_id, status = status).all()
+        orders = Orders.query.filter_by(period = period, division_id = division_id).filter(Orders.status >= status).all()
     else:
         orders = Orders.query.filter_by(period = period, division_id = division_id).all()
 
@@ -409,13 +413,8 @@ def api_fulfill_orders(period, division_id):
 @api.route('/procurement/<string:period>/total', methods = ['GET'])
 def api_get_total_procurement(period):
     period = f"{period[:4]}/{period[4:]}"
-    status = request.args.get('status')
 
-    if status:
-        orders = Orders.query.filter_by(period = period, status = status).all()
-    else:
-        orders = Orders.query.filter_by(period = period).all()
-
+    orders = Orders.query.filter_by(period = period).filter(Orders.status >= OrderStatus.FINANCE_APPROVED).all()
     total = calculateTotal(orders)
 
     return jsonify({ 'total': total }), HTTPStatus.OK

@@ -352,7 +352,8 @@ def api_remove_combined_order_item(period, division_id, item_id):
 @api.route('/procurement/<string:period>/items', methods = ['GET'])
 def api_get_period_order_items(period):
     period = f"{period[:4]}/{period[4:]}"
-    orders = Orders.query.filter(Orders.period == period).order_by(asc(Orders.division_id)).all()
+
+    orders = Orders.query.filter(Orders.period == period).filter(Orders.status >= OrderStatus.FINANCE_APPROVED).order_by(asc(Orders.division_id)).all()
     if len(orders) == 0:
         return jsonify({ 'error': 'No orders found' }), HTTPStatus.NOT_FOUND
 
