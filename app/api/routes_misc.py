@@ -2,7 +2,7 @@ from flask import jsonify, request, session
 
 from app.api import api
 from app.models.misc import Category, QuantityUnit
-from helper.core import generate_item_id
+from helper.core import generate_item_id, generate_order_id
 from helper.endpoint import HTTPStatus
 
 # ===============
@@ -37,6 +37,16 @@ def api_generate_item_id():
     id = generate_item_id(brand, name, variant)
 
     return jsonify({ 'id': id, 'brand': brand, 'name': name, 'variant': variant }), HTTPStatus.OK
+
+# Order ID Generator
+@api.route('/helper/generate_order_id', methods = ['POST'])
+def api_generate_order_id():
+    period = request.form.get('period')
+    division_id = request.form.get('division_id')
+
+    id = generate_order_id(period, division_id)
+
+    return jsonify({ 'id': id, 'period': period, 'division_id': division_id }), HTTPStatus.OK
 
 @api.route('helper/test_cookies', methods = ['GET'])
 def api_test_cookies():
