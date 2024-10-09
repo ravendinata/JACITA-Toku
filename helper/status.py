@@ -8,15 +8,16 @@ class OrderStatus:
     FULFILLED = 10          # Order has been fulfilled by procurement. No further action required.
     CANCELLED = 99          # Order has been cancelled and is no longer valid.
 
-class OrderStatusText:
-    PENDING = 'Pending'
-    SUBMITTED = 'Submitted'
-    DIVISION_REJECTED = 'Division Rejected'
-    DIVISION_APPROVED = 'Division Approved'
-    FINANCE_REJECTED = 'Finance Rejected'
-    FINANCE_APPROVED = 'Finance Approved'
-    FULFILLED = 'Fulfilled'
-    CANCELLED = 'Cancelled'
+OrderStatusText = {
+    OrderStatus.PENDING: 'Pending',
+    OrderStatus.SUBMITTED: 'Submitted',
+    OrderStatus.DIVISION_REJECTED: 'Division Rejected',
+    OrderStatus.DIVISION_APPROVED: 'Division Approved',
+    OrderStatus.FINANCE_REJECTED: 'Finance Rejected',
+    OrderStatus.FINANCE_APPROVED: 'Finance Approved',
+    OrderStatus.FULFILLED: 'Fulfilled',
+    OrderStatus.CANCELLED: 'Cancelled'
+}
 
 class OrderStatusTransitionError(Exception):
     """
@@ -43,16 +44,7 @@ def get_order_status_text(status):
     :param status: The status name to get the text representation of.
     :returns: The text representation of the status.
     """
-    return {
-        OrderStatus.PENDING: OrderStatusText.PENDING,
-        OrderStatus.SUBMITTED: OrderStatusText.SUBMITTED,
-        OrderStatus.DIVISION_REJECTED: OrderStatusText.DIVISION_REJECTED,
-        OrderStatus.DIVISION_APPROVED: OrderStatusText.DIVISION_APPROVED,
-        OrderStatus.FINANCE_REJECTED: OrderStatusText.FINANCE_REJECTED,
-        OrderStatus.FINANCE_APPROVED: OrderStatusText.FINANCE_APPROVED,
-        OrderStatus.FULFILLED: OrderStatusText.FULFILLED,
-        OrderStatus.CANCELLED: OrderStatusText.CANCELLED
-    }.get(status, 'Unknown')
+    return OrderStatusText.get(status, 'Unknown')
 
 def can_transition(current, new):
     """

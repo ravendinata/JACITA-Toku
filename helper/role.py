@@ -6,23 +6,24 @@ class Role:
     PROCUREMENT_MANAGER = 30
     SYSTEM = 99
 
+    @staticmethod
     def get_roles():
-        return [
-            { 'id': Role.ADMINISTRATOR, 'text': RoleText.ADMINISTRATOR },
-            { 'id': Role.DIVISION_LEADER, 'text': RoleText.DIVISION_LEADER },
-            { 'id': Role.DIVISION_USER, 'text': RoleText.DIVISION_USER },
-            { 'id': Role.FINANCE_MANAGER, 'text': RoleText.FINANCE_MANAGER },
-            { 'id': Role.PROCUREMENT_MANAGER, 'text': RoleText.PROCUREMENT_MANAGER },
-            { 'id': Role.SYSTEM, 'text': RoleText.SYSTEM }
-        ]
+        roles = []
 
-class RoleText:
-    ADMINISTRATOR = 'Administrator'
-    DIVISION_LEADER = 'Division Leader'
-    DIVISION_USER = 'Division User'
-    FINANCE_MANAGER = 'Finance Manager'
-    PROCUREMENT_MANAGER = 'Procurement Manager'
-    SYSTEM = 'System'
+        for attr in dir(Role):
+            if not attr.startswith('__') and not callable(getattr(Role, attr)):
+                roles.append({ "id": getattr(Role, attr), "text": get_role_text(getattr(Role, attr)) })
+        
+        return roles
+
+RoleText = {
+    Role.ADMINISTRATOR: 'Administrator',
+    Role.DIVISION_LEADER: 'Division Leader',
+    Role.DIVISION_USER: 'Division User',
+    Role.FINANCE_MANAGER: 'Finance Manager',
+    Role.PROCUREMENT_MANAGER: 'Procurement Manager',
+    Role.SYSTEM: 'System'
+}
 
 class InsufficientPermissionError(Exception):
     """
@@ -126,14 +127,7 @@ def get_role_text(role):
     :param role: The role to get the text representation of.
     :returns: The text representation of the role.
     """
-    return {
-        Role.ADMINISTRATOR: RoleText.ADMINISTRATOR,
-        Role.DIVISION_LEADER: RoleText.DIVISION_LEADER,
-        Role.DIVISION_USER: RoleText.DIVISION_USER,
-        Role.FINANCE_MANAGER: RoleText.FINANCE_MANAGER,
-        Role.PROCUREMENT_MANAGER: RoleText.PROCUREMENT_MANAGER,
-        Role.SYSTEM: RoleText.SYSTEM
-    }.get(role, 'Unknown')
+    return RoleText.get(role, 'Unknown')
 
 def check_permission(user, operation):
     """
