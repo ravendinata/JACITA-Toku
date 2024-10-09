@@ -29,18 +29,22 @@ def api_get_items():
 @api.route('/items/validated', methods = ['POST'])
 @check_api_permission('item_validated/create')
 def api_create_item():
-    check_field = check_fields(request, 'item/create')
+    check_field = check_fields(request, 'item_validated/create')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
+    created_by = request.form.get('created_by')
+    if session.get('user') != created_by:
+        return jsonify({ 'error': 'Submitter does not match the current user', 'details': f"User in Form: {created_by}, Session User: {session.get('user')}" }), HTTPStatus.FORBIDDEN
+    
     brand = request.form.get('brand')
     name = request.form.get('name')
     variant = request.form.get('variant')
     base_price = request.form.get('base_price')
     category_id = request.form.get('category_id')
     qty_unit_id = request.form.get('qty_unit_id')
-    created_by = request.form.get('created_by')
     description = request.form.get('description')
+
 
     check_item = Items.query.filter_by(brand = brand, name = name, variant = variant).first()
     if check_item:
@@ -66,11 +70,13 @@ def api_create_item():
 @api.route('/items/validated/bulk', methods = ['POST'])
 @check_api_permission('item_validated/create')
 def api_create_bulk_items():
-    check_field = check_fields(request, 'item/create_bulk')
+    check_field = check_fields(request, 'item_validated/create_bulk')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
     created_by = request.form.get('created_by')
+    if session.get('user') != created_by:
+        return jsonify({ 'error': 'Submitter does not match the current user', 'details': f"User in Form: {created_by}, Session User: {session.get('user')}" }), HTTPStatus.FORBIDDEN
 
     brands = request.form.getlist('brand[]')
     names = request.form.getlist('name[]')
@@ -144,27 +150,18 @@ def api_update_bulk_items():
     old_items = []
 
     for i in range(len(item_ids)):
-        item_id = item_ids[i]
-        brand = brands[i]
-        name = names[i]
-        variant = variants[i]
-        base_price = base_prices[i]
-        category_id = category_ids[i]
-        qty_unit_id = qty_unit_ids[i]
-
-        item = Items.query.get(item_id)
+        item = Items.query.get(item_ids[i])
         if item is None:
-            return jsonify({ 'error': 'Item not found', 'details': f"Item with ID {item_id} not found" }), HTTPStatus.NOT_FOUND
+            return jsonify({ 'error': 'Item not found', 'details': f"Item with ID {item_ids[i]} not found" }), HTTPStatus.NOT_FOUND
         
         old_item = copy.deepcopy(item)
         
-        item.brand = brand
-        item.name = name
-        item.variant = variant
-        item.base_price = base_price
-        item.category_id = category_id
-        item.qty_unit_id = qty_unit_id
-        item.modification_by = username
+        item.brand = brands[i]
+        item.name = names[i]
+        item.variant = variants[i]
+        item.base_price = base_prices[i]
+        item.category_id = category_ids[i]
+        item.qty_unit_id = qty_unit_ids[i]
 
         old_items.append(old_item)
         items.append(item)
@@ -280,7 +277,7 @@ def api_get_nonval_items():
 @api.route('/items/nonvalidated', methods = ['POST'])
 @check_api_permission('item_nonvalidated/create')
 def api_create_nonval_item():
-    check_field = check_fields(request, 'nonvalitem/create')
+    check_field = check_fields(request, 'item_nonvalidated/create')
     if not check_field['pass']:
         return jsonify(check_field), HTTPStatus.BAD_REQUEST
     
@@ -366,14 +363,17 @@ def api_delete_nonval_item(item_id):
 @api.route('/items/nonvalidated/<string:item_id>/validate', methods = ['POST'])
 @check_api_permission('item_nonvalidated/validate')
 def api_validate_nonval_item(item_id):
+    check_field = check_fields(request, 'item_nonvalidated/validate')
+    if not check_field['pass']:
+        return jsonify(check_field), HTTPStatus.BAD_REQUEST
+
+    validator = session.get('user')
+    if validator != request.form.get('validator'):
+        return jsonify({ 'error': 'Validator does not match the current user', 'details': f"User in Form: {request.form.get('validator')}, Session User: {validator}" }), HTTPStatus.FORBIDDEN
+    
     item = NonvalItems.query.get(item_id)
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
-    
-    validator = session.get('user')
-
-    if validator != request.form.get('validator'):
-        return jsonify({ 'error': 'Validator does not match the current user', 'details': f"User in Form: {request.form.get('validator')}, Session User: {validator}" }), HTTPStatus.FORBIDDEN
 
     description = f"{item.description} (Originally Created by {item.created_by})"
 
@@ -389,6 +389,9 @@ def api_validate_nonval_item(item_id):
         print(f"Error while validating non-validated item: {e}")
         return jsonify({ 'error': 'Error while validating non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_deletion(item, f"{validator} via system@validate")
+    trail.log_creation(item_val, f"{validator} via system@validate")
+
     return jsonify({ 'message': 'Non-validated item validated successfully' }), HTTPStatus.CREATED
 
 # ======================
