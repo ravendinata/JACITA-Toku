@@ -445,8 +445,6 @@
 
             if (data.details != null)
                 displayPopupAlert(err_title, data.details, 'error');
-            else if (data.available_fields != null)
-                displayPopupAlert(err_title, `Available fields: ${data.available_fields}`, 'error');
             else
                 displayPopupAlert(err_title, response.statusText, 'error');
         }
@@ -907,6 +905,8 @@
             const item_id = $('#item_details_item_id').val();
             const remarks = $('#item_details_remarks').val();
 
+            displayToast('Updating Remarks', 'Please wait while we update the remarks...', 'info');
+
             const formData = new FormData();
             formData.append('remarks', remarks);
 
@@ -975,6 +975,8 @@
     {
         const item_id = $('#qty_update_item_id').val();
         const qty = parseInt($('#qty_update_qty').val());
+
+        displayToast('Updating Quantity', 'Please wait while we update the quantity...', 'info');
 
         if (qty < 1 || qty > 100)
             return displayPopupAlert('Quantity Error', 'Quantity must be between 1 and 100.', 'error');
