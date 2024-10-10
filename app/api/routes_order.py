@@ -266,7 +266,7 @@ def api_approve_orders(period, division_id, by):
             return jsonify({ 'error': 'Some orders not approved at division level', 
                             'details': f"Orders {', '.join(reject_ids)} are not at division approved state. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
     elif by == 'division':
-        reject_ids = [ order.id for order in orders if not order.status in [1, 6] ]
+        reject_ids = [ order.id for order in orders if not order.status in [OrderStatus.SUBMITTED, OrderStatus.FINANCE_REJECTED] ]
         if reject_ids:
             return jsonify({ 'error': 'Some orders not submitted', 
                             'details': f"Orders {', '.join(reject_ids)} are not yet submitted or have gone beyond submission level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
@@ -305,7 +305,7 @@ def api_reject_orders(period, division_id, by):
             return jsonify({ 'error': 'Some orders not approved at division level', 
                             'details': f"Orders {', '.join(reject_ids)} are not at division approved level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
     elif by == 'division':
-        reject_ids = [ order.id for order in orders if not order.status in [1, 6] ]
+        reject_ids = [ order.id for order in orders if not order.status in [OrderStatus.SUBMITTED, OrderStatus.FINANCE_REJECTED] ]
         if reject_ids:
             return jsonify({ 'error': 'Some orders not submitted', 
                             'details': f"Orders {', '.join(reject_ids)} are not yet submitted or have gone beyond submission level. Please resolve all conflicts before proceeding." }), HTTPStatus.FORBIDDEN
