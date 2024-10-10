@@ -1,7 +1,12 @@
+import time
+from itertools import chain
+
 from sqlalchemy.sql import func
 
 from app.extensions import db
 from app.models.user import User, Division
+from app.models.items import Items, NonvalItems
+from app.models.order_items import OrderItems, OrderNonvalItems
 from helper.status import OrderStatus, OrderStatusTransitionError, can_transition, get_order_status_text
 
 class Orders(db.Model):
@@ -53,14 +58,15 @@ class Orders(db.Model):
         return get_order_status_text(self.status)
     
     def get_division(self):
-        return Division.query.get(self.division_id).full_name        
-    
+        return Division.query.get(self.division_id).full_name   
+
     def clear_approval(self):
             self.approval_division_date = None
             self.approval_division_by = None
             self.approval_finance_date = None
             self.approval_finance_by = None
     
+    # Status Transition Methods
     def transition(self, new):
         if can_transition(self.status, new):
             self.status = new
@@ -101,3 +107,29 @@ class Orders(db.Model):
     def fulfill(self):
         self.transition(OrderStatus.FULFILLED)
         self.fulfillment_date = func.current_timestamp()
+
+    # Extra Properties and Methods
+    @property
+    def total_price(self):
+        return self._get_total_price()
+    
+    @property
+    def item_count(self):
+        return sum([item.quantity for item in self.items])
+    
+    @property
+    def items(self):
+        return list(chain(self._get_items(), self._get_nonval_items()))
+    
+    def _get_items(self):
+        return OrderItems.query.filter_by(order_id = self.id).all()
+    
+    def _get_nonval_items(self):
+        return OrderNonvalItems.query.filter_by(order_id = self.id).all()
+    
+    def _get_total_price(self):
+        total = 0
+        for order_item in self.items:
+            item = Items.query.get(order_item.item_id) or NonvalItems.query.get(order_item.item_id)
+            total += item.base_price * float(order_item.quantity)
+        return total
