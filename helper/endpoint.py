@@ -94,7 +94,7 @@ def check_page_permission(permission: str):
     [Decorator] Check if the user has the permission to access the page.
     
     :param permission: The permission name to check. Refer to the role module for the list of permissions.
-    :returns: The decorated function.
+    :returns: The decorated function if the user has the permission, a redirect to the error page otherwise.
     """
     def decorator(func):
         @wraps(func)
@@ -113,7 +113,7 @@ def check_api_permission(permission: str):
     [Decorator] Check if the user has the permission to access the API endpoint.
 
     :param permission: The permission name to check. Refer to the role module for the list of permissions.
-    :returns: The decorated function.
+    :returns: The decorated function if the user has the permission, an error response otherwise.
     """
     def decorator(func):
         @wraps(func)
@@ -134,7 +134,7 @@ def check_page_permissions(permissions: list):
     [Decorator] Check if the user has the permissions to access the page.
 
     :param permissions: The list of permission names to check. Refer to the role module for the list of permissions.
-    :returns: The decorated function.
+    :returns: The decorated function if the user has the permissions, an redirect to the error page otherwise.
     """
     def decorator(func):
         @wraps(func)
@@ -158,7 +158,7 @@ def check_api_permissions(permissions: list):
     [Decorator] Check if the user has the permissions to access the API endpoint.
 
     :param permissions: The list of permission names to check. Refer to the role module for the list of permissions.
-    :returns: The decorated function.
+    :returns: The decorated function if the user has the permissions, an error response otherwise.
     """
     def decorator(func):
         @wraps(func)
@@ -186,7 +186,7 @@ def inject_allowed_operations(func):
     *Pre-requisite: The decorated function must have a user_operations parameter.*
     
     :param func: The function to decorate.
-    :returns: The decorated function.
+    :returns: The decorated function regardless of the pre-requisite. When the pre-requisite is not met, an error is logged but the function is still executed.
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
