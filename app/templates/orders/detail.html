@@ -521,7 +521,7 @@
                         }
                 },
                 { 
-                    data: "sub_total", // 6
+                    data: "subtotal", // 6
                     render: function(data, type, row, meta) 
                     {
                         if (type === 'display')
@@ -771,7 +771,7 @@
         $('#qty_update_price').val(formatCurrency(item.price));
         $('#qty_update_qty').val(item.quantity);
         $('#qty_update_qty_unit').text(item.qty_unit);
-        $('#qty_update_subtotal').text(formatCurrency(item.sub_total));
+        $('#qty_update_subtotal').text(formatCurrency(item.subtotal));
 
         $('#updateQtyModal').modal('show');
     });
@@ -791,7 +791,7 @@
         $('#item_details_quantity').val(`${item.quantity}`);
         $('#item_details_qty_unit').text(item.qty_unit);
         $('#item_details_remarks').val(item.remarks);
-        $('#item_details_subtotal').text(formatCurrency(item.sub_total));
+        $('#item_details_subtotal').text(formatCurrency(item.subtotal));
 
         $('#orderItemDetailsModal').modal('show');
     });

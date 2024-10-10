@@ -157,7 +157,7 @@
 
         data.forEach(item => {
             const li = document.createElement('li');
-            li.innerText = `${item.quantity} x ${item.name} - ${formatCurrency(item.sub_total)}`;
+            li.innerText = `${item.quantity} x ${item.name} - ${formatCurrency(item.subtotal)}`;
             orderItems.appendChild(li);
         });
     }

@@ -418,7 +418,7 @@
                         }
                 },
                 { 
-                    data: "sub_total", // 6
+                    data: "subtotal", // 6
                     render: function(data, type, row, meta) 
                     {
                         if (type === 'display')
@@ -594,7 +594,7 @@
         $('#item_details_price').val(formatCurrency(item.price));
         $('#item_details_quantity').val(`${item.quantity}`);
         $('#item_details_qty_unit').text(item.qty_unit);
-        $('#item_details_subtotal').text(formatCurrency(item.sub_total));
+        $('#item_details_subtotal').text(formatCurrency(item.subtotal));
         $('#item_details_in_orders').text(item.in_orders);
 
         let remarks = item.remarks.replace(/;/g, '\n');
