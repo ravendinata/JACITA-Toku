@@ -59,11 +59,8 @@ def api_get_order(order_id):
 
 @api.route('/order', methods = ['POST'])
 @check_api_permission('order/create')
+@check_fields('order/create')    
 def api_create_order():
-    check_field = check_fields(request, 'order/create')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
     period = request.form.get('period')
     division_id = request.form.get('division_id')
     created_by = request.form.get('created_by')
@@ -88,11 +85,8 @@ def api_create_order():
 
 @api.route('/order/<string:order_id>', methods = ['PATCH'])
 @check_api_permission('order/update')
+@check_fields('order/update')
 def api_update_order(order_id):
-    check_field = check_fields(request, 'order/update')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     order = Orders.query.get(order_id)
     old_order = copy.deepcopy(order)
     
@@ -194,11 +188,8 @@ def api_cancel_order(order_id):
 
 @api.route('/order/<string:order_id>/approve/<string:by>', methods = ['POST'])
 @check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
+@check_fields('order/approve')
 def api_approve_order(order_id, by):
-    check_field = check_fields(request, 'order/approve')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
     order = Orders.query.get(order_id)
     old_order = copy.deepcopy(order)
     
@@ -221,11 +212,8 @@ def api_approve_order(order_id, by):
 
 @api.route('/order/<string:order_id>/reject/<string:by>', methods = ['POST'])
 @check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
+@check_fields('order/reject')
 def api_reject_order(order_id, by):
-    check_field = check_fields(request, 'order/reject')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
     order = Orders.query.get(order_id)
     old_order = copy.deepcopy(order)
     
@@ -288,11 +276,8 @@ def api_get_total_order(period, division_id):
 
 @api.route('/order/<string:period>/<string:division_id>/approve/<string:by>', methods = ['POST'])
 @check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
+@check_fields('order/approve')
 def api_approve_orders(period, division_id, by):
-    check_field = check_fields(request, 'order/approve')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     period = f"{period[:4]}/{period[4:]}"
     if by not in ['division', 'finance']:
         return jsonify({ 'error': 'Invalid approval level', 'details': 'Approval level must be either division or finance.' }), HTTPStatus.BAD_REQUEST
@@ -330,11 +315,8 @@ def api_approve_orders(period, division_id, by):
 
 @api.route('/order/<string:period>/<string:division_id>/reject/<string:by>', methods = ['POST'])
 @check_api_permissions([ 'order/approve_division', 'order/approve_finance' ])
+@check_fields('order/reject')
 def api_reject_orders(period, division_id, by):
-    check_field = check_fields(request, 'order/reject')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     period = f"{period[:4]}/{period[4:]}"
     if by not in ['division', 'finance']:
         return jsonify({ 'error': 'Invalid rejection level', 'details': 'Rejection level must be either division or finance.' }), HTTPStatus.BAD_REQUEST

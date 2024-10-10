@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import jsonify, render_template, session
+from flask import jsonify, render_template, session, request
 
 import helper.trail as trail
 from app.models.user import User
@@ -46,30 +46,48 @@ def get_endpoint_fields(endpoint):
     :param endpoint: The endpoint name to get the fields for. Refer to the required_fields and modifiable_fields dictionaries in this module.
     :returns: The list of required and/or modifiable fields for the endpoint.
     """
-    return required_fields.get(endpoint, []) + modifiable_fields.get(endpoint, [])
+    return { 'required': required_fields.get(endpoint, []), 'modifiable': modifiable_fields.get(endpoint, []) }
 
-def check_fields(request, endpoint):
+def get_missing_fields(endpoint):
     """
-    Check if the required fields are present in the request.
-
-    :param request: The request object to check.
+    Get the missing required fields in the request.
+    
     :param endpoint: The endpoint name to check the fields for. Refer to the required_fields and modifiable_fields dictionaries in this module.
-    :returns: The result of the check. This will always have a 'pass' key that is True if the check passed, False otherwise.
-              If the check failed, it will also have an 'error' key with the error message and an 'available_fields' key with the available fields.
+    :returns: The list of missing required fields in the request.
     """
     if endpoint in required_fields:
         required = required_fields[endpoint]
-        
-        if not all([ field in request.form for field in required ]):
-            return { 'pass': False, 'error': 'Missing required fields', 'available_fields': required }
-        
-    if endpoint in modifiable_fields:
-        modifiable = modifiable_fields[endpoint]
-        
-        if not any([ field in request.form for field in modifiable ]):
-            return { 'pass': False, 'error': 'No modifiable fields provided', 'available_fields': modifiable }
+        missing_required = [ field for field in required if field not in request.form ]
+    else:
+        missing_required = []
 
-    return { 'pass': True }
+    return missing_required
+
+def check_fields(endpoint):
+    """
+    [Decorator] Check if the required fields are present in the request.
+
+    :param endpoint: The endpoint name to check the fields for. Refer to the required_fields and modifiable_fields dictionaries in this module.
+    :returns: The decorated function if the required fields are present, an error response otherwise.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if endpoint in required_fields:
+                required = required_fields[endpoint]
+                if not all([ field in request.form for field in required ]):
+                    return jsonify({ 'error': 'Required fields not provided',
+                                     'fields': get_endpoint_fields(endpoint),
+                                     'missing': get_missing_fields(endpoint) }), HTTPStatus.BAD_REQUEST
+                
+            if endpoint in modifiable_fields:
+                modifiable = modifiable_fields[endpoint]
+                if not any([ field in request.form for field in modifiable ]):
+                    return jsonify({ 'error': 'No modifiable fields provided', 'available_fields': modifiable }), HTTPStatus.BAD_REQUEST
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator    
 
 def check_page_permission(permission: str):
     """

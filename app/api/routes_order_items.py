@@ -148,11 +148,8 @@ def api_get_order_item(order_id, item_id):
 
 @api.route('/order/<string:order_id>/item', methods = ['POST'])
 @check_api_permission('orderitem/create')
+@check_fields('orderitem/create')
 def api_add_order_item(order_id):
-    check_field = check_fields(request, 'orderitem/create')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     order = Orders.query.get(order_id)
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -202,11 +199,8 @@ def api_add_order_item(order_id):
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['PATCH'])
 @check_api_permission('orderitem/update')
+@check_fields('orderitem/update')
 def api_update_order_item(order_id, item_id):
-    check_field = check_fields(request, 'orderitem/update')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
     order = Orders.query.get(order_id)
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND

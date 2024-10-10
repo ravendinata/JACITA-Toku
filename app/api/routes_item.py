@@ -28,11 +28,8 @@ def api_get_items():
 
 @api.route('/items/validated', methods = ['POST'])
 @check_api_permission('item_validated/create')
+@check_fields('item_validated/create')
 def api_create_item():
-    check_field = check_fields(request, 'item_validated/create')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     created_by = request.form.get('created_by')
     if session.get('user') != created_by:
         return jsonify({ 'error': 'Submitter does not match the current user', 'details': f"User in Form: {created_by}, Session User: {session.get('user')}" }), HTTPStatus.FORBIDDEN
@@ -68,12 +65,9 @@ def api_create_item():
     return jsonify({ 'message': 'Item created successfully' }), HTTPStatus.CREATED
 
 @api.route('/items/validated/bulk', methods = ['POST'])
-@check_api_permission('item_validated/create')
+@check_api_permission('item_validated/create_bulk')
+@check_fields('item_validated/create_bulk')
 def api_create_bulk_items():
-    check_field = check_fields(request, 'item_validated/create_bulk')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
     created_by = request.form.get('created_by')
     if session.get('user') != created_by:
         return jsonify({ 'error': 'Submitter does not match the current user', 'details': f"User in Form: {created_by}, Session User: {session.get('user')}" }), HTTPStatus.FORBIDDEN
@@ -131,11 +125,8 @@ def api_create_bulk_items():
 
 @api.route('/items/validated/bulk/edit', methods = ['PATCH'])
 @check_api_permission('item_validated/update_bulk')
-def api_update_bulk_items():
-    check_field = check_fields(request, 'item_validated/update_bulk')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
+@check_fields('item_validated/update_bulk')
+def api_update_bulk_items():   
     username = session.get('user')
 
     item_ids = request.form.getlist('item_id[]')
@@ -199,12 +190,8 @@ def api_delete_bulk_items():
 
 @api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
 @check_api_permission('item_validated/update')
-def api_update_item(item_id):
-
-    check_field = check_fields(request, 'item_validated/update')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
+@check_fields('item_validated/update')
+def api_update_item(item_id):    
     username = session.get('user')
     
     item = Items.query.get(item_id)
@@ -276,11 +263,8 @@ def api_get_nonval_items():
 
 @api.route('/items/nonvalidated', methods = ['POST'])
 @check_api_permission('item_nonvalidated/create')
-def api_create_nonval_item():
-    check_field = check_fields(request, 'item_nonvalidated/create')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
+@check_fields('item_nonvalidated/create')
+def api_create_nonval_item():   
     brand = request.form.get('brand')
     name = request.form.get('name')
     variant = request.form.get('variant')
@@ -312,11 +296,8 @@ def api_create_nonval_item():
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['PATCH'])
 @check_api_permission('item_nonvalidated/update')
-def api_update_nonval_item(item_id):
-    check_field = check_fields(request, 'item_nonvalidated/update')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-    
+@check_fields('item_nonvalidated/update')
+def api_update_nonval_item(item_id):   
     username = session.get('user')
     
     item = NonvalItems.query.get(item_id)
@@ -362,11 +343,8 @@ def api_delete_nonval_item(item_id):
 
 @api.route('/items/nonvalidated/<string:item_id>/validate', methods = ['POST'])
 @check_api_permission('item_nonvalidated/validate')
+@check_fields('item_nonvalidated/validate')
 def api_validate_nonval_item(item_id):
-    check_field = check_fields(request, 'item_nonvalidated/validate')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     validator = session.get('user')
     if validator != request.form.get('validator'):
         return jsonify({ 'error': 'Validator does not match the current user', 'details': f"User in Form: {request.form.get('validator')}, Session User: {validator}" }), HTTPStatus.FORBIDDEN

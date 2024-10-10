@@ -25,11 +25,8 @@ def api_get_user(username):
     return jsonify(user.to_dict()), HTTPStatus.OK
 
 @api.route('/users', methods = ['POST'])
+@check_fields('user/create')
 def api_create_user():
-    check_field = check_fields(request, 'user/create')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     username = request.form.get('username')
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
@@ -60,11 +57,8 @@ def api_create_user():
     return jsonify({ 'message': 'User created', 'user_details': user.to_dict() }), HTTPStatus.CREATED
 
 @api.route('/user/<string:username>', methods = ['PATCH'])
+@check_fields('user/update')
 def api_update_user(username):
-    check_field = check_fields(request, 'user/update')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
-
     user = User.query.get(username)
     old_user = copy.deepcopy(user)
 
@@ -131,10 +125,8 @@ def api_reset_password(username):
     return jsonify({ 'message': 'Password reset' }), HTTPStatus.OK
 
 @api.route('/auth/login', methods = ['POST'])
+@check_fields('auth/login')
 def api_login_user():
-    check_field = check_fields(request, 'auth/login')
-    if not check_field['pass']:
-        return jsonify(check_field), HTTPStatus.BAD_REQUEST
 
     username = request.form.get('username')
     password = request.form.get('password')
