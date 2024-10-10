@@ -1,15 +1,15 @@
 import copy
+from itertools import chain
 from uuid import uuid4
 
 from flask import jsonify, request, session
-from sqlalchemy import desc, or_
+from sqlalchemy import desc
 
 import helper.trail as trail
 from app.api import api
 from app.extensions import db
 from app.models.orders import Orders
 from app.models.order_items import OrderItems, OrderNonvalItems
-from app.models.items import Items, NonvalItems
 from app.models.logs import OrderRejectLog
 from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission, check_api_permissions
@@ -17,19 +17,8 @@ from helper.status import OrderStatusTransitionError, OrderStatus
 
 def calculateTotal(orders):
     total = 0
-
     for order in orders:
-        order_items = OrderItems.query.filter_by(order_id = order.id).all()
-        order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order.id).all()
-
-        for item in order_items:
-            item_data = Items.query.get(item.item_id)
-            total += item_data.base_price * float(item.quantity)
-
-        for item in order_nonval_items:
-            item_data = NonvalItems.query.get(item.item_id)
-            total += item_data.base_price * float(item.quantity)
-
+        total += order.total_price
     return total
 
 # =================================
@@ -127,20 +116,7 @@ def api_delete_order(order_id):
 
 @api.route('/order/<string:order_id>/total', methods = ['GET'])
 def api_get_order_total(order_id):
-    order_items = OrderItems.query.filter_by(order_id = order_id).all()
-    order_nonval_items = OrderNonvalItems.query.filter_by(order_id = order_id).all()
-
-    total = 0
-
-    for item in order_items:
-        item_data = Items.query.get(item.item_id)
-        total += item_data.base_price * float(item.quantity)
-
-    for item in order_nonval_items:
-        item_data = NonvalItems.query.get(item.item_id)
-        total += item_data.base_price * float(item.quantity)
-
-    return jsonify({ 'total': total }), HTTPStatus.OK
+    return jsonify({ 'total': Orders.query.get(order_id).total_price }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/submit', methods = ['POST'])
 @check_api_permission('order/submit')
