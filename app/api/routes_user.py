@@ -83,7 +83,11 @@ def api_update_user(username):
     user.email = request.form.get('email', user.email)
     user.division_id = request.form.get('division_id', user.division_id)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while updating user: {e}")
+        return jsonify({ 'error': 'Error while updating user', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
 
     trail.log_update(user, old_user, acting_user)
     return jsonify({ 'message': 'User updated', 'new_user_details': user.to_dict() }), HTTPStatus.OK
@@ -97,15 +101,23 @@ def api_delete_user(username):
         return jsonify({ 'error': 'User fingerprint mismatch',
                          'details': f"Are you trying to impersonate someone? Logged in user does not match the fulfiller in the request." }), HTTPStatus.FORBIDDEN
     
+    acting_user_obj = User.query.get(acting_user)
+    if acting_user_obj.role not in [ Role.ADMINISTRATOR, Role.SYSTEM ] and acting_user != username:
+        return jsonify({ 'error': 'Insufficient permission', 'details': 'Only administrators and system users can delete other users' }), HTTPStatus.FORBIDDEN
+
     user = User.query.get(username)
 
     if user is None:
         return jsonify({ 'error': 'User not found' }), HTTPStatus.NOT_FOUND
 
-    db.session.delete(user)
-    db.session.commit()
+    try:
+        db.session.delete(user)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while deleting user: {e}")
+        return jsonify({ 'error': 'Error while deleting user', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
 
-    if 'user' in session:
+    if 'user' in session and acting_user == username:
         session.pop('user')
 
     trail.log_deletion(user, acting_user)
