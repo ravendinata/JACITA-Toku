@@ -38,7 +38,9 @@ required_fields = {
     'item_nonvalidated/update': [ 'modified_by' ],
     'item_nonvalidated/delete': [ 'deleted_by' ],
     'orderitem/create': [ 'item_id', 'quantity' ],
-    'user/create': [ 'username', 'first_name', 'division_id', 'role', 'password' ],
+    'user/create': [ 'username', 'first_name', 'division_id', 'role', 'password', 'created_by' ],
+    'user/update': [ 'modified_by' ],
+    'user/delete': [ 'deleted_by' ],
     'auth/login': [ 'username', 'password' ],
 }
 
