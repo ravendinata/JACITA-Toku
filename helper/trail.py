@@ -68,11 +68,16 @@ def log_update(object_post, object_pre, user):
 
     if len(changed_fields) == 0:
         return
+    
+    if hasattr(object_post, 'id'):
+        id = object_post.id
+    elif hasattr(object_post, 'username'):
+        id = object_post.username
 
     data = {
         'timestamp': timestamp,
         'user': user,
-        'object_id': object_post.id,
+        'object_id': id,
         'type': object_post.__class__.__name__,
         'changed_fields': changed_fields
     }
