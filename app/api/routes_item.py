@@ -32,7 +32,9 @@ def api_get_items():
 def api_create_item():
     created_by = request.form.get('created_by')
     if session.get('user') != created_by:
-        return jsonify({ 'error': 'Submitter does not match the current user', 'details': f"User in Form: {created_by}, Session User: {session.get('user')}" }), HTTPStatus.FORBIDDEN
+        trail.log_system_event("api.item.create", f"User fingerprint mismatch. User in Form: {created_by}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the creator in the request." }), HTTPStatus.FORBIDDEN
     
     brand = request.form.get('brand')
     name = request.form.get('name')
@@ -70,7 +72,9 @@ def api_create_item():
 def api_create_bulk_items():
     created_by = request.form.get('created_by')
     if session.get('user') != created_by:
-        return jsonify({ 'error': 'Submitter does not match the current user', 'details': f"User in Form: {created_by}, Session User: {session.get('user')}" }), HTTPStatus.FORBIDDEN
+        trail.log_system_event("api.item.create_bulk", f"User fingerprint mismatch. User in Form: {created_by}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the creator in the request." }), HTTPStatus.FORBIDDEN
 
     brands = request.form.getlist('brand[]')
     names = request.form.getlist('name[]')
@@ -126,8 +130,13 @@ def api_create_bulk_items():
 @api.route('/items/validated/bulk/edit', methods = ['PATCH'])
 @check_api_permission('item_validated/update_bulk')
 @check_fields('item_validated/update_bulk')
-def api_update_bulk_items():   
-    username = session.get('user')
+def api_update_bulk_items():
+    username = request.form.get('modified_by')
+
+    if session.get('user') != username:
+        trail.log_system_event("api.item.update_bulk", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the modifier in the request." }), HTTPStatus.FORBIDDEN
 
     item_ids = request.form.getlist('item_id[]')
     brands = request.form.getlist('brand[]')
@@ -153,6 +162,7 @@ def api_update_bulk_items():
         item.base_price = base_prices[i]
         item.category_id = category_ids[i]
         item.qty_unit_id = qty_unit_ids[i]
+        item.modification_by = username
 
         old_items.append(old_item)
         items.append(item)
@@ -170,7 +180,14 @@ def api_update_bulk_items():
 
 @api.route('/items/validated/bulk/delete', methods = ['DELETE'])
 @check_api_permission('item_validated/delete_bulk')
+@check_fields('item_validated/delete_bulk')
 def api_delete_bulk_items():
+    username = request.form.get('deleted_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.delete_bulk", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the deleter in the request." }), HTTPStatus.FORBIDDEN
+    
     item_ids = request.form.getlist('item_id[]')
 
     for item_id in item_ids:
@@ -181,7 +198,7 @@ def api_delete_bulk_items():
         try:
             db.session.delete(item)
             db.session.commit()
-            trail.log_deletion(item, session.get('user'))
+            trail.log_deletion(item, username)
         except Exception as e:
             print(f"Error while deleting bulk items: {e}")
             return jsonify({ 'error': 'Error while deleting items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
@@ -192,7 +209,11 @@ def api_delete_bulk_items():
 @check_api_permission('item_validated/update')
 @check_fields('item_validated/update')
 def api_update_item(item_id):    
-    username = session.get('user')
+    username = request.form.get('modified_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.update", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the modifier in the request." }), HTTPStatus.FORBIDDEN
     
     item = Items.query.get(item_id)
     old_item = copy.deepcopy(item)
@@ -231,7 +252,14 @@ def api_update_item(item_id):
 
 @api.route('/items/validated/<string:item_id>', methods = ['DELETE'])
 @check_api_permission('item_validated/delete')
+@check_fields('item_validated/delete')
 def api_delete_item(item_id):
+    username = request.form.get('deleted_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.delete", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the deleter in the request." }), HTTPStatus.FORBIDDEN
+
     item = Items.query.get(item_id)
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
@@ -243,7 +271,7 @@ def api_delete_item(item_id):
         print(f"Error while deleting item: {e}")
         return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    trail.log_deletion(item, session.get('user'))
+    trail.log_deletion(item, username)
     return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.OK
 
 # =========================
@@ -265,12 +293,17 @@ def api_get_nonval_items():
 @check_api_permission('item_nonvalidated/create')
 @check_fields('item_nonvalidated/create')
 def api_create_nonval_item():   
+    created_by = request.form.get('created_by')
+    if session.get('user') != created_by:
+        trail.log_system_event("api.item.create", f"User fingerprint mismatch. User in Form: {created_by}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the creator in the request." }), HTTPStatus.FORBIDDEN
+
     brand = request.form.get('brand')
     name = request.form.get('name')
     variant = request.form.get('variant')
     base_price = request.form.get('base_price')
     category_id = request.form.get('category_id')
-    created_by = request.form.get('created_by')
     description = request.form.get('description')
 
     check_item = NonvalItems.query.filter_by(brand = brand, name = name, variant = variant).first()
@@ -298,7 +331,11 @@ def api_create_nonval_item():
 @check_api_permission('item_nonvalidated/update')
 @check_fields('item_nonvalidated/update')
 def api_update_nonval_item(item_id):   
-    username = session.get('user')
+    username = request.form.get('modified_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.update", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the modifier in the request." }), HTTPStatus.FORBIDDEN
     
     item = NonvalItems.query.get(item_id)
     old_item = copy.deepcopy(item)
@@ -326,7 +363,14 @@ def api_update_nonval_item(item_id):
 
 @api.route('/items/nonvalidated/<string:item_id>', methods = ['DELETE'])
 @check_api_permission('item_nonvalidated/delete')
-def api_delete_nonval_item(item_id):   
+@check_fields('item_nonvalidated/delete')
+def api_delete_nonval_item(item_id):
+    username = request.form.get('deleted_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.delete", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the deleter in the request." }), HTTPStatus.FORB
+
     item = NonvalItems.query.get(item_id)
     if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
@@ -338,7 +382,7 @@ def api_delete_nonval_item(item_id):
         print(f"Error while deleting non-validated item: {e}")
         return jsonify({ 'error': 'Error while deleting non-validated item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
-    trail.log_deletion(item, session.get('user'))
+    trail.log_deletion(item, username)
     return jsonify({ 'message': 'Non-validated item deleted successfully' }), HTTPStatus.OK
 
 @api.route('/items/nonvalidated/<string:item_id>/validate', methods = ['POST'])
@@ -347,7 +391,9 @@ def api_delete_nonval_item(item_id):
 def api_validate_nonval_item(item_id):
     validator = session.get('user')
     if validator != request.form.get('validator'):
-        return jsonify({ 'error': 'Validator does not match the current user', 'details': f"User in Form: {request.form.get('validator')}, Session User: {validator}" }), HTTPStatus.FORBIDDEN
+        trail.log_system_event("api.item.validate", f"User fingerprint mismatch. User in Form: {request.form.get('validator')}, Session User: {validator}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the validator in the request." }), HTTPStatus.FORBIDDEN
     
     item = NonvalItems.query.get(item_id)
     if item is None:

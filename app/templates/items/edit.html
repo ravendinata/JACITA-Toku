@@ -173,6 +173,7 @@
         e.preventDefault();
 
         const formData = new FormData();
+        formData.append('modified_by', '{{ data.user }}');
         fields.forEach(field => 
         {
             if (document.querySelector(`#${field}`).classList.contains('is-dirty')) 
@@ -202,7 +203,10 @@
         {
             displayToast('Deleting item', 'Please wait while we delete the item...', 'info');
 
-            const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', { method: 'DELETE' });
+            const formData = new FormData();
+            formData.append('deleted_by', '{{ data.user }}');
+
+            const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', { method: 'DELETE', body: formData });
             const data = await response.json();
 
             if (response.ok)

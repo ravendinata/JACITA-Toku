@@ -468,7 +468,6 @@
 
     if (btnBulkDelete != null)
     {
-
         btnBulkDelete.addEventListener('click', async function() 
         {
             const selectedItems = [];
@@ -495,6 +494,7 @@
                 displayToast('Bulk Item Deletion', 'Deleting selected items...', 'info');
 
                 const formData = new FormData();
+                formData.append('deleted_by', '{{ data.user }}');
                 selectedItems.forEach(item_id => formData.append('item_id[]', item_id));
 
                 const response = await fetch('/api/items/validated/bulk/delete', { method: 'DELETE', body: formData });
