@@ -553,7 +553,12 @@
         btnFulfillOrder.addEventListener('click', function() 
         {
             displayPopupConfirm('Fulfill Collection', 'Are you sure you want to fulfill this order? This action cannot be undone.',
-            confirmCallback = async () => { await updateOrderStatus('fulfill'); },
+            confirmCallback = async () => 
+            {
+                const formData = new FormData();
+                formData.append('fulfilled_by', '{{ data.user }}'); 
+                await updateOrderStatus('fulfill', formData);
+            },
             denyCallback = () => {},
             confirmText = 'Yes, fulfill this order',
             denyText = 'No, keep this order');

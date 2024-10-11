@@ -693,7 +693,12 @@
         btnSubmitOrder.addEventListener('click', function() 
         {
             displayPopupConfirm('Submit Order', 'Are you sure you want to submit this order for approval? This action cannot be undone.',
-            confirmCallback = async () => { await updateOrderStatus('submit'); },
+            confirmCallback = async () => 
+            { 
+                const formData = new FormData();
+                formData.append('submitted_by', '{{ data.user }}');
+                await updateOrderStatus('submit', formData); 
+            },
             denyCallback = () => {},
             confirmText = 'Yes, submit this order',
             denyText = 'No, keep this order');
@@ -705,7 +710,12 @@
         btnFulfillOrder.addEventListener('click', function() 
         {
             displayPopupConfirm('Fulfill Order', 'Are you sure you want to fulfill this order? This action cannot be undone.',
-            confirmCallback = async () => { await updateOrderStatus('fulfill'); },
+            confirmCallback = async () => 
+            {
+                const formData = new FormData();
+                formData.append('fulfilled_by', '{{ data.user }}'); 
+                await updateOrderStatus('fulfill', formData);
+            },
             denyCallback = () => {},
             confirmText = 'Yes, fulfill this order',
             denyText = 'No, keep this order');

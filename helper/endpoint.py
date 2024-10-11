@@ -20,8 +20,13 @@ class HTTPStatus:
 
 required_fields = {
     'order/create': [ 'period', 'division_id', 'created_by' ],
+    'order/update': [ 'modified_by' ],
+    'order/delete': [ 'deleted_by' ],
+    'order/submit': [ 'submitted_by' ],
     'order/approve': [ 'username' ],
     'order/reject': [ 'username', 'reason' ],
+    'order/fulfill': [ 'fulfilled_by' ],
+    'order/cancel': [ 'cancelled_by' ],
     'item_validated/create': [ 'category_id', 'brand', 'name', 'base_price', 'qty_unit_id', 'created_by' ],
     'item_validated/create_bulk': [ 'category_id[]', 'brand[]', 'name[]', 'base_price[]', 'qty_unit_id[]', 'created_by' ],
     'item_validated/update': [ 'modified_by' ],
