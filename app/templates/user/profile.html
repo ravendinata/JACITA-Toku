@@ -4,7 +4,7 @@
 <div class="container-fluid" style="width: 75%; padding-top: 28px; padding-bottom: 48px;">
     <span><a href="/" class="btn btn-secondary float-end"><i class="fa-solid fa-caret-left"></i> Back to Home</a></span>
     <h1>Profile</h1>
-    <form id="editProfileForm" method="post" action="/api/user/{{ data.user }}">
+    <form id="editProfileForm">
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="division" class="form-label">Division</label>
@@ -22,7 +22,7 @@
             </div>
             <div class="col-md-6 mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
             </div>
         </div>
         <div class="row">
@@ -32,7 +32,7 @@
             </div>
             <div class="col-md-6 mb-3">
                 <label for="last_name" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
             </div>
         </div>
         <div class="mt-3">
@@ -85,17 +85,23 @@
         {
             displayToast("Operation in progress", "Please wait while we delete this account", "info");
             
-            const response = await fetch('/api/user/{{ data.user }}', { method: "DELETE" });
+            const formData = new FormData();
+            formData.append('deleted_by', '{{ data.user }}');
+
+            const response = await fetch('/api/user/{{ user.username }}', { method: "DELETE", body: formData });
             data = await response.json();
 
             if (response.ok) 
             {
                 setTimeout(() => { displayToast("Operation success", data.message); }, 1000);
-                setTimeout(() => { window.location.href = '/login'; }, 2000);
+                if ('{{ user.username }}' === '{{ data.user }}')
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
+                else
+                    setTimeout(() => { window.location.href = '/users'; }, 2000);
             }
             else
             {
-                displayPopupAlert("Operation failed", data.error);
+                displayPopupAlert("Operation failed", data.error, "error");
             }
         },
         denyCallback = () => {},
@@ -107,22 +113,25 @@
     profileForm.addEventListener('submit', async (event) =>
     {
         event.preventDefault();
+        displayToast("Operation in progress", "Please wait while we update this profile", "info");
 
         const form = event.target;
         const formData = new FormData(profileForm);
+        formData.append('modified_by', '{{ data.user }}');
 
-        const response = await fetch(form.action, 
-        {
-            method: "PATCH",
-            body: formData
-        });
+        const response = await fetch('/api/user/{{ user.username }}', { method: "PATCH", body: formData });
 
         data = await response.json();
 
-        if (response.ok) 
-            displayToast("Operation success", data.message);
+        if (response.ok)
+        {
+            setTimeout(() => { displayToast("Operation success", data.message); }, 1000);
+            setTimeout(() => { window.location.reload(); }, 2000);
+        }
         else
+        {
             displayPopupAlert("Operation failed", data.error, "error");
+        }
     });
 
     changePasswordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
@@ -140,7 +149,7 @@
         const form = event.target;
         const formData = new FormData(changePasswordForm);
 
-        const response = await fetch('/api/user/{{ data.user }}/change_password', 
+        const response = await fetch('/api/user/{{ user.username }}/change_password', 
         {
             method: "POST",
             body: formData
