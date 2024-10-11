@@ -1,7 +1,6 @@
 import copy
 
 from flask import jsonify, request, session
-from sqlalchemy import desc
 
 import helper.trail as trail
 from app.api import api
@@ -9,6 +8,7 @@ from app.extensions import db
 from app.models.user import User
 from helper.auth import generate_password_hash, is_authenticated
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
+from helper.role import Role
 
 @api.route('/users', methods = ['GET'])
 def api_get_users():
@@ -25,8 +25,15 @@ def api_get_user(username):
     return jsonify(user.to_dict()), HTTPStatus.OK
 
 @api.route('/users', methods = ['POST'])
+@check_api_permission('user/administer')
 @check_fields('user/create')
 def api_create_user():
+    acting_user = request.form.get('created_by')
+    if acting_user != session.get('user'):
+        trail.log_system_event("api.user.create", f"User fingerprint mismatch. User in Form: {acting_user}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the fulfiller in the request." }), HTTPStatus.FORBIDDEN
+
     username = request.form.get('username')
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
@@ -53,12 +60,18 @@ def api_create_user():
         print(f"Error while creating user: {e}")
         return jsonify({ 'error': 'Error while creating user', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
 
-    trail.log_creation(user, session.get('user'))
+    trail.log_creation(user, acting_user)
     return jsonify({ 'message': 'User created', 'user_details': user.to_dict() }), HTTPStatus.CREATED
 
 @api.route('/user/<string:username>', methods = ['PATCH'])
 @check_fields('user/update')
 def api_update_user(username):
+    acting_user = request.form.get('modified_by')
+    if acting_user != session.get('user'):
+        trail.log_system_event("api.user.update", f"User fingerprint mismatch. User in Form: {acting_user}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the fulfiller in the request." }), HTTPStatus.FORBIDDEN
+
     user = User.query.get(username)
     old_user = copy.deepcopy(user)
 
@@ -72,11 +85,18 @@ def api_update_user(username):
 
     db.session.commit()
 
-    trail.log_update(user, old_user, session.get('user'))
+    trail.log_update(user, old_user, acting_user)
     return jsonify({ 'message': 'User updated', 'new_user_details': user.to_dict() }), HTTPStatus.OK
 
 @api.route('/user/<string:username>', methods = ['DELETE'])
+@check_fields('user/delete')
 def api_delete_user(username):
+    acting_user = request.form.get('deleted_by')
+    if acting_user != session.get('user'):
+        trail.log_system_event("api.user.delete", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the fulfiller in the request." }), HTTPStatus.FORBIDDEN
+    
     user = User.query.get(username)
 
     if user is None:
@@ -88,7 +108,7 @@ def api_delete_user(username):
     if 'user' in session:
         session.pop('user')
 
-    trail.log_deletion(user, session.get('user'))
+    trail.log_deletion(user, acting_user)
     return jsonify({ 'message': 'User deleted' }), HTTPStatus.OK
 
 @api.route('/user/<string:username>/change_password', methods = ['POST'])
