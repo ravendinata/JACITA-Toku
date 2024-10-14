@@ -179,9 +179,12 @@
 
         try
         {
+            const formData = new FormData(newOrderForm);
+            formData.append('csrf_token', '{{ csrf_token() }}');
+            
             const response = await fetch('/api/order', {
                 method: 'POST',
-                body: new FormData(newOrderForm)
+                body: formData
             });
 
             const data = await response.json();

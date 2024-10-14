@@ -147,6 +147,12 @@
     async function updateOrderStatus(action, id, formData = null)
     {
         displayToast('Updating Order Status', 'Please wait while we update the order status...', 'info');
+        
+        if (formData === null)
+            formData = new FormData();
+            
+        formData.append('csrf_token', '{{ csrf_token() }}');
+
         const response = await fetch(`/api/order/${id}/${action}`, { method: 'POST', body: formData });
         const data = await response.json();
 

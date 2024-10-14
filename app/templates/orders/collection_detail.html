@@ -350,6 +350,12 @@
     async function updateOrderStatus(action, formData = null)
     {
         displayToast('Updating Order Status', 'Please wait while we update the order status...', 'info');
+
+        if (formData == null)
+            formData = new FormData();
+
+        formData.append('csrf_token', '{{ csrf_token() }}');
+
         const response = await fetch(`/api/order/{{ period | replace('/', '') }}/{{ division.id }}/${action}`, { method: 'POST', body: formData });
         const data = await response.json();
 
@@ -705,7 +711,11 @@
             displayToast('Deleting Item', 'Please wait while we delete the item from all orders...', 'info');
 
             const id = $('#item_details_item_id').val();
-            const response = await fetch(`/api/order/{{ period | replace('/', '') }}/{{ division.id }}/item/${id}`, { method: 'DELETE' });
+            
+            const formData = new FormData();
+            formData.append('csrf_token', '{{ csrf_token() }}');
+
+            const response = await fetch(`/api/order/{{ period | replace('/', '') }}/{{ division.id }}/item/${id}`, { method: 'DELETE', body: formData });
             const data = await response.json();
 
             if (response.ok)

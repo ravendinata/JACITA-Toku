@@ -426,9 +426,13 @@
     // Remove Item Function
     async function removeItem(item_id)
     {
+        const formData = new FormData();
+        formData.append('csrf_token', '{{ csrf_token() }}');
+
         const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
         {
-            method: 'DELETE'
+            method: 'DELETE',
+            body: formData
         });
 
         const data = await response.json();
@@ -458,6 +462,12 @@
     async function updateOrderStatus(action, formData = null)
     {
         displayToast('Updating Order Status', 'Please wait while we update the order status...', 'info');
+
+        if (formData == null)
+            formData = new FormData();
+
+        formData.append('csrf_token', '{{ csrf_token() }}');
+
         const response = await fetch(`/api/order/{{ order.id }}/${action}`, { method: 'POST', body: formData });
         const data = await response.json();
 
@@ -940,6 +950,7 @@
 
             const formData = new FormData();
             formData.append('remarks', remarks);
+            formData.append('csrf_token', '{{ csrf_token() }}');
 
             const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
             {
@@ -1014,6 +1025,7 @@
 
         const formData = new FormData();
         formData.append('quantity', qty);
+        formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
         {
