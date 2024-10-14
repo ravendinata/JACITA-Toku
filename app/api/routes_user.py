@@ -1,10 +1,12 @@
 import copy
+import json
 
 from flask import jsonify, request, session
+from flask_wtf.csrf import generate_csrf
 
 import helper.trail as trail
 from app.api import api
-from app.extensions import db
+from app.extensions import csrf, db
 from app.models.user import User
 from helper.auth import generate_password_hash, is_authenticated
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
@@ -158,6 +160,7 @@ def api_reset_password(username):
 
 @api.route('/auth/login', methods = ['POST'])
 @check_fields('auth/login')
+@csrf.exempt
 def api_login_user():
 
     username = request.form.get('username')
@@ -180,8 +183,13 @@ def api_login_user():
     if 'next' in session:
         session.pop('next')
 
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+
+    csrf_token = generate_csrf(config['app_secret_key'])
+
     trail.log_login(user.username, request.remote_addr)
-    return jsonify({ 'success': True, 'message': 'Login successful' }), HTTPStatus.OK
+    return jsonify({ 'success': True, 'message': 'Login successful', 'csrf_token': csrf_token }), HTTPStatus.OK
 
 @api.route('/auth/logout', methods = ['POST'])
 def api_logout_user():
