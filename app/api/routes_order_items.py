@@ -29,10 +29,7 @@ def collectItems(orders):
 
                 remarks = ''
                 if order_item.remarks and order_item.remarks != '':
-                    if len(orders) > 1:
-                        remarks = f"{order_item.order_id}: {order_item.remarks}"
-                    else:
-                        remarks = order_item.remarks
+                    remarks = f"{order_item.order_id}: {order_item.remarks}"
 
                 item_data['remarks'] = item_data['remarks'] + ';' + remarks if item_data['remarks'] else remarks
             else:
