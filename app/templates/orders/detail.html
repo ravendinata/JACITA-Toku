@@ -427,6 +427,7 @@
     async function removeItem(item_id)
     {
         const formData = new FormData();
+        formData.append('deleted_by', '{{ data.user }}');
         formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
@@ -950,6 +951,7 @@
 
             const formData = new FormData();
             formData.append('remarks', remarks);
+            formData.append('modified_by', '{{ data.user }}');
             formData.append('csrf_token', '{{ csrf_token() }}');
 
             const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 
@@ -1025,6 +1027,7 @@
 
         const formData = new FormData();
         formData.append('quantity', qty);
+        formData.append('modified_by', '{{ data.user }}');
         formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch(`/api/order/{{ order.id }}/item/${item_id}`, 

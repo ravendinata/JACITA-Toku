@@ -713,6 +713,7 @@
             const id = $('#item_details_item_id').val();
             
             const formData = new FormData();
+            formData.append('deleted_by', '{{ data.user }}');
             formData.append('csrf_token', '{{ csrf_token() }}');
 
             const response = await fetch(`/api/order/{{ period | replace('/', '') }}/{{ division.id }}/item/${id}`, { method: 'DELETE', body: formData });

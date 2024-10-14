@@ -1,6 +1,7 @@
 from flask import jsonify, request, session
 from sqlalchemy import asc
 
+import helper.trail as trail
 from app.api import api
 from app.extensions import db
 from app.models.misc import QuantityUnit
@@ -82,6 +83,12 @@ def api_get_order_item(order_id, item_id):
 @check_api_permission('orderitem/create')
 @check_fields('orderitem/create')
 def api_add_order_item(order_id):
+    username = request.form.get('added_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.order.item_add", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': 'Are you trying to impersonate someone? Logged in user does not match actor in request.' }), HTTPStatus.FORBIDDEN
+
     order = Orders.query.get(order_id)
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -133,6 +140,12 @@ def api_add_order_item(order_id):
 @check_api_permission('orderitem/update')
 @check_fields('orderitem/update')
 def api_update_order_item(order_id, item_id):
+    username = request.form.get('modified_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.order.item_update", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': 'Are you trying to impersonate someone? Logged in user does not match actor in request.' }), HTTPStatus.FORBIDDEN
+
     order = Orders.query.get(order_id)
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -160,7 +173,14 @@ def api_update_order_item(order_id, item_id):
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['DELETE'])
 @check_api_permission('orderitem/delete')
+@check_fields('orderitem/delete')
 def api_remove_order_item(order_id, item_id):
+    username = request.form.get('deleted_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.order.item_remove", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': 'Are you trying to impersonate someone? Logged in user does not match actor in request.' }), HTTPStatus.FORBIDDEN
+
     order = Orders.query.get(order_id)
     if order is None:
         return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
@@ -232,7 +252,14 @@ def api_get_combined_order_items(period, division_id):
 
 @api.route('/order/<string:period>/<string:division_id>/item/<string:item_id>', methods = ['DELETE'])
 @check_api_permission('orderitem/delete')
+@check_fields('orderitem/delete')
 def api_remove_combined_order_item(period, division_id, item_id):
+    username = request.form.get('deleted_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.order.item_remove", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': 'Are you trying to impersonate someone? Logged in user does not match actor in request.' }), HTTPStatus.FORBIDDEN
+    
     period = f"{period[:4]}/{period[4:]}"
     orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(asc(Orders.id)).all()
     if len(orders) == 0:
