@@ -64,7 +64,7 @@ def page_order_administration():
                            orders = grouped_orders, can_do = can_do, division = user.division_id)
     
     if can_do['order/approve_finance']:
-        orders = Orders.query.filter(or_(Orders.status == OrderStatus.DIVISION_APPROVED),
+        orders = Orders.query.filter(Orders.status == OrderStatus.DIVISION_APPROVED,
                                      or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
     elif can_do['order/fulfill']:
         orders = Orders.query.filter(Orders.status == OrderStatus.FINANCE_APPROVED, 
