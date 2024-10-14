@@ -1,4 +1,3 @@
-import time
 from itertools import chain
 
 from sqlalchemy.sql import func
