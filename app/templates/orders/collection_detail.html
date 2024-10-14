@@ -552,7 +552,7 @@
     {
         btnFulfillOrder.addEventListener('click', function() 
         {
-            displayPopupConfirm('Fulfill Collection', 'Are you sure you want to fulfill this order? This action cannot be undone.',
+            displayPopupConfirm('Fulfill Collection', 'Are you sure you want to fulfill this collection? This action cannot be undone.',
             confirmCallback = async () => 
             {
                 const formData = new FormData();
@@ -560,8 +560,8 @@
                 await updateOrderStatus('fulfill', formData);
             },
             denyCallback = () => {},
-            confirmText = 'Yes, fulfill this order',
-            denyText = 'No, keep this order');
+            confirmText = 'Yes, fulfill this collection',
+            denyText = 'No, keep this collection');
         });
     }
 
@@ -569,7 +569,7 @@
     {
         btnApproveOrder.addEventListener('click', function() 
         {
-            displayPopupConfirm('Approve Collection', 'Are you sure you want to approve this order? This action cannot be undone.',
+            displayPopupConfirm('Approve Collection', 'Are you sure you want to approve this collection? This action cannot be undone.',
             confirmCallback = async () => 
             { 
                 const formData = new FormData();
@@ -580,8 +580,8 @@
                     await updateOrderStatus('approve/division', formData);
             },
             denyCallback = () => {},
-            confirmText = 'Yes, approve this order',
-            denyText = 'No, keep this order');
+            confirmText = 'Yes, approve this collection',
+            denyText = 'No, keep this collection');
         });
     }
 
@@ -729,7 +729,6 @@
     {
         $('#item_details_remarks').val('');
         $('#item_details_subtotal').text('');
-        btnModalUpdateRemarks.disabled = true;
     });
 </script>
 {% endblock %}
