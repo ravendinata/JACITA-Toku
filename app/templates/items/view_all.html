@@ -43,7 +43,7 @@
                 <h5 class="modal-title" id="modalAddToCartLabel"><i class="fas fa-cart-plus"></i> Add to Order</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="formAddToCart" action="#" method="post">
+            <form id="formAddToCart">
                 <div class="modal-body">
                     <input type="hidden" id="cart_item_id">
                     <div class="mb-3">
@@ -495,6 +495,7 @@
 
                 const formData = new FormData();
                 formData.append('deleted_by', '{{ data.user }}');
+                formData.append('csrf_token', '{{ csrf_token() }}');
                 selectedItems.forEach(item_id => formData.append('item_id[]', item_id));
 
                 const response = await fetch('/api/items/validated/bulk/delete', { method: 'DELETE', body: formData });
@@ -768,6 +769,7 @@
         formData.append('item_id', item_id);
         formData.append('quantity', qty);
         formData.append('remarks', remarks);
+        formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch(`/api/order/${order_id}/item`, 
         {

@@ -15,6 +15,7 @@
     {% endif %}
     <form>
         <input type="hidden" name="created_by" value="{{ data.user }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row mb-3">
             <div class="col">
                 <label for="brand">Brand <small class="text-muted"><i>(Required)</i></small></label>

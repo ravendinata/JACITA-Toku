@@ -13,6 +13,7 @@
 <hr>
 <form id="bulkAddForm" style="padding-bottom: 48px;">
     <input type="hidden" name="created_by" value="{{ data.user }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 	<table id="bulkAddTable" class="table">
 		<thead>
 			<tr>

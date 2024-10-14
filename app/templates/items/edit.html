@@ -174,6 +174,7 @@
 
         const formData = new FormData();
         formData.append('modified_by', '{{ data.user }}');
+        formData.append('csrf_token', '{{ csrf_token() }}');
         fields.forEach(field => 
         {
             if (document.querySelector(`#${field}`).classList.contains('is-dirty')) 
@@ -205,6 +206,7 @@
 
             const formData = new FormData();
             formData.append('deleted_by', '{{ data.user }}');
+            formData.append('csrf_token', '{{ csrf_token() }}');
 
             const response = await fetch('/api/items/{{ item_type }}/{{ item.id }}', { method: 'DELETE', body: formData });
             const data = await response.json();
@@ -233,6 +235,7 @@
 
             const formData = new FormData();
             formData.append('validator', '{{ data.user }}');
+            formData.append('csrf_token', '{{ csrf_token() }}');
 
             const response = await fetch('/api/items/nonvalidated/{{ item.id }}/validate', { method: 'POST', body: formData });
             const data = await response.json();

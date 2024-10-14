@@ -14,6 +14,7 @@
 <hr>
 <form id="bulkEditForm" style="padding-bottom: 48px;">
     <input type="hidden" name="modified_by" value="{{ data.user }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 	<table id="bulkEditTable" class="table">
 		<thead>
 			<tr>
