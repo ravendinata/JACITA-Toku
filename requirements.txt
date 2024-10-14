@@ -16,18 +16,24 @@ flask==3.0.3
     # via
     #   -r requirements.in
     #   flask-sqlalchemy
+    #   flask-wtf
 flask-sqlalchemy==3.1.1
+    # via -r requirements.in
+flask-wtf==1.2.1
     # via -r requirements.in
 greenlet==3.0.3
     # via sqlalchemy
 itsdangerous==2.2.0
-    # via flask
+    # via
+    #   flask
+    #   flask-wtf
 jinja2==3.1.4
     # via flask
 markupsafe==2.1.5
     # via
     #   jinja2
     #   werkzeug
+    #   wtforms
 psycopg2==2.9.9
     # via -r requirements.in
 sqlalchemy==2.0.34
@@ -36,3 +42,5 @@ typing-extensions==4.12.2
     # via sqlalchemy
 werkzeug==3.0.4
     # via flask
+wtforms==3.1.2
+    # via flask-wtf
