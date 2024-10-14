@@ -87,6 +87,7 @@
             
             const formData = new FormData();
             formData.append('deleted_by', '{{ data.user }}');
+            formData.append('csrf_token', '{{ csrf_token() }}');
 
             const response = await fetch('/api/user/{{ user.username }}', { method: "DELETE", body: formData });
             data = await response.json();
@@ -118,6 +119,7 @@
         const form = event.target;
         const formData = new FormData(profileForm);
         formData.append('modified_by', '{{ data.user }}');
+        formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch('/api/user/{{ user.username }}', { method: "PATCH", body: formData });
 
@@ -148,6 +150,7 @@
 
         const form = event.target;
         const formData = new FormData(changePasswordForm);
+        formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch('/api/user/{{ user.username }}/change_password', 
         {

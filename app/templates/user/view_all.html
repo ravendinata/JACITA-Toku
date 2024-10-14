@@ -247,6 +247,7 @@
         const form = e.target;
         const formData = new FormData(form);
         formData.append('created_by', '{{ data.user }}');
+        formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch('/api/users', { method: "POST", body: formData });
         const data = await response.json();
@@ -271,12 +272,13 @@
     document.getElementById('changePasswordModal').querySelector('form').addEventListener('submit', async (e) => 
     {
         e.preventDefault();
+        displayToast("Operation in progress", "Please wait while we change this user's password", "info");
 
         const form = e.target;
-        const formData = new FormData(form);
         const username = document.getElementById('username').getAttribute('data-username');
 
-        displayToast("Operation in progress", "Please wait while we change this user's password", "info");
+        const formData = new FormData(form);
+        formData.append('csrf_token', '{{ csrf_token() }}');
 
         const response = await fetch(`/api/user/${username}/change_password/bypass`, { method: "POST", body: formData });
         const data = await response.json();
