@@ -42,6 +42,18 @@ class Orders(db.Model):
         data['status'] = { 'code': self.status, 'text': get_order_status_text(self.status) }
         data['division'] = { 'id': self.division_id, 'name': Division.query.get(self.division_id).full_name }
         return data
+    
+    def __fix_data(self):
+        if self.status != OrderStatus.FULFILLED:
+            self.fulfillment_date = None
+
+        if self.status < OrderStatus.FINANCE_APPROVED:
+            self.approval_finance_date = None
+            self.approval_finance_by = None
+
+        if self.status < OrderStatus.DIVISION_APPROVED:
+            self.approval_division_date = None
+            self.approval_division_by = None
 
     def is_approved(self, by):
         if by == 'division':
@@ -52,29 +64,23 @@ class Orders(db.Model):
             return False
         
     def is_fulfilled(self):
-        return self.fulfillment_date is not None
+        return self.fulfillment_date is not None and self.status == OrderStatus.FULFILLED
     
     def get_status(self):
         return get_order_status_text(self.status)
     
     def get_division(self):
-        return Division.query.get(self.division_id).full_name   
-
-    def clear_approval(self):
-            self.approval_division_date = None
-            self.approval_division_by = None
-            self.approval_finance_date = None
-            self.approval_finance_by = None
+        return Division.query.get(self.division_id).full_name
     
     # Status Transition Methods
     def transition(self, new):
         if can_transition(self.status, new):
             self.status = new
+            self.__fix_data()
         else:
             raise OrderStatusTransitionError(self.status, new)
     
     def submit(self):
-        self.clear_approval()
         self.transition(OrderStatus.SUBMITTED)
     
     def cancel(self):
@@ -115,7 +121,11 @@ class Orders(db.Model):
     
     @property
     def item_count(self):
-        return sum([item.quantity for item in self.items])
+        return sum([ item.quantity for item in self.items ])
+    
+    @property
+    def sku_count(self):
+        return len(self.items)
     
     @property
     def items(self):
