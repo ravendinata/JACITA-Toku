@@ -28,7 +28,10 @@ def collectItems(orders):
 
                 remarks = ''
                 if order_item.remarks and order_item.remarks != '':
-                    remarks = f"{order_item.order_id}: {order_item.remarks}"
+                    if len(orders) > 1:
+                        remarks = f"{order_item.order_id}: {order_item.remarks}"
+                    else:
+                        remarks = order_item.remarks
 
                 item_data['remarks'] = item_data['remarks'] + ';' + remarks if item_data['remarks'] else remarks
             else:
@@ -45,7 +48,10 @@ def collectItems(orders):
                 order_item_dict['orders'] = [order_item.order_id]
             
                 if order_item.remarks and order_item.remarks != '':
-                    order_item_dict['remarks'] = f"{order_item.order_id}: {order_item.remarks}"
+                    if len(orders) > 1:
+                        order_item_dict['remarks'] = f"{order_item.order_id}: {order_item.remarks}"
+                    else:
+                        order_item_dict['remarks'] = order_item.remarks
                 else:
                     order_item_dict['remarks'] = ''
 
