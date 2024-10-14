@@ -435,7 +435,7 @@
 
         if (response.ok)
         {
-            displayToast('Remove Item', 'Item removed successfully.');
+            setTimeout(() => displayToast('Item Removed', data.message), 1000);
             updateNavbarCart('{{ data.active_order }}');
             getOrderTotal();
             $('#data').DataTable().ajax.reload();
@@ -953,7 +953,7 @@
 
             if (response.ok)
             {
-                displayToast('Update Remarks', 'Remarks updated successfully.');
+                setTimeout(() => displayToast('Update Remarks', 'Remarks updated successfully.'), 1000);
                 $('#data').DataTable().ajax.reload();
             }
             else
@@ -1027,7 +1027,7 @@
 
         if (response.ok)
         {
-            displayToast('Update Quantity', 'Quantity updated successfully.');
+            setTimeout(() => displayToast('Update Quantity', 'Quantity updated successfully.'), 1000);
             updateNavbarCart('{{ data.active_order }}');
             getOrderTotal();
             $('#data').DataTable().ajax.reload();
