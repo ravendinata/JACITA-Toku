@@ -221,7 +221,8 @@
         btn.addEventListener('click', async () => {
             const id = btn.id.split('_')[1];
             const formData = new FormData();
-            updateOrderStatus('fulfill', id);
+            formData.append('fulfilled_by', '{{ data.user }}');
+            updateOrderStatus('fulfill', id, formData);
         });
     });
 
