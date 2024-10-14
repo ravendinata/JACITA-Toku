@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from flask import Flask
 
-from app.extensions import db
+from app.extensions import csrf, db
 from app.context_processor import inject_session_data
 
 def create_app():
@@ -19,6 +19,7 @@ def create_app():
     # Extensions
     # ==========
     db.init_app(app)    # SQLAlchemy Database Connection Object (app.extensions.db)
+    csrf.init_app(app)  # CSRF Protection Object (app.extensions.csrf
 
     # =================
     # Context Processor
