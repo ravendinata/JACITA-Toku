@@ -75,13 +75,15 @@
                             <li><a class="dropdown-item" id="kanriLogout" href="#">Logout</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item dropdown ms-3 me-3">
+                    <li class="nav-item dropdown ms-3 me-3" id="navCart">
                         <a class="btn btn-outline-secondary position-relative" href="#" id="btnToggleCart" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-shopping-cart"></i>
                             Current Order
                             <span id="cartCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" hidden>0</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Order <b>#{{ data.active_order }}</b> | <i>Top 5 Items by Quantity</i></h6></li>
+                            <hr class="dropdown-divider"> 
                             <li id="cartItems"></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a id="btnOrderDetails" class="dropdown-item" href="#">View Order Detail</a></li>

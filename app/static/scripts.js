@@ -116,20 +116,13 @@ function updateCartItemsCount(orderId)
 
 function updateCartTopItems(orderId)
 {
+    const navCart = document.getElementById('navCart');
     const cartItems = document.getElementById('cartItems');
     const btnOrderDetails = document.getElementById('btnOrderDetails');
 
     if (orderId == 'None') 
     {
-        cartItems.innerHTML = '';
-
-        const cartItem = document.createElement('li');
-        cartItem.classList.add('dropdown-item', 'd-flex', 'justify-content-between', 'lh-sm');
-        cartItem.innerHTML = '<small class="text-muted">No active order</small>';
-        cartItems.appendChild(cartItem);
-
-        btnOrderDetails.hidden = true;
-
+        navCart.hidden = true;
         return;
     }
 
