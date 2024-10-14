@@ -34,7 +34,7 @@ required_transition_states = {
     OrderStatus.FINANCE_REJECTED: [OrderStatus.DIVISION_APPROVED],
     OrderStatus.FINANCE_APPROVED: [OrderStatus.DIVISION_APPROVED],
     OrderStatus.FULFILLED: [OrderStatus.FINANCE_APPROVED],
-    OrderStatus.CANCELLED: [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]
+    OrderStatus.CANCELLED: [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_APPROVED]
 }
 
 def get_order_status_text(status):

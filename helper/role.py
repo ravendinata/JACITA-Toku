@@ -89,7 +89,7 @@ permission_rules = {
     'order/approve_division': { 'required': [ Role.DIVISION_LEADER ], 'operation': 'approve or reject order (Division)' },
     'order/approve_finance': { 'required': [ Role.FINANCE_MANAGER ], 'operation': 'approve or reject order (Finance)' },
     'order/fulfill': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'fulfill order' },
-    'order/cancel': { 'required': [ Role.DIVISION_LEADER, Role.DIVISION_USER ], 'operation': 'cancel order' },
+    'order/cancel': { 'required': [ Role.DIVISION_LEADER, Role.DIVISION_USER, Role.PROCUREMENT_MANAGER ], 'operation': 'cancel order' },
     # Order Item Related
     'orderitem/create': { 'required': [ Role.DIVISION_LEADER, Role.DIVISION_USER ], 'operation': 'create order item' },
     'orderitem/update': { 'required': [ Role.DIVISION_LEADER, Role.DIVISION_USER ], 'operation': 'update order item' },

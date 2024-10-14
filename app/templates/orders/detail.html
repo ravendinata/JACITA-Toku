@@ -8,13 +8,16 @@
         {% endif %}
         {% if can_do['order/approve_division'] or can_do['order/approve_finance'] %}
         <button type="button" class="btn btn-success float-end ms-1" id="btnApproveOrder"><i class="fa-regular fa-circle-check"></i> Approve Order</button>
-        <button type="button" class="btn btn-danger float-end ms-1" id="btnRejectOrder"><i class="fa-solid fa-times"></i> Reject Order</button>
+        <button type="button" class="btn btn-danger float-end ms-1" id="btnRejectOrder"><i class="fa-solid fa-ban"></i> Reject Order</button>
         {% endif %}
         {% if can_do['order/fulfill'] %}
         <button type="button" class="btn btn-success float-end ms-1" id="btnFulfillOrder"><i class="fa-regular fa-circle-check"></i> Fulfill Order</button>
         {% endif %}
         {% if order.id == data.active_order and can_do['orderitem/create'] %}
         <a href="/items/grouped" class="btn btn-primary float-end ms-1"><i class="fa-solid fa-cart-plus"></i> Add More Items to this Order</a>
+        {% endif %}
+        {% if can_do['order/cancel'] %}
+        <a href="javascript:void(0);" class="btn btn-danger float-end ms-1" id="btnCancelOrder"><i class="fa-solid fa-xmark"></i> Cancel Order</a>
         {% endif %}
         <a href="javascript:void(0);" class="btn btn-secondary float-end" onclick="history.back();"><i class="fa-solid fa-caret-left"></i> Back</a>
     </span>
@@ -395,6 +398,7 @@
     const btnFulfillOrder = document.getElementById('btnFulfillOrder');
     const btnApproveOrder = document.getElementById('btnApproveOrder');
     const btnRejectOrder = document.getElementById('btnRejectOrder');
+    const btnCancelOrder = document.getElementById('btnCancelOrder');
 
     const btnModalUpdateQty = document.getElementById('btnModalUpdateQty');
     const btnModalRemoveItem = document.getElementById('btnModalRemoveItem');
@@ -747,6 +751,23 @@
         btnRejectOrder.addEventListener('click', function() 
         {
             $('#rejectionModal').modal('show');
+        });
+    }
+
+    if (btnCancelOrder != null)
+    {
+        btnCancelOrder.addEventListener('click', function() 
+        {
+            displayPopupConfirm('Cancel Order', 'Are you sure you want to cancel this order? This action cannot be undone.',
+            confirmCallback = async () => 
+            { 
+                const formData = new FormData();
+                formData.append('cancelled_by', '{{ data.user }}');
+                await updateOrderStatus('cancel', formData); 
+            },
+            denyCallback = () => {},
+            confirmText = 'Yes, cancel this order',
+            denyText = 'No, keep this order');
         });
     }
 

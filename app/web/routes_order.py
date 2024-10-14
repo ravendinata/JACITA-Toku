@@ -9,7 +9,7 @@ from app.models.orders import Orders
 from app.models.user import User
 from helper.auth import check_login
 from helper.endpoint import check_page_permission
-from helper.role import InsufficientPermissionError
+from helper.role import InsufficientPermissionError, Role
 from helper.status import OrderStatus
 
 @web.route('/orders')
@@ -124,7 +124,8 @@ def page_order_view(id):
         'orderitem/update': False,
         'order/approve_division': False,
         'order/approve_finance': False,
-        'order/fulfill': False
+        'order/fulfill': False,
+        'order/cancel': False
     }
     
     # Check permissions based on order status
@@ -132,16 +133,19 @@ def page_order_view(id):
         can_do['order/update'] = check_permission('order/update')
         can_do['orderitem/create'] = check_permission('orderitem/create')
         can_do['orderitem/update'] = check_permission('orderitem/update')
+        can_do['order/cancel'] = check_permission('order/cancel')
     
     if order.status in [OrderStatus.SUBMITTED,  OrderStatus.FINANCE_REJECTED]:
         can_do['order/approve_division'] = check_permission('order/approve_division')
-        can_do['orderitem/update'] = check_permission('orderitem/update')
     
     if order.status == OrderStatus.DIVISION_APPROVED:
         can_do['order/approve_finance'] = check_permission('order/approve_finance')
     
     if order.status == OrderStatus.FINANCE_APPROVED:
         can_do['order/fulfill'] = check_permission('order/fulfill')
+        can_do['order/cancel'] = check_permission('order/cancel')
+        if user.role in [Role.DIVISION_LEADER, Role.DIVISION_USER]:
+            can_do['order/cancel'] = False
 
     if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
         latest_rejection = OrderRejectLog.query.filter(OrderRejectLog.order_id == id).order_by(desc(OrderRejectLog.date)).first()
