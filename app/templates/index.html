@@ -8,7 +8,7 @@
 <hr>
 <div class="container-fluid" style="margin-bottom: 48px;">
     <h1>Hello, {{ data.user }}</h1>
-    <small class="text-muted">Current Period: {{ current_period.short }} ({{ current_period.long}})</small>
+    <small class="text-muted">Current Period: {{ current_period.short }} ({{ current_period.long }})</small>
     <div class="row mt-4">
         <div class="col-md-8">
             <div class="row">
@@ -52,7 +52,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mt-3">
+            <div class="row mt-4">
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
@@ -98,7 +98,7 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Your active order</h5>
+                    <h4 class="card-title">Your active order</h4>
                     {% if data.active_order %}
                     <p class="card-text">ID: {{ data.active_order }}</p>
                     <a href="/order/{{ data.active_order }}" class="btn btn-success"><i class="fa-solid fa-eye"></i> View Order</a>
@@ -109,12 +109,13 @@
                         Total Value: <span id="orderTotal"></span>
                     </p>
                     <hr>
-                    <p>
-                        <b>Order Items</b><br>
+                    <p class="mb-1">
+                        <b>Order Items <span id="orderItemCount"></span></b><br>
                         <ul id="orderItems"></ul>
                     </p>
                     {% else %}
                     <p class="card-text">You don't have any active order.</p>
+                    <a href="/orders" class="btn btn-secondary"><i class="fa-solid fa-list"></i> View past orders or create a new order</a>
                     {% endif %}
                 </div>
             </div>
@@ -128,6 +129,7 @@
     const orderStatus = document.getElementById('orderStatus');
     const orderTotal = document.getElementById('orderTotal');
     const orderItems = document.getElementById('orderItems');
+    const orderItemCount = document.getElementById('orderItemCount');
 
     async function getStatus() 
     {
@@ -148,6 +150,8 @@
         const response = await fetch('/api/order/{{ data.active_order }}/items', { method: 'GET' });
         const data = await response.json();
 
+        orderItemCount.innerText = `(${data.length} SKUs)`;
+
         if (data.length === 0) {
             const li = document.createElement('li');
             li.innerText = 'No items in this order.';
@@ -155,11 +159,21 @@
             return;
         }
 
-        data.forEach(item => {
+        data.slice(0, 10).forEach(item => {
             const li = document.createElement('li');
             li.innerText = `${item.quantity} x ${item.name} - ${formatCurrency(item.subtotal)}`;
             orderItems.appendChild(li);
         });
+
+        if (data.length > 10) {
+            const remaining = data.length - 10;
+            const p = document.createElement('p');
+            p.classList.add('text-muted');
+            p.classList.add('fst-italic');
+            p.classList.add('mt-2');
+            p.innerText = `... and ${remaining} more items.`;
+            orderItems.appendChild(p);            
+        }
     }
 
     getStatus();
