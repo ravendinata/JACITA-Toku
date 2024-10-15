@@ -137,6 +137,7 @@ def page_order_view(id):
     
     if order.status in [OrderStatus.SUBMITTED,  OrderStatus.FINANCE_REJECTED]:
         can_do['order/approve_division'] = check_permission('order/approve_division')
+        can_do['orderitem/update'] = check_permission('orderitem/update')
     
     if order.status == OrderStatus.DIVISION_APPROVED:
         can_do['order/approve_finance'] = check_permission('order/approve_finance')
@@ -146,6 +147,9 @@ def page_order_view(id):
         can_do['order/cancel'] = check_permission('order/cancel')
         if user.role in [Role.DIVISION_LEADER, Role.DIVISION_USER]:
             can_do['order/cancel'] = False
+
+    if order.id != session['active_order'] and user.role not in [Role.ADMINISTRATOR, Role.DIVISION_LEADER]:
+        can_do['orderitem/update'] = False
 
     if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
         latest_rejection = OrderRejectLog.query.filter(OrderRejectLog.order_id == id).order_by(desc(OrderRejectLog.date)).first()
@@ -195,7 +199,7 @@ def page_division_order_view(period, division_id):
         if status == OrderStatus.FINANCE_APPROVED:
             can_do['order/fulfill'] = check_permission('order/fulfill')
 
-    division = {'id': division_id, 'name': orders[0].get_division()}
+    division = { 'id': division_id, 'name': orders[0].get_division() }
 
     return render_template('orders/collection_detail.html', use_datatables = True, title = "Division Orders", can_do = can_do, sync = sync,
                            orders = orders, period = period, division = division, last_modification_date = orders[0].last_modification_date)

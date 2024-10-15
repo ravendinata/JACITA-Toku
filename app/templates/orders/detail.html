@@ -548,7 +548,7 @@
                     data: null, // 8
                     render: function(data, type, row, meta) 
                     {
-                        if ("{{ order.id }}" == "{{ data.active_order }}" && "{{ can_do['orderitem/update'] }}" == "True")
+                        if ("{{ can_do['orderitem/update'] }}" == "True")
                         {
                             var buttons = `<button class="btn btn-primary btn-sm" id="btnUpdateQty_${row.item_id}"><i class="fas fa-plus-minus"></i></button>
                             <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.item_id}"><i class="fas fa-edit"></i></button>
