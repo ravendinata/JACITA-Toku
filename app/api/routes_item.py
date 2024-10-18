@@ -1,5 +1,6 @@
 import copy
 import re
+from uuid import uuid4
 
 from flask import jsonify, request, session
 
@@ -7,6 +8,7 @@ import helper.trail as trail
 from app.api import api
 from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems, ViewGroupedItems, ViewGroupedNonvalItems
+from app.models.logs import ItemPriceUpdateLog
 from app.models.misc import QuantityUnit
 from helper.core import generate_item_id, jumble_string
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
@@ -164,6 +166,33 @@ def api_update_bulk_items():
         item.qty_unit_id = qty_unit_ids[i]
         item.modification_by = username
 
+        if float(item.base_price) != float(old_item.base_price):
+            item_price_update = ItemPriceUpdateLog(id = f"{item.id}-{str(uuid4())[:8]}",
+                                                   item_id = item.id,
+                                                   price_original = old_item.base_price,
+                                                   price_new = item.base_price,
+                                                   user = username)
+            
+            if ItemPriceUpdateLog.query.filter_by(item_id = item.id).count() == 0:
+                initial_price = ItemPriceUpdateLog(id = f"{item.id}-init",
+                                                   item_id = item.id,
+                                                   price_original = old_item.base_price,
+                                                   price_new = old_item.base_price,
+                                                   date = old_item.created_date,
+                                                   user = old_item.created_by)
+                
+                try:
+                    db.session.add(initial_price)
+                except Exception as e:
+                    print(f"Error while logging initial price update: {e}")
+                    return jsonify({ 'error': 'Error while logging initial price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+
+            try:
+                db.session.add(item_price_update)
+            except Exception as e:
+                print(f"Error while logging price update: {e}")
+                return jsonify({ 'error': 'Error while logging price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+
         old_items.append(old_item)
         items.append(item)
 
@@ -227,6 +256,33 @@ def api_update_item(item_id):
     item.base_price = request.form.get('base_price', item.base_price)
     item.category_id = request.form.get('category_id', item.category_id)
     item.qty_unit_id = request.form.get('qty_unit_id', item.qty_unit_id)
+
+    if float(old_item.base_price) != float(item.base_price):
+        item_price_update = ItemPriceUpdateLog(id = f"{item.id}-{str(uuid4())[:8]}",
+                                               item_id = item_id,
+                                               price_original = old_item.base_price,
+                                               price_new = item.base_price,
+                                               user = username)
+        
+        if ItemPriceUpdateLog.query.filter_by(item_id = item_id).count() == 0:
+            initial_price = ItemPriceUpdateLog(id = f"{item.id}-init",
+                                               item_id = item_id,
+                                               price_original = old_item.base_price,
+                                               price_new = old_item.base_price,
+                                               date = old_item.created_date,
+                                               user = old_item.created_by)
+            
+            try:
+                db.session.add(initial_price)
+            except Exception as e:
+                print(f"Error while logging initial price update: {e}")
+                return jsonify({ 'error': 'Error while logging initial price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+
+        try:
+            db.session.add(item_price_update)
+        except Exception as e:
+            print(f"Error while logging price update: {e}")
+            return jsonify({ 'error': 'Error while logging price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     if item.description:
         match = re.search(r'\(Originally Created by (.*?)\)', item.description)
