@@ -8,7 +8,7 @@ from app.models.logs import OrderRejectLog
 from app.models.orders import Orders
 from app.models.user import User
 from helper.auth import check_login
-from helper.endpoint import check_page_permission
+from helper.endpoint import HTTPStatus, check_page_permission
 from helper.role import InsufficientPermissionError, Role
 from helper.status import OrderStatus
 
@@ -98,7 +98,7 @@ def page_order_history():
 def page_order_view(id):
     order = Orders.query.get(id)
     if order is None:
-        return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
+        return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
 
     # Append GMT to the dates
     order.created_date = order.created_date.strftime('%Y-%m-%d %H:%M:%S GMT')
@@ -154,8 +154,15 @@ def page_order_view(id):
     if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
         latest_rejection = OrderRejectLog.query.filter(OrderRejectLog.order_id == id).order_by(desc(OrderRejectLog.date)).first()
 
-    return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, can_do = can_do, 
-                           reject_reason = latest_rejection.reason if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED] else None)
+    try:
+        reject_reason = latest_rejection.reason if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED] else None
+    except AttributeError:
+        reject_reason = None
+        return render_template('error/standard.html', title = "Database Error", code = HTTPStatus.INTERNAL_SERVER_ERROR,
+                               message = "Order is rejected but system has failed to retrieve rejection reason. Please contact Administrator."), HTTPStatus.INTERNAL_SERVER_ERROR
+
+    return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, 
+                           can_do = can_do, reject_reason = reject_reason)
 
 @web.route('/order/<string:period>/<int:division_id>')
 @check_login
@@ -164,7 +171,7 @@ def page_division_order_view(period, division_id):
     orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(desc(Orders.last_modification_date)).all()
 
     if len(orders) == 0:
-        return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
+        return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
     
     user = User.query.get(session['user'])
     
@@ -214,7 +221,7 @@ def page_procurement_order_view(period):
             .all()
     
     if len(orders) == 0:
-        return render_template('error/standard.html', title = "Not Found", code = 404, message = "Order not found."), 404
+        return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
 
     divisions = {}
     for order in orders:
