@@ -1,6 +1,4 @@
 import copy
-from itertools import chain
-from uuid import uuid4
 
 from flask import jsonify, request, session
 from sqlalchemy import desc
@@ -240,7 +238,7 @@ def api_reject_order(order_id, by):
 
     try:
         order.reject(by, username)
-        log = OrderRejectLog(order_id = order_id, reason = request.form.get('reason'), user = username, level = by, id = str(uuid4()))
+        log = OrderRejectLog(order_id = order_id, reason = request.form.get('reason'), user = username, level = by)
         db.session.add(log)
         db.session.commit()
     except OrderStatusTransitionError as e:
@@ -377,7 +375,7 @@ def api_reject_orders(period, division_id, by):
         
         order.reject(by, username)
 
-        log = OrderRejectLog(order_id = order.id, reason = request.form.get('reason'), user = username, level = by, id = str(uuid4()))
+        log = OrderRejectLog(order_id = order.id, reason = request.form.get('reason'), user = username, level = by)
         logs.append(log)
     
     try:
