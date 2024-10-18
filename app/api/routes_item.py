@@ -577,3 +577,16 @@ def api_get_grouped_variants():
         data.append(obj)
 
     return jsonify(data), HTTPStatus.OK
+
+# =================
+# PRICE UPDATE LOGS
+# =================
+
+@api.route('/item/<string:item_id>/price_history', methods = ['GET'])
+def api_get_price_updates(item_id):
+    updates = ItemPriceUpdateLog.query.filter_by(item_id = item_id).all()
+
+    if not updates:
+        return jsonify({ 'error': 'No price updates yet' }), HTTPStatus.OK
+    
+    return jsonify([ update.to_dict() for update in updates ]), HTTPStatus.OK
