@@ -1,5 +1,6 @@
 from app.extensions import db
 from helper.auth import generate_password_hash, check_password_hash
+from helper.navbar import get_navbar_items
 from helper.role import Role, check_permission, get_allowed_operations, get_role_text
 
 class Division(db.Model):
@@ -36,6 +37,21 @@ class User(db.Model):
         user_data['division'] = Division.query.get(self.division_id).to_dict()
         user_data['role'] = { 'id': self.role, 'text': get_role_text(self.role) }
         return user_data
+    
+    @property
+    def full_name(self):
+        string = self.first_name
+        if self.last_name:
+            string += ' ' + self.last_name
+        return string
+    
+    @property
+    def division(self):
+        return Division.query.get(self.division_id)
+    
+    @property
+    def navbar_items(self):
+        return get_navbar_items(self.role)
     
     def check_password(self, password):
         return check_password_hash(self.password, password)
