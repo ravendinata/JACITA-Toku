@@ -4,6 +4,7 @@ from flask import render_template, session, redirect, request, url_for
 
 from app.web import web
 from app.models.items import Items, NonvalItems
+from app.models.logs import ItemPriceUpdateLog
 from app.models.misc import Category, QuantityUnit
 from app.models.user import User
 from helper.auth import check_login
@@ -100,3 +101,16 @@ def page_items_bulk_edit():
 
     return render_template('items/bulk_edit.html', title = "Bulk Edit Items", items = items,
                            units = units, categories = categories)
+
+# =============
+# PRICE HISTORY
+# =============
+
+@web.route('/item/<string:id>/price_history')
+@check_login
+def page_items_price_history(id):
+    price_history = ItemPriceUpdateLog.query.filter_by(item_id = id).all()
+    item = Items.query.get(id) or NonvalItems.query.get(id)
+
+    return render_template('items/price_history.html', title = "Price History",
+                           price_history = [ log.to_dict() for log in price_history ], item = item.to_dict())

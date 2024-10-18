@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<span class="float-end">
+    <a href="/item/{{ item.id }}/edit" class="btn btn-secondary"><i class="fas fa-edit"></i> Edit Item</a>
+</span>
+<h1>Price History</h1>
+<p class="text-muted">
+    Item: <span class="fw-bold">{{ item.brand }} {{ item.name }} {{ item.variant }}</span><br>
+    ID: <span class="fw-bold">{{ item.id }}</span>
+</p>
+<hr>
+{% if price_history %}
+<div class="container-fluid" style="padding-bottom: 48px;">
+    <div>
+        <canvas id="chart" style="width: 100%; height: 40vh;"></canvas>
+    </div>
+    <table id="data" class="table table-striped" style="width: 100%;">
+        <thead style="vertical-align: middle;">
+            <tr>
+                <th rowspan="2">Date</th>
+                <th colspan="2">Price</th>
+                <th rowspan="2" style="text-align: right;">Difference</th>
+                <th rowspan="2">[ ] Change (%)</th>
+                <th rowspan="2">Current Position (%)</th>
+                <th rowspan="2">Updated By</th>
+            </tr>
+            <tr>
+                <th>Before</th>
+                <th>After</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-warning" role="alert">
+    <i class="fas fa-exclamation-triangle"></i>
+    No price change history found for this item.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+    const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    const DATE_OPTIONS_SHORT = { year: 'numeric', month: 'short', day: 'numeric' };
+    
+    const price_history = {{ price_history | tojson }};
+    price_history.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    const tbody = document.querySelector('tbody');
+    const ctx = document.getElementById('chart');
+
+    Chart.register(ChartDataLabels);
+
+    function createPctChangeString(value)
+    {
+        var textColor = 'text-danger';
+        var icon = 'fa-angles-up';
+
+        if (value < 100 && value> 0)
+        {
+            textColor = 'text-warning';
+            icon = 'fa-angle-up';
+        }
+        else if (value < -50)
+        {
+            textColor = 'text-success';
+            icon = 'fa-angles-down';
+        }
+        else if (value < 0)
+        {
+            textColor = 'text-info';
+            icon = 'fa-angle-down';
+        }
+
+        return `<span class="${textColor}"><i class="fa-solid ${icon}"></i> ${value.toFixed(2)}%</span>`;
+    }
+
+    price_history.slice(1).forEach(data => 
+    {
+        const tr = document.createElement('tr');
+        const date = new Date(data.date);
+        tr.innerHTML = `
+            <td>${date.toLocaleDateString('en-US', DATE_OPTIONS)}</td>
+            <td>${formatCurrency(data.price_original)}</td>
+            <td>${formatCurrency(data.price_new)}</td>
+            <td style="text-align: right;">${formatCurrency(data.diff)}</td>
+            <td>${createPctChangeString(data.percent_change)}</td>
+            <td>${(data.current_position).toFixed(2)}%</td>
+            <td>${data.user}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    new Chart(ctx, 
+    {
+        type: 'line',
+        data: 
+        {
+            labels: price_history.map(data => new Date(data.date).toLocaleDateString('en-US', DATE_OPTIONS_SHORT)),
+            datasets: 
+            [
+                {
+                    label: 'Price',
+                    data: price_history.map(data => data.price_new),
+                    borderColor: '#007bff',
+                    tension: 0.1,
+                    radius: (ctx) => { return ctx.dataIndex === 0 ? 10 : 5; },
+                    hoverRadius: (ctx) => { return ctx.dataIndex === 0 ? 12 : 7; },
+                    pointStyle: (ctx) => { return ctx.dataIndex === 0 ? 'star' : 'circle'; },
+                    datalabels:
+                    {
+                        visibility: 'auto',
+                        overlap: false,
+                        clamp: true,
+                        anchor: 'start',
+                        align: 'start',
+                        clip: true,
+                        backgroundColor: '#000',
+                        borderRadius: 7,
+                        borderWidth: 2,
+                        color: '#fff',
+                        formatter: (value, context) => { return formatCurrency(value); },
+                        font: { weight: 'bold', lineHeight: 1 }
+                    }
+                },
+                {
+                    type: 'bar',
+                    label: 'Percent Change',
+                    data: price_history.map(data => data.percent_change),
+                    borderColor: '#28a745',
+                    barPercentage: 0.5,
+                    yAxisID: 'y2',
+                    backgroundColor: (ctx) => 
+                    {
+                        const value = ctx.dataset.data[ctx.dataIndex];
+                        return value > 0 ? '#dc3545' : '#28a745';
+                    },
+                    datalabels:
+                    {
+                        anchor: 'start',
+                        align: 'start',
+                        color: '#777',
+                        formatter: (value, context) => { return value.toFixed(2) + '%'; }
+                    }
+                }
+            ]
+        },
+        options: 
+        {
+            scales:
+            {
+                y: 
+                {
+                    type: 'linear',
+                    position: 'left',
+                    stack: 'main',
+                    stackWeight: 2,
+                    border: { color: '#007bff' }
+                },
+                y2:
+                {
+                    type: 'linear',
+                    position: 'left',
+                    stack: 'main',
+                    stackWeight: 1,
+                    suggestedMin: -20,
+                    suggestedMax: 20,
+                    border: { color: '#28a745' },
+                    ticks: { display: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
