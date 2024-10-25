@@ -45,6 +45,7 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
 <script>
     const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     const DATE_OPTIONS_SHORT = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -77,104 +78,214 @@
             textColor = 'text-info';
             icon = 'fa-angle-down';
         }
+        else if (value == 0)
+        {
+            textColor = 'text-muted';
+            icon = 'fa-minus';
+            return `<span class="${textColor}"><i class="fa-solid ${icon}"></i> Item Creation Time</span>`;
+        }
 
         return `<span class="${textColor}"><i class="fa-solid ${icon}"></i> ${value.toFixed(2)}%</span>`;
     }
 
-    price_history.slice(1).forEach(data => 
+    function formatPriceData(value, type)
     {
-        const tr = document.createElement('tr');
-        const date = new Date(data.date);
-        tr.innerHTML = `
-            <td>${date.toLocaleDateString('en-US', DATE_OPTIONS)}</td>
-            <td>${formatCurrency(data.price_original)}</td>
-            <td>${formatCurrency(data.price_new)}</td>
-            <td style="text-align: right;">${formatCurrency(data.diff)}</td>
-            <td>${createPctChangeString(data.percent_change)}</td>
-            <td>${(data.current_position).toFixed(2)}%</td>
-            <td>${data.user}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+        if (type === 'display')
+            return formatCurrency(value);
+        else
+            return value;
+    }
 
-    new Chart(ctx, 
+    var table = $('#data').DataTable(
     {
-        type: 'line',
-        data: 
+        ajax:
         {
-            labels: price_history.map(data => new Date(data.date).toLocaleDateString('en-US', DATE_OPTIONS_SHORT)),
-            datasets: 
-            [
-                {
-                    label: 'Price',
-                    data: price_history.map(data => data.price_new),
-                    borderColor: '#007bff',
-                    tension: 0.1,
-                    radius: (ctx) => { return ctx.dataIndex === 0 ? 10 : 5; },
-                    hoverRadius: (ctx) => { return ctx.dataIndex === 0 ? 12 : 7; },
-                    pointStyle: (ctx) => { return ctx.dataIndex === 0 ? 'star' : 'circle'; },
-                    datalabels:
-                    {
-                        visibility: 'auto',
-                        overlap: false,
-                        clamp: true,
-                        anchor: 'start',
-                        align: 'start',
-                        clip: true,
-                        backgroundColor: '#000',
-                        borderRadius: 7,
-                        borderWidth: 2,
-                        color: '#fff',
-                        formatter: (value, context) => { return formatCurrency(value); },
-                        font: { weight: 'bold', lineHeight: 1 }
-                    }
-                },
-                {
-                    type: 'bar',
-                    label: 'Percent Change',
-                    data: price_history.map(data => data.percent_change),
-                    borderColor: '#28a745',
-                    barPercentage: 0.5,
-                    yAxisID: 'y2',
-                    backgroundColor: (ctx) => 
-                    {
-                        const value = ctx.dataset.data[ctx.dataIndex];
-                        return value > 0 ? '#dc3545' : '#28a745';
-                    },
-                    datalabels:
-                    {
-                        anchor: 'start',
-                        align: 'start',
-                        color: '#777',
-                        formatter: (value, context) => { return value.toFixed(2) + '%'; }
-                    }
-                }
-            ]
+            url: '/api/item/{{ item.id }}/price_history',
+            dataSrc: '',
+            type: 'GET'
         },
-        options: 
-        {
-            scales:
-            {
-                y: 
+        columns: 
+        [
+            { 
+                data: 'date', // 0
+                render: (data, type, row, meta) =>
                 {
-                    type: 'linear',
-                    position: 'left',
-                    stack: 'main',
-                    stackWeight: 2,
-                    border: { color: '#007bff' }
-                },
-                y2:
-                {
-                    type: 'linear',
-                    position: 'left',
-                    stack: 'main',
-                    stackWeight: 1,
-                    suggestedMin: -20,
-                    suggestedMax: 20,
-                    border: { color: '#28a745' },
-                    ticks: { display: false }
+                    console.info(data);
+                    if (type === 'display') 
+                        return new Date(data).toLocaleDateString('en-GB', DATE_OPTIONS_SHORT); 
+                    else
+                        return moment(data).format('YYYY-MM-DD HH:mm:ss');
                 }
+            },
+            { data: 'price_original', render: (data, type, row, meta) => { return formatPriceData(data, type); } }, // 1
+            { data: 'price_new', render: (data, type, row, meta) => { return formatPriceData(data, type); } }, // 2
+            { data: 'diff', render: (data, type, row, meta) => { return formatPriceData(data, type); } }, // 3
+            { data: 'percent_change', render: (data) => { return createPctChangeString(data); } }, // 4
+            { data: 'current_position', render: (data) => { return data.toFixed(2) + '%'; } }, // 5
+            { data: 'user' } // 6
+        ],
+        order: [[0, 'asc']],
+        processing: true,
+        info: false,
+        autoWidth: false,
+        columnDefs: 
+        [
+            { targets: [1, 2, 3, 4, 5, 6], orderable: false },
+            { targets: [3], className: 'text-end' }
+        ],
+        pageLength: 10,
+        language: 
+        { 
+            searchBuilder: 
+            { 
+                button:
+                {
+                    0: '<i class="fas fa-filter"></i> Filter',
+                    _: '<i class="fas fa-filter"></i> %d Filter(s) Applied'
+                },
+                title: 
+                {
+                    0: 'No Filters Applied',
+                    _: '%d Filters Applied'
+                },
+                data: 'Data Column',
             }
+        },
+        layout:
+        {
+            topEnd:
+            {
+                buttons:
+                [
+                    {
+                        extend: 'searchBuilder',
+                        config: { columns: [0, 1, 2, 3, 4, 6] }
+                    }
+                ]
+            },
+            bottomEnd: 'paging'
+        },
+        drawCallback: function(settings)
+        {
+            var dates = [];
+            var prices = [];
+            var pct_changes = [];
+
+            console.info(settings);
+
+            function fetchData(row)
+            {
+                dates.push(row.date);
+                pct_changes.push(row.percent_change);
+                
+                price = `${row.price_new}`.replace(/[^0-9.-]+/g, '');
+                priceInt = parseInt(price);
+                prices.push(priceInt);
+            }
+
+            if (settings.aaSorting[0][1] === 'asc')
+                settings.aoData.forEach(row => fetchData(row._aData));
+            else
+            {
+                for (let i = settings.aoData.length - 1; i >= 0; i--)
+                    fetchData(settings.aoData[i]._aData);
+            }
+
+            const current_chart = Chart.getChart(ctx);
+            if (current_chart)
+            {
+                current_chart.data.labels = dates;
+                current_chart.data.datasets[0].data = prices;
+                current_chart.data.datasets[1].data = pct_changes;
+                current_chart.update();
+                
+                return;
+            }
+
+            const chart = new Chart(ctx, 
+            {
+                type: 'line',
+                data: 
+                {
+                    labels: dates,
+                    datasets: 
+                    [
+                        {
+                            label: 'Price',
+                            data: prices,
+                            borderColor: '#007bff',
+                            tension: 0.1,
+                            radius: (ctx) => { return ctx.dataIndex === 0 ? 10 : 5; },
+                            hoverRadius: (ctx) => { return ctx.dataIndex === 0 ? 12 : 7; },
+                            pointStyle: (ctx) => { return ctx.dataIndex === 0 ? 'star' : 'circle'; },
+                            datalabels:
+                            {
+                                visibility: 'auto',
+                                overlap: false,
+                                clamp: true,
+                                anchor: 'start',
+                                align: 'start',
+                                clip: true,
+                                backgroundColor: '#000',
+                                borderRadius: 7,
+                                borderWidth: 2,
+                                color: '#fff',
+                                formatter: (value, context) => { return formatCurrency(value); },
+                                font: { weight: 'bold', lineHeight: 1 }
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Percent Change',
+                            data: pct_changes,
+                            borderColor: '#28a745',
+                            barPercentage: 0.5,
+                            yAxisID: 'y2',
+                            backgroundColor: (ctx) => 
+                            {
+                                const value = ctx.dataset.data[ctx.dataIndex];
+                                return value > 0 ? '#dc3545' : '#28a745';
+                            },
+                            datalabels:
+                            {
+                                anchor: 'start',
+                                align: 'start',
+                                color: '#777',
+                                formatter: (value, context) => 
+                                { 
+                                    if (isNaN(value)) return value;
+                                    else return value.toFixed(2) + '%'; 
+                                }
+                            }
+                        }
+                    ]
+                },
+                options: 
+                {
+                    scales:
+                    {
+                        y: 
+                        {
+                            type: 'linear',
+                            position: 'left',
+                            stack: 'main',
+                            stackWeight: 2,
+                            border: { color: '#007bff' }
+                        },
+                        y2:
+                        {
+                            type: 'linear',
+                            position: 'left',
+                            stack: 'main',
+                            stackWeight: 1,
+                            suggestedMin: -20,
+                            suggestedMax: 20,
+                            border: { color: '#28a745' },
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
         }
     });
 </script>
