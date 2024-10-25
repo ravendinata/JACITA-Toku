@@ -112,5 +112,5 @@ def page_items_price_history(id):
     price_history = ItemPriceUpdateLog.query.filter_by(item_id = id).all()
     item = Items.query.get(id) or NonvalItems.query.get(id)
 
-    return render_template('items/price_history.html', title = "Price History",
+    return render_template('items/price_history.html', title = "Price History", use_datatables = True,
                            price_history = [ log.to_dict() for log in price_history ], item = item.to_dict())
