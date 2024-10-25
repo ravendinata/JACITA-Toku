@@ -265,7 +265,10 @@
                         <button class="btn btn-secondary btn-sm" id="btnViewDetails_${row.id}"><i class="fas fa-info-circle"></i></button>&nbsp;`;
 
                         if ((operations.includes('item_validated/update') && row.validated == 1) || (operations.includes('item_nonvalidated/update') && row.validated == 0))
-                            buttons += `<button class="btn btn-secondary btn-sm" id="btnEditItem_${row.id}"><i class="fas fa-edit"></i></button>`;
+                        {
+                            buttons += `<button class="btn btn-secondary btn-sm" id="btnEditItem_${row.id}"><i class="fas fa-edit"></i></button>
+                            <a class="btn btn-success btn-sm" href="/item/${row.id}/price_history"><i class="fas fa-chart-line"></i></a>`;
+                        }
                         
                         return buttons;
                     }
@@ -293,7 +296,7 @@
                 { searchPanes: { show: false }, targets: [1, 4, 5, 6, 8] },
                 { orderable: false, targets: [0, 8] },
                 { width: '15%', targets: [1] },
-                { width: '15%', targets: [8] }
+                { width: '16%', targets: [8] }
             ],
             order: [[1, 'asc']],
             fixedHeader: true,
