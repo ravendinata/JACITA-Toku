@@ -3,6 +3,7 @@ import re
 from uuid import uuid4
 
 from flask import jsonify, request, session
+from sqlalchemy import asc
 
 import helper.trail as trail
 from app.api import api
@@ -584,7 +585,7 @@ def api_get_grouped_variants():
 
 @api.route('/item/<string:item_id>/price_history', methods = ['GET'])
 def api_get_price_updates(item_id):
-    updates = ItemPriceUpdateLog.query.filter_by(item_id = item_id).all()
+    updates = ItemPriceUpdateLog.query.filter_by(item_id = item_id).order_by(asc(ItemPriceUpdateLog.date)).all()
 
     if not updates:
         return jsonify({ 'error': 'No price updates yet' }), HTTPStatus.OK
