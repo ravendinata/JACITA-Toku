@@ -110,7 +110,6 @@
                 data: 'date', // 0
                 render: (data, type, row, meta) =>
                 {
-                    console.info(data);
                     if (type === 'display') 
                         return new Date(data).toLocaleDateString('en-GB', DATE_OPTIONS_SHORT); 
                     else
@@ -170,8 +169,6 @@
             var dates = [];
             var prices = [];
             var pct_changes = [];
-
-            console.info(settings);
 
             function fetchData(row)
             {
