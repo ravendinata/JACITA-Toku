@@ -36,6 +36,10 @@ markupsafe==2.1.5
     #   wtforms
 psycopg2==2.9.9
     # via -r requirements.in
+python-dateutil==2.9.0.post0
+    # via -r requirements.in
+six==1.16.0
+    # via python-dateutil
 sqlalchemy==2.0.34
     # via flask-sqlalchemy
 typing-extensions==4.12.2

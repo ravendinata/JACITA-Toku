@@ -3,3 +3,4 @@ Flask
 Flask-SQLAlchemy
 Flask-WTF
 psycopg2
+python-dateutil
