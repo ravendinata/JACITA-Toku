@@ -97,7 +97,11 @@
                     <div class="row mb-3">
                         <div class="col">
                             <label for="period" class="form-label">Period</label>
-                            <select class="form-select" id="period" name="period" required></select>
+                            <select class="form-select" id="period" name="period" required>
+                                {% for period in available_periods %}
+                                <option value="{{ period.short }}">{{ period.short }} - {{ period.long }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -159,20 +163,6 @@
         const orderId = dateElement.id.split('_')[1];
         dateElement.textContent = new Date(dateElement.textContent).toLocaleDateString('en-GB', DATE_OPTIONS);
     });
-
-    // Add periods to the new order form (next 3 months in YYYY/MM format)
-    const today = new Date();
-    for (let i = 0; i < 4; i++)
-    {
-        const nextMonth = new Date(today);
-        nextMonth.setMonth(today.getMonth() + i);
-        var month = nextMonth.getMonth() + 1;
-        if (month < 10)
-            month = '0' + month;
-        const periodValue = `${nextMonth.getFullYear()}/${month}`;
-        const periodText = nextMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-        periodSelect.innerHTML += `<option value="${periodValue}">${periodValue} - ${periodText}</option>`;
-    }   
 
     newOrderForm.addEventListener('submit', async (event) => {
         event.preventDefault();

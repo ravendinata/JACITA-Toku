@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from flask import render_template, session
 from sqlalchemy import asc, desc, or_
 
+import helper.periods as periods
 from app.web import web
 from app.models.logs import OrderRejectLog
 from app.models.orders import Orders
@@ -23,7 +22,7 @@ def page_order_list():
     user = User.query.get(username).to_dict()
     division = user['division']
 
-    return render_template('orders/view_all.html', use_datatables = True, title = "My Orders",
+    return render_template('orders/view_all.html', use_datatables = True, title = "My Orders", available_periods = periods.get_available_periods(),
                            active_order = active_order, past_orders = past_orders, division = division)
 
 @web.route('/orders/administration')
@@ -31,11 +30,8 @@ def page_order_list():
 @check_page_permission('order/administer')
 def page_order_administration():
     user = User.query.get(session['user'])
-    this_month = f"{datetime.now().year}/{datetime.now().month:02d}"
-    if datetime.now().month == 12:
-        next_month = f"{datetime.now().year + 1}/01"
-    else:
-        next_month = f"{datetime.now().year}/{datetime.now().month + 1:02d}"
+    this_month = periods.get_current_month()
+    next_month = periods.get_next_month()
 
     can_do = {
         'order/approve_division': False,
