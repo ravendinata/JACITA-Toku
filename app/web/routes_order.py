@@ -144,7 +144,8 @@ def page_order_view(id):
         if user.role in [Role.DIVISION_LEADER, Role.DIVISION_USER]:
             can_do['order/cancel'] = False
 
-    if order.id != session['active_order'] and user.role not in [Role.ADMINISTRATOR, Role.DIVISION_LEADER]:
+    active_order = session['active_order'] if 'active_order' in session else None
+    if order.id != active_order and user.role not in [Role.ADMINISTRATOR, Role.DIVISION_LEADER]:
         can_do['orderitem/update'] = False
 
     if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED]:
