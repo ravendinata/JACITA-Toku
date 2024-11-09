@@ -110,7 +110,10 @@
             document.getElementById('btnLogout').addEventListener('click', async () =>
             {
                 console.log('Logging out from Kanri...');
-                const response = await fetch('/api/auth/logout', { method: 'POST' });
+                const formData = new FormData()
+                formData.append('csrf_token', '{{ csrf_token() }}');
+
+                const response = await fetch('/api/auth/logout', { method: 'POST', body: formData });
                 const data = await response.json();
 
                 if (data.success === true) 
