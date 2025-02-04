@@ -277,15 +277,10 @@
                     data: "validated", // 9
                     render: function(data, type, row, meta) 
                     {
-                        if (type === 'display') 
-                        {
-                            if (data == 1)
-                                return "Validated Item";
-                            else
-                                return "Non-validated Item";
-                        }
-
-                        return data;
+                        if (data == true)
+                            return `<span class="badge bg-success">Validated</span>`;
+                        else
+                            return `<span class="badge bg-danger">Non-validated</span>`;
                     }
                 }
             ],
