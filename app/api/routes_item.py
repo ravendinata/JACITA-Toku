@@ -11,6 +11,7 @@ from app.extensions import db
 from app.models.items import Items, ViewItems, NonvalItems, ViewNonvalItems, ViewGroupedItems, ViewGroupedNonvalItems
 from app.models.logs import ItemPriceUpdateLog
 from app.models.misc import QuantityUnit
+from app.models.order_items import OrderItems, OrderNonvalItems
 from helper.core import generate_item_id, jumble_string
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission
 
@@ -464,6 +465,18 @@ def api_validate_nonval_item(item_id):
                      created_by = validator, description = description)
 
     try:
+        # Move non-validated order items to validated order items
+        nonvalidated_order_items = OrderNonvalItems.query.filter_by(item_id = item_id).all()
+        for order_item in nonvalidated_order_items:
+            order_item_val = OrderItems(order_id = order_item.order_id, item_id = order_item.item_id,
+                                        quantity = order_item.quantity, remarks = order_item.remarks)
+            
+            db.session.add(order_item_val)
+            db.session.delete(order_item)
+
+            trail.log_deletion(order_item, f"{validator} via system@validate")
+            trail.log_creation(order_item_val, f"{validator} via system@validate")
+        
         db.session.add(item_val)
         db.session.delete(item)
         db.session.commit()

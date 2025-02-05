@@ -21,6 +21,8 @@ def log_creation(object, user):
 
     if hasattr(object, 'id'):
         id = object.id
+    elif hasattr(object, 'item_id'):
+        id = object.item_id
     elif hasattr(object, 'username'):
         id = object.username
 
@@ -71,6 +73,8 @@ def log_update(object_post, object_pre, user):
     
     if hasattr(object_post, 'id'):
         id = object_post.id
+    elif hasattr(object_post, 'item_id'):
+        id = object_post.item_id
     elif hasattr(object_post, 'username'):
         id = object_post.username
 
