@@ -58,6 +58,13 @@
                         </li>
                         {% endif %}
                         {% if 'order_history' in user.navbar_items %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navBypass" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin View</a>
+                            <ul class="dropdown-menu" aria-labelledby="navBypass">
+                                <li><a class="dropdown-item" href="/orders/adminview/finance">Bypass Finance</a></li>
+                                <li><a class="dropdown-item" href="/orders/adminview/procurement">Bypass Procurement</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/orders/history">All Orders History</a>
                         </li>

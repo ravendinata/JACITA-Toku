@@ -83,6 +83,46 @@ def page_order_administration():
                             period = {'this_month': this_month, 'next_month': next_month},
                             grouped_orders = grouped_orders, can_do = can_do)
 
+@web.route('/orders/adminview/<string:phase>')
+@check_login
+@check_page_permission('order/administer')
+def page_order_bypass(phase):
+    if phase not in ['procurement', 'finance']:
+        return render_template('error/standard.html', title = "Invalid Phase", code = HTTPStatus.BAD_REQUEST, message = "."), HTTPStatus.BAD_REQUEST
+    
+    user = User.query.get(session['user'])
+    if user.role != Role.ADMINISTRATOR:
+        return render_template('error/standard.html', title = "Access Denied", code = HTTPStatus.FORBIDDEN, message = "You are not authorized to access this page."), HTTPStatus.FORBIDDEN
+
+    this_month = periods.get_current_month()
+    next_month = periods.get_next_month()
+
+    if phase == 'finance':
+        can_do = { 'order/approve_finance': True }
+        orders = Orders.query.filter(Orders.status == OrderStatus.DIVISION_APPROVED,
+                                    or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
+    elif phase == 'procurement':
+        can_do = { 'order/fulfill': True }
+        orders = Orders.query.filter(Orders.status == OrderStatus.FINANCE_APPROVED,
+                                    or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
+    
+    grouped_orders = {}
+    for order in orders:
+        period = order.period
+        division = order.get_division()
+
+        if period not in grouped_orders:
+            grouped_orders[period] = {}
+
+        if division not in grouped_orders[period]:
+            grouped_orders[period][division] = []
+
+        grouped_orders[period][division].append(order)
+
+    return render_template('orders/administration.html', use_datatables = True, title = f"Order Administration (Bypass: {phase})",
+                            period = {'this_month': this_month, 'next_month': next_month},
+                            grouped_orders = grouped_orders, can_do = can_do)
+
 @web.route('/orders/history')
 @check_login
 @check_page_permission('order/administer')
