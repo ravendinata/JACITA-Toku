@@ -132,7 +132,7 @@
     const orderItemCount = document.getElementById('orderItemCount');
 
     async function getStatus() 
-    {
+    {        
         const response = await fetch('/api/order/{{ data.active_order }}', { method: 'GET' });
         const data = await response.json();
         orderStatus.innerText = data.status.text;
@@ -176,8 +176,11 @@
         }
     }
 
-    getStatus();
-    getTotal();
-    getItems();
+    if ('None' !== '{{ data.active_order }}') 
+    { 
+        getStatus();
+        getTotal();
+        getItems();
+    }
 </script>
 {% endblock %}
