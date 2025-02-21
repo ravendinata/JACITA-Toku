@@ -290,7 +290,7 @@ def api_update_item(item_id):
         match = re.search(r'\(Originally Created by (.*?)\)', item.description)
         if match:
             original_creator = match.group(1)
-            new_description = request.form.get('description', '')
+            new_description = request.form.get('description', item.description)
             if f"(Originally Created by {original_creator})" not in new_description:
                 return jsonify({'error': 'Cannot change description of validated item',
                                 'details': "You should not remove or change the '(Originally Created by ...)' part of the description"}), HTTPStatus.BAD_REQUEST
