@@ -1,4 +1,5 @@
 import copy
+from uuid import uuid4
 
 from flask import jsonify, request, session
 from sqlalchemy import desc
@@ -238,7 +239,8 @@ def api_reject_order(order_id, by):
 
     try:
         order.reject(by, username)
-        log = OrderRejectLog(order_id = order_id, reason = request.form.get('reason'), user = username, level = by)
+        log = OrderRejectLog(id = uuid4(), order_id = order_id, 
+                             reason = request.form.get('reason'), user = username, level = by)
         db.session.add(log)
         db.session.commit()
     except OrderStatusTransitionError as e:
