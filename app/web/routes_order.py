@@ -175,7 +175,6 @@ def page_order_view(id):
     
     if order.status in [OrderStatus.SUBMITTED,  OrderStatus.FINANCE_REJECTED]:
         can_do['order/approve_division'] = check_permission('order/approve_division')
-        can_do['orderitem/update'] = check_permission('orderitem/update')
     
     if order.status == OrderStatus.DIVISION_APPROVED:
         can_do['order/approve_finance'] = check_permission('order/approve_finance')
