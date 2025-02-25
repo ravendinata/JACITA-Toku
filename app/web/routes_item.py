@@ -8,7 +8,7 @@ from app.models.logs import ItemPriceUpdateLog
 from app.models.misc import Category, QuantityUnit
 from app.models.user import User
 from helper.auth import check_login
-from helper.endpoint import inject_allowed_operations, check_page_permission, check_page_permissions
+from helper.endpoint import HTTPStatus, inject_allowed_operations, check_page_permission, check_page_permissions
 
 @web.route('/items')
 @check_login
@@ -73,7 +73,7 @@ def page_items_edit(id):
     def page(user_operations):
         user = User.query.get(username)
         if item.created_by != username and not user.can_update_items():
-            return render_template('error/standard.html', title = "Forbidden", code = 403, message = "You are not the creator of this item."), 403
+            return render_template('error/standard.html', title = "Forbidden", message = "You are not the creator of this item."), HTTPStatus.FORBIDDEN
         else:
             return render_template('items/edit.html', title = "Edit Item", operations = user_operations,
                                     item_type = item_type, units = units, categories = categories, item = item.to_dict())

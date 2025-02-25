@@ -88,11 +88,11 @@ def page_order_administration():
 @check_page_permission('order/administer')
 def page_order_bypass(phase):
     if phase not in ['procurement', 'finance']:
-        return render_template('error/standard.html', title = "Invalid Phase", code = HTTPStatus.BAD_REQUEST, message = "."), HTTPStatus.BAD_REQUEST
+        return render_template('error/standard.html', title = "Invalid Phase", message = "."), HTTPStatus.BAD_REQUEST
     
     user = User.query.get(session['user'])
     if user.role != Role.ADMINISTRATOR:
-        return render_template('error/standard.html', title = "Access Denied", code = HTTPStatus.FORBIDDEN, message = "You are not authorized to access this page."), HTTPStatus.FORBIDDEN
+        return render_template('error/standard.html', title = "Access Denied", message = "You are not authorized to access this page."), HTTPStatus.FORBIDDEN
 
     this_month = periods.get_current_month()
     next_month = periods.get_next_month()
@@ -134,7 +134,7 @@ def page_order_history():
 def page_order_view(id):
     order = Orders.query.get(id)
     if order is None:
-        return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
+        return render_template('error/standard.html', title = "Not Found", message = "Order not found."), HTTPStatus.NOT_FOUND
     
     user = User.query.get(session['user'])
     if order.division_id != user.division_id and user.role not in [Role.ADMINISTRATOR, Role.PROCUREMENT_MANAGER, Role.FINANCE_MANAGER]:
@@ -196,7 +196,7 @@ def page_order_view(id):
         reject_reason = latest_rejection.reason if order.status in [OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED] else None
     except AttributeError:
         reject_reason = None
-        return render_template('error/standard.html', title = "Database Error", code = HTTPStatus.INTERNAL_SERVER_ERROR,
+        return render_template('error/standard.html', title = "Database Error", 
                                message = "Order is rejected but system has failed to retrieve rejection reason. Please contact Administrator."), HTTPStatus.INTERNAL_SERVER_ERROR
 
     return render_template('orders/detail.html', use_datatables = True, title = "View Order", order = order, 
@@ -209,7 +209,7 @@ def page_division_order_view(period, division_id):
     orders = Orders.query.filter(Orders.period == period, Orders.division_id == division_id).order_by(desc(Orders.last_modification_date)).all()
 
     if len(orders) == 0:
-        return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
+        return render_template('error/standard.html', title = "Not Found", message = "Order not found."), HTTPStatus.NOT_FOUND
     
     user = User.query.get(session['user'])
     
@@ -259,7 +259,7 @@ def page_procurement_order_view(period):
             .all()
     
     if len(orders) == 0:
-        return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
+        return render_template('error/standard.html', title = "Not Found", message = "Order not found."), HTTPStatus.NOT_FOUND
 
     divisions = {}
     for order in orders:
