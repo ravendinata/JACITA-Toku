@@ -1,3 +1,4 @@
+import copy
 from flask import jsonify, request, session
 from sqlalchemy import asc
 
@@ -112,11 +113,14 @@ def api_add_order_item(order_id):
     # If item already exists, update the quantity instead of adding a new item
     if check_order_item is not None:
         try:
+            # Copy instead of reference
+            pre_edit = copy.deepcopy(check_order_item)
             check_order_item.quantity += int(quantity)
             db.session.commit()
         except Exception as e:
             return jsonify({ 'error': 'Error while updating order item quantity', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
         
+        trail.log_update(check_order_item, pre_edit, username)
         return jsonify({ 'message': 'Item quantity updated instead of adding a new item' }), HTTPStatus.OK
 
     item = None
@@ -131,6 +135,7 @@ def api_add_order_item(order_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while adding item to order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_creation(item, username)
     return jsonify({ 'message': 'Item added to order successfully' }), HTTPStatus.CREATED
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['PATCH'])
@@ -158,6 +163,7 @@ def api_update_order_item(order_id, item_id):
     if item is None:
         return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
     
+    pre_edit = copy.deepcopy(item)
     item.quantity = request.form.get('quantity', item.quantity)
     item.remarks = request.form.get('remarks', item.remarks)
     
@@ -166,6 +172,7 @@ def api_update_order_item(order_id, item_id):
     except Exception as e:
         return jsonify({ 'error': 'Error while updating item in order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
+    trail.log_update(item, pre_edit, username)
     return jsonify({ 'message': 'Item updated in order successfully', 'item_details': item.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/item/<string:item_id>', methods = ['DELETE'])
@@ -198,7 +205,8 @@ def api_remove_order_item(order_id, item_id):
         db.session.commit()
     except Exception as e:
         return jsonify({ 'error': 'Error while removing item from order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
-    
+
+    trail.log_deletion(item, username)
     return jsonify({ 'message': 'Item removed from order successfully' }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/items/count', methods = ['GET'])
