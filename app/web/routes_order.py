@@ -135,6 +135,10 @@ def page_order_view(id):
     order = Orders.query.get(id)
     if order is None:
         return render_template('error/standard.html', title = "Not Found", code = HTTPStatus.NOT_FOUND, message = "Order not found."), HTTPStatus.NOT_FOUND
+    
+    user = User.query.get(session['user'])
+    if order.division_id != user.division_id and user.role not in [Role.ADMINISTRATOR, Role.PROCUREMENT_MANAGER, Role.FINANCE_MANAGER]:
+        return render_template('error/standard.html', title = "Access Denied", message = "You cannot access orders from other divisions."), HTTPStatus.FORBIDDEN
 
     # Append GMT to the dates
     order.created_date = order.created_date.strftime('%Y-%m-%d %H:%M:%S GMT')
@@ -142,8 +146,6 @@ def page_order_view(id):
     order.approval_division_date = order.approval_division_date.strftime('%Y-%m-%d %H:%M:%S GMT') if order.approval_division_date is not None else None
     order.approval_finance_date = order.approval_finance_date.strftime('%Y-%m-%d %H:%M:%S GMT') if order.approval_finance_date is not None else None
     order.fulfillment_date = order.fulfillment_date.strftime('%Y-%m-%d %H:%M:%S GMT') if order.fulfillment_date is not None else None
-
-    user = User.query.get(session['user'])
 
     can_do = {}
 
