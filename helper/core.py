@@ -110,7 +110,7 @@ def generate_order_id(period, division_id):
 # ITEM SPECIFIC METHODS
 # =====================
     
-def generate_item_id(brand, name, variant):
+def generate_item_id(brand, name, variant, skip_duplicate_check = False):
     """
     Generate an item ID from the brand, name, and variant.
     The generated ID is in the format of T9-converted brand, name, and variant.
@@ -132,6 +132,9 @@ def generate_item_id(brand, name, variant):
     t9_variant = replace_start_end_dot(t9_variant)
 
     result = f"{t9_brand}-{t9_name}-{t9_variant}"
+
+    if skip_duplicate_check:
+        return result
 
     check_item = Items.query.get(result) or NonvalItems.query.get(result)
     if check_item:
