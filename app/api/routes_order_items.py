@@ -94,18 +94,15 @@ def api_add_order_item(order_id):
     if order.status not in [OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED]:
         return jsonify({ 'error': 'Forbidden operation', 'details': 'The active order is currently not able to accept new items' }), HTTPStatus.FORBIDDEN
     
-    item_type = 'validated'
     item_id = request.form.get('item_id')
     quantity = request.form.get('quantity')
     remarks = request.form.get('remarks')
 
-    check_item = Items.query.get(item_id)
+    check_item = Items.query.get(item_id) or NonvalItems.query.get(item_id)
     if check_item is None:
-        check_item = NonvalItems.query.get(item_id)
-        if check_item is None:
-            return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
-        else:
-            item_type = 'nonvalidated'
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+    
+    item_type = 'nonvalidated' if isinstance(check_item, NonvalItems) else 'validated'
 
     # Check if item already exists in order
     check_order_item = OrderItems.query.get((order_id, item_id)) or OrderNonvalItems.query.get((order_id, item_id))
