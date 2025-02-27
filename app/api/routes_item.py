@@ -365,11 +365,15 @@ def api_create_nonval_item():
     category_id = request.form.get('category_id')
     description = request.form.get('description')
 
-    check_item = NonvalItems.query.filter_by(brand = brand, name = name, variant = variant).first()
-    if check_item:
-        return jsonify({ 'error': 'Item already exists' }), HTTPStatus.CONFLICT
+    id = generate_item_id(brand, name, variant, abort_on_duplicate = True)
 
-    id = generate_item_id(brand, name, variant)
+    check_by_id = NonvalItems.query.get(id) or Items.query.get(id)
+    check_item = NonvalItems.query.filter_by(brand=brand, name=name, variant=variant).first() or \
+                 Items.query.filter_by(brand=brand, name=name, variant=variant).first()
+    
+    if check_item or check_by_id:
+        return jsonify({'error': 'Potential item duplication',
+                        'details': f"A similar or same item already exists. Please do not create duplicate items! If the item is actually different, please contact the administrator to assist you."}), HTTPStatus.CONFLICT
 
     item = NonvalItems(id = id, 
                        brand = brand, name = name, variant = variant, 
