@@ -4,7 +4,7 @@ from sqlalchemy import asc
 
 import helper.trail as trail
 from app.api import api
-from app.extensions import db
+from app.extensions import db, csrf
 from app.models.misc import QuantityUnit
 from app.models.orders import Orders
 from app.models.items import Items, NonvalItems
@@ -208,6 +208,81 @@ def api_remove_order_item(order_id, item_id):
 
     trail.log_deletion(item, username)
     return jsonify({ 'message': 'Item removed from order successfully' }), HTTPStatus.OK
+
+# Bypass CSRF token check for this endpoint
+@api.route('/order/<string:order_id>/item/<string:item_id>/replace', methods = ['POST'])
+@check_api_permission('orderitem/update')
+@csrf.exempt
+def api_replace_order_item(order_id, item_id):
+    username = request.form.get('modified_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.order.item_replace", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': 'Are you trying to impersonate someone? Logged in user does not match actor in request.' }), HTTPStatus.FORBIDDEN
+
+    order = Orders.query.get(order_id)
+    if order is None:
+        return jsonify({ 'error': 'Order not found' }), HTTPStatus.NOT_FOUND
+    
+    if order.status != OrderStatus.PENDING:
+        return jsonify({ 'error': 'Forbidden operation', 'details': 'The current active order is not able to accept item replacements because of its status' }), HTTPStatus.FORBIDDEN
+
+    user = User.query.get(session['user'])
+    if user.role != Role.ADMINISTRATOR:
+        return jsonify({ 'error': 'Insufficient permission', 'details': 'Only administrators can replace items in an order' }), HTTPStatus.FORBIDDEN
+    
+    order_item = OrderItems.query.get((order_id, item_id)) or OrderNonvalItems.query.get((order_id, item_id))
+    if order_item is None:
+        return jsonify({ 'error': 'Item not found in order' }), HTTPStatus.NOT_FOUND
+
+    new_item_id = request.form.get('new_item_id')
+    if new_item_id == item_id:
+        return jsonify({ 'error': 'New item ID is the same as the old item ID' }), HTTPStatus.BAD_REQUEST
+
+    item_type = 'validated'
+    quantity = order_item.quantity
+    remarks = order_item.remarks
+
+    check_item = Items.query.get(new_item_id) or NonvalItems.query.get(new_item_id)
+    if check_item is None:
+        return jsonify({ 'error': 'New item not found' }), HTTPStatus.NOT_FOUND
+    
+    item_type = 'nonvalidated' if isinstance(check_item, NonvalItems) else 'validated'
+
+    # Check if new item already exists in order
+    check_order_item = OrderItems.query.get((order_id, new_item_id)) or OrderNonvalItems.query.get((order_id, new_item_id))
+
+    # If new item already exists, update the quantity instead of adding a new item
+    if check_order_item is not None:
+        try:
+            # Copy instead of reference
+            pre_edit = copy.deepcopy(check_order_item)
+            check_order_item.quantity += int(quantity)
+            db.session.delete(order_item)
+            db.session.commit()
+        except Exception as e:
+            return jsonify({ 'error': 'Error while updating order item quantity', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        trail.log_update(check_order_item, pre_edit, username)
+        return jsonify({ 'message': 'Item replaced successfully', 'new_item': check_item.to_dict() }), HTTPStatus.OK
+    
+    new_item = None
+    if item_type == 'validated':
+        new_item = OrderItems(order_id = order_id, item_id = new_item_id, quantity = quantity, remarks = remarks)
+    elif item_type == 'nonvalidated':
+        new_item = OrderNonvalItems(order_id = order_id, item_id = new_item_id, quantity = quantity, remarks = remarks)
+
+    try:
+        db.session.add(new_item)
+        db.session.delete(order_item)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({ 'error': 'Error while replacing item in order', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    trail.log_creation(new_item, username)
+    trail.log_deletion(order_item, username)
+    
+    return jsonify({ 'message': 'Item replaced successfully', 'new_item': check_item.to_dict() }), HTTPStatus.OK
 
 @api.route('/order/<string:order_id>/items/count', methods = ['GET'])
 def api_get_order_item_count(order_id):
