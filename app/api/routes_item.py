@@ -294,7 +294,7 @@ def api_update_item(item_id):
             if f"(Originally Created by {original_creator})" not in new_description:
                 return jsonify({'error': 'Cannot change description of validated item',
                                 'details': "You should not remove or change the '(Originally Created by ...)' part of the description"}), HTTPStatus.BAD_REQUEST
-        item.description = request.form.get('description')
+        item.description = new_description
     else:
         item.description = request.form.get('description', item.description)
 
