@@ -1,10 +1,12 @@
 import json
 from datetime import timedelta
 
-from flask import Flask
+from flask import Flask, render_template
 
 from app.extensions import csrf, db
 from app.context_processor import inject_session_data
+
+from helper.endpoint import HTTPStatus
 
 def create_app():
     with open('config.json') as config_file:
@@ -25,6 +27,21 @@ def create_app():
     # Context Processor
     # =================
     app.context_processor(inject_session_data)  # Inject session data to all templates (app.context_processor.inject_session_data)
+
+    # ==============
+    # Error Handlers
+    # ==============
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('error/standard.html', 
+                               title = "Page Not Found", 
+                               message = "The page you are looking for does not exist."), HTTPStatus.NOT_FOUND
+    
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('error/standard.html', 
+                               title = "Internal Server Error", 
+                               message = "An internal server error occurred. Please try again later."), HTTPStatus.INTERNAL_SERVER_ERROR
 
     # ==========
     # Blueprints
