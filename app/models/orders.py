@@ -40,6 +40,9 @@ class Orders(db.Model):
         data = { c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'status' and c.name != 'division_id' }
         data['status'] = { 'code': self.status, 'text': get_order_status_text(self.status) }
         data['division'] = { 'id': self.division_id, 'name': Division.query.get(self.division_id).full_name }
+        # Dates in ISO 8601 format
+        data['created_date'] = self.created_date.isoformat()
+        data['last_modification_date'] = self.last_modification_date.isoformat()
         return data
     
     def __fix_data(self):
