@@ -3,6 +3,10 @@
 {% block content %}
 <h2>All Orders History</h2>
 <hr>
+<div id="tz-alert" class="alert alert-info alert-dismissible fade show" role="alert">
+    <small><em>All date-times are in <strong><span id="timezone"></span></strong> timezone.</em></small>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 <div class="container-fluid" style="padding-bottom: 48px;">
     <table id="data" class="table table-striped" style="width: 100%;">
         <thead style="vertical-align: middle;">
@@ -29,9 +33,17 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 <script>
-$(document).ready(function() 
+    setTimeout(() => $('#tz-alert').alert('close'), 10000); // Close the alert after 10 seconds
+
+    $(document).ready(function() 
     {
+        var tzLong = luxon.DateTime.local().zoneName;
+        var tzGMT = luxon.DateTime.local().toFormat('ZZZZ');
+
+        document.getElementById('timezone').innerHTML = `${tzLong} (${tzGMT})`;
+
         $('#data').DataTable(
         {
             ajax: 
@@ -47,8 +59,14 @@ $(document).ready(function()
                 { data: "division.name" }, // 2
                 { data: "status.text" }, // 3
                 { data: "created_by" }, // 4
-                { data: "created_date" }, // 5
-                { data: "last_modification_date" }, // 6
+                { 
+                    data: "created_date", // 5
+                    render: function(data) { return formatToLocalTZ(data, 'utc', true); }
+                },
+                { 
+                    data: "last_modification_date", // 6
+                    render: function(data) { return formatToLocalTZ(data, 'utc', true); }
+                },
                 { data: "approval_division_by" }, // 7
                 { data: "approval_division_date" }, // 8
                 { data: "approval_finance_by" }, // 9
