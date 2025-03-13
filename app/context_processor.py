@@ -13,7 +13,7 @@ def inject_session_data():
 
     if 'user' in session:
         user = User.query.get(session['user'])
-        active_order = Orders.query.filter(~Orders.status.in_([10, 99]), Orders.created_by == session['user']).order_by(desc(Orders.created_date)).first()
+        active_order = Orders.query.filter(~Orders.status.in_([7, 10, 99]), Orders.created_by == session['user']).order_by(desc(Orders.created_date)).first()
         if active_order:
             session['active_order'] = active_order.id
         else:
