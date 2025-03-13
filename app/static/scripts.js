@@ -233,3 +233,37 @@ function displayPopupConfirm(title, message, confirmCallback = null, denyCallbac
             denyCallback();
     });
 }
+
+/* ================================
+    LUXON BASED TIME FUNCTIONS
+    Requires Luxon.js
+================================ */
+
+const DATE_FORMAT = 'yyyy/MM/dd - HH:mm:ss';
+
+function formatToLocalTZ(date, source_zone, append_relative = false)
+{
+    const dateLocalTZ = luxon.DateTime.fromISO(date, { zone: source_zone }).setZone('system');
+    
+    if (append_relative)
+    {
+        const relativeDate = getRelativeTime(date, source_zone);
+        return `${dateLocalTZ.toFormat(DATE_FORMAT)}<br><small>${relativeDate}</small>`;
+    }
+    else
+        return dateLocalTZ.toFormat(DATE_FORMAT);
+}
+
+function getRelativeTime(date, source_zone)
+{
+    const dateLocalTZ = luxon.DateTime.fromISO(date, { zone: source_zone }).setZone('system');
+    const now = luxon.DateTime.local();
+    const diff = now.diff(dateLocalTZ, ['months', 'days', 'hours', 'minutes', 'seconds']);
+
+    if (diff.months > 0) return `${diff.months} month(s) ago`;
+    else if (diff.days > 0) return `${diff.days} day(s) ago`;
+    else if (diff.hours > 0) return `${diff.hours} hour(s) ago`;
+    else if (diff.minutes > 0) return `${diff.minutes} minute(s) ago`;
+    else if (diff.seconds > 0) return `${diff.seconds} second(s) ago`;
+    else return 'Just now';
+}
