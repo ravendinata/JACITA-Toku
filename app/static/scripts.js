@@ -260,10 +260,16 @@ function getRelativeTime(date, source_zone)
     const now = luxon.DateTime.local();
     const diff = now.diff(dateLocalTZ, ['months', 'days', 'hours', 'minutes', 'seconds']);
 
-    if (diff.months > 0) return `${diff.months} month(s) ago`;
-    else if (diff.days > 0) return `${diff.days} day(s) ago`;
-    else if (diff.hours > 0) return `${diff.hours} hour(s) ago`;
-    else if (diff.minutes > 0) return `${diff.minutes} minute(s) ago`;
-    else if (diff.seconds > 0) return `${diff.seconds} second(s) ago`;
+    let offset = 0;
+    let relative = '';
+
+    if (diff.months > 0) { offset = diff.months; relative = 'month'; }
+    else if (diff.days > 0) { offset = diff.days; relative = 'day'; }
+    else if (diff.hours > 0) { offset = diff.hours; relative = 'hour'; }
+    else if (diff.minutes > 0)  { offset = diff.minutes; relative = 'minute'; }
+    else if (diff.seconds > 0) { offset = diff.seconds; relative = 'second'; }
     else return 'Just now';
+
+    if (offset > 1) relative += 's';
+    return `${offset} ${relative} ago`;
 }
