@@ -241,17 +241,23 @@ function displayPopupConfirm(title, message, confirmCallback = null, denyCallbac
 
 const DATE_FORMAT = 'yyyy/MM/dd - HH:mm:ss';
 
-function formatToLocalTZ(date, source_zone, append_relative = false)
+class DateFormat
+{
+    static DATETIME_SIMPLE = 'yyyy/MM/dd - HH:mm:ss'
+    static DATETIME_LONG = "ccc, d MMMM yyyy 'at' HH:mm"
+}
+
+function formatToLocalTZ(date, source_zone, append_relative = false, format = DateFormat.DATETIME_SIMPLE)
 {
     const dateLocalTZ = luxon.DateTime.fromISO(date, { zone: source_zone }).setZone('system');
     
     if (append_relative)
     {
         const relativeDate = getRelativeTime(date, source_zone);
-        return `${dateLocalTZ.toFormat(DATE_FORMAT)}<br><small>${relativeDate}</small>`;
+        return `${dateLocalTZ.toFormat(format)}<br><small>${relativeDate}</small>`;
     }
     else
-        return dateLocalTZ.toFormat(DATE_FORMAT);
+        return dateLocalTZ.toFormat(format);
 }
 
 function getRelativeTime(date, source_zone)
