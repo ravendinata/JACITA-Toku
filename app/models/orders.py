@@ -133,6 +133,26 @@ class Orders(db.Model):
     def items(self):
         return list(chain(self._get_items(), self._get_nonval_items()))
     
+    @property
+    def created_date_iso(self):
+        return self.created_date.isoformat()
+    
+    @property
+    def last_modification_date_iso(self):
+        return self.last_modification_date.isoformat()
+    
+    @property
+    def approval_division_date_iso(self):
+        return self.approval_division_date.isoformat() if self.approval_division_date else None
+    
+    @property
+    def approval_finance_date_iso(self):
+        return self.approval_finance_date.isoformat() if self.approval_finance_date else None
+    
+    @property
+    def fulfillment_date_iso(self):
+        return self.fulfillment_date.isoformat() if self.fulfillment_date else None
+    
     def _get_items(self):
         return OrderItems.query.filter_by(order_id = self.id).all()
     
