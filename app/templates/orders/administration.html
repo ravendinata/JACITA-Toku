@@ -30,7 +30,7 @@
                     <div class="col-md-5" style="border-right: 1px dashed;">
                         <h5 class="card-title"><i class="fa-solid fa-shopping-cart"></i> Order ID: <b>{{ order.id }}</b></h5>
                         <p class="card-text">
-                            Opened on: <span id="orderDate_{{ order.id }}">{{ order.created_date }}</span><br>
+                            Opened on: <span id="orderDate_{{ order.id }}">{{ order.created_date_iso }}</span><br>
                             By: {{ order.created_by }}
                         </p>
                         <a href="/order/{{ order.id }}" class="btn btn-primary"><i class="fa-solid fa-eye"></i> View Order</a>
@@ -135,6 +135,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 <script>
     const DATE_OPTIONS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
@@ -189,9 +190,7 @@
     }
 
     orderDates.forEach(orderDate => {
-        const orderId = orderDate.id.split('_')[1];
-        const date = new Date(orderDate.textContent);
-        orderDate.textContent = date.toLocaleDateString('en-US', DATE_OPTIONS);
+        orderDate.textContent = formatToLocalTZ(orderDate.textContent, 'utc', undefined, DateFormat.DATETIME_LONG);
     });
 
     orderTotals.forEach(orderTotal => {
