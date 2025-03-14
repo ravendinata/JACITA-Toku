@@ -311,6 +311,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 <script>
     const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
 
@@ -547,7 +548,9 @@
         });
     });
 
-    $('#updated_at').val(new Date('{{ last_modification_date }} GMT').toLocaleString('en-US', DATE_OPTIONS));
+    const latestModificationTimeLong = formatToLocalTZ('{{ last_modification_date }}', 'utc', undefined, DateFormat.DATETIME_LONG);
+    const latestModificationTimeRelative = getRelativeTime('{{ last_modification_date }}', 'utc');
+    $('#updated_at').val(`${latestModificationTimeLong} (${latestModificationTimeRelative})`);
 
     orderTotals.forEach((orderTotal) => {
         const orderId = orderTotal.id.split('_')[1];

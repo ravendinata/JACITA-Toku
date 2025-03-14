@@ -240,7 +240,7 @@ def page_division_order_view(period, division_id):
     division = { 'id': division_id, 'name': orders[0].get_division() }
 
     return render_template('orders/collection_detail.html', use_datatables = True, title = "Division Orders", can_do = can_do, sync = sync,
-                           orders = orders, period = period, division = division, last_modification_date = orders[0].last_modification_date)
+                           orders = orders, period = period, division = division, last_modification_date = orders[0].last_modification_date.isoformat())
 
 @web.route('/procurement/<string:period>')
 @check_login
