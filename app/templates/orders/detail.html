@@ -941,15 +941,15 @@
         });
     }
 
-    // Remarks Change Event (Modal)
-    $('#item_details_remarks').on('change', function() 
-    {
-        btnModalUpdateRemarks.disabled = false;
-    });
-
     // Update Remarks Button (Modal)
     if (btnModalUpdateRemarks != null)
     {
+        // Remarks Change Event (Modal)
+        $('#item_details_remarks').on('change', function() 
+        {
+            btnModalUpdateRemarks.disabled = false;
+        });
+        
         btnModalUpdateRemarks.addEventListener('click', async function() 
         {
             const item_id = $('#item_details_item_id').val();
