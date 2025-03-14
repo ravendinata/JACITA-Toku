@@ -387,6 +387,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 <script>
     const btnMinusQty = document.getElementById('btnMinusQty');
     const btnPlusQty = document.getElementById('btnPlusQty');
@@ -677,11 +678,18 @@
         });
 
         // Format Dates
-        const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        $('#created_at').val(new Date('{{ order.created_date }}').toLocaleString("en-GB", DATE_OPTIONS));
-        $('#updated_at').val(new Date('{{ order.last_modification_date }}').toLocaleString("en-GB", DATE_OPTIONS));
-        $('#division_approved_at').val(new Date('{{ order.approval_division_date }}').toLocaleString("en-GB", DATE_OPTIONS));
-        $('#finance_approved_at').val(new Date('{{ order.approval_finance_date }}').toLocaleString("en-GB", DATE_OPTIONS));
+        $('#created_at').val(formatToLocalTZ('{{ order.created_date_iso }}', 'utc', undefined, DateFormat.DATETIME_LONG));
+        $('#updated_at').val(formatToLocalTZ('{{ order.last_modification_date_iso }}', 'utc', undefined, DateFormat.DATETIME_LONG));
+
+        if ('{{ order.approval_division_date }}' == 'None')
+            $('#division_approved_at').val('Not yet approved');
+        else
+            $('#division_approved_at').val(formatToLocalTZ('{{ order.approval_division_date_iso }}', 'utc', undefined, DateFormat.DATETIME_LONG));
+
+        if ('{{ order.approval_finance_date }}' == 'None')
+            $('#finance_approved_at').val('Not yet approved');
+        else
+            $('#finance_approved_at').val(formatToLocalTZ('{{ order.approval_finance_date_iso }}', 'utc', undefined, DateFormat.DATETIME_LONG));
 
         // Fulfillment Status
         if ('{{ order.fulfillment_date }}' == '' || '{{ order.fulfillment_date }}' == 'None')
@@ -693,7 +701,7 @@
         }
         else
         {
-            $('#fulfillment').val(`Fulfilled on ${new Date('{{ order.fulfillment_date }}').toLocaleString("en-GB", DATE_OPTIONS)}`);
+            $('#fulfillment').val(`Fulfilled on ${formatToLocalTZ('{{ order.fulfillment_date_iso }}', 'utc', undefined, DateFormat.DATETIME_LONG)}`);
             $('#fulfillment').addClass('text-success');
             $('#order_status').html('<i class="fa-solid fa-check-double"></i>');
             $('#order_status').addClass('bg-success');
