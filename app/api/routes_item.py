@@ -523,25 +523,22 @@ def api_get_item(item_id):
     human_readable = request.args.get('human_readable')
 
     if human_readable == 'true':
-        item_val = ViewItems.query.get(item_id)
-        item_nonval = ViewNonvalItems.query.get(item_id)
+        item = ViewItems.query.get(item_id) or ViewNonvalItems.query.get(item_id)
     else:
-        item_val = Items.query.get(item_id)
-        item_nonval = NonvalItems.query.get(item_id)
+        item = Items.query.get(item_id) or NonvalItems.query.get(item_id)
 
-    if item_val is None and item_nonval is None:
+    if item is None:
         return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
     
-    if item_val is not None:
-        obj = item_val.to_dict()
-        obj['validated'] = True
-        return jsonify(item_val.to_dict()), HTTPStatus.OK
-    else:
-        obj = item_nonval.to_dict()
-        obj['validated'] = False
-        obj['qty_unit'] = None
-        return jsonify(obj), HTTPStatus.OK
-    
+    obj = item.to_dict()
+    obj['validated'] = isinstance(item, Items) or isinstance(item, ViewItems)
+
+    # Convert all dates into ISO 8601 format
+    for key in obj.keys():
+        if '_date' in key and obj[key] is not None:
+            obj[key] = obj[key].isoformat()
+        
+    return jsonify(obj), HTTPStatus.OK
 
 # ===================
 # GROUPED ITEM ROUTES
