@@ -137,8 +137,6 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 <script>
-    const DATE_OPTIONS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-
     const orderDates = document.querySelectorAll('[id^="orderDate_"]');
     const orderTotals = document.querySelectorAll('[id^="orderTotal_"]');
     const btnApproveOrder = document.querySelectorAll('[id^="btnApproveOrder_"]');
