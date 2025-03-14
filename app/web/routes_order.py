@@ -272,4 +272,4 @@ def page_procurement_order_view(period):
     can_fulfill = True if sync and OrderStatus.FINANCE_APPROVED in statuses else False
 
     return render_template('orders/procurement_view.html', use_datatables = True, title = "Procurement Orders", can_fulfill = can_fulfill, sync = sync,
-                           orders = grouped_orders, period = period, division = divisions, last_modification_date = orders[0].last_modification_date)
+                           orders = grouped_orders, period = period, division = divisions, last_modification_date = orders[0].last_modification_date.isoformat())
