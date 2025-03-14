@@ -70,9 +70,9 @@
                 <tr>
                     <td>{{ order.id }}</td>
                     <td>{{ order.period }}</td>
-                    <td id="pastOrderDate_{{ order.id }}">{{ order.created_date }}</td>
+                    <td id="pastOrderDate_{{ order.id }}">{{ order.created_date_iso }}</td>
                     <td>{{ order.get_status() }}</td>
-                    <td id="pastOrderFulfillmentDate_{{ order.id }}">{{ order.fulfillment_date }}</td>
+                    <td id="pastOrderFulfillmentDate_{{ order.id }}">{{ order.fulfillment_date_iso }}</td>
                     <td><a href="/order/{{ order.id }}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-eye"></i> View Order</a></td>
                 </tr>
             {% endfor %}
@@ -119,6 +119,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 <script>
     const DATE_OPTIONS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
@@ -152,16 +153,19 @@
 
     getOrderTotal();
 
-    $('#activeOrderDate').text(new Date('{{ active_order.created_date }}').toLocaleDateString('en-GB', DATE_OPTIONS));
+    const createDateLong = formatToLocalTZ('{{ active_order.created_date_iso }}', 'utc', undefined, DateFormat.DATE_LONG);
+    const createDateRelative = getRelativeTime('{{ active_order.created_date_iso }}', 'utc');
+    $('#activeOrderDate').html(`${createDateLong} <small class="text-muted"><em>(${createDateRelative})</em></small>`);
 
     pastOrderDates.forEach(dateElement => {
-        const orderId = dateElement.id.split('_')[1];
-        dateElement.textContent = new Date(dateElement.textContent).toLocaleDateString('en-GB', DATE_OPTIONS);
+        dateElement.innerHTML = formatToLocalTZ(dateElement.textContent, 'utc', true);
     });
 
     pastOrderFulfillmentDates.forEach(dateElement => {
-        const orderId = dateElement.id.split('_')[1];
-        dateElement.textContent = new Date(dateElement.textContent).toLocaleDateString('en-GB', DATE_OPTIONS);
+        if (dateElement.textContent !== 'None')
+            dateElement.innerHTML = formatToLocalTZ(dateElement.textContent, 'utc', true);
+        else
+            dateElement.innerHTML = '<small class="text-muted"><em>Not yet fulfilled</em></small>';
     });
 
     newOrderForm.addEventListener('submit', async (event) => {
