@@ -70,16 +70,14 @@ permission_rules = {
     'item_validated/delete': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'delete validated item' },
     'item_validated/delete_bulk': { 'required': [ Role.ADMINISTRATOR ], 'operation': 'delete validated item in bulk' },
     # Non-Validated Item Related
-    'item_nonvalidated/create': { 'required': [ Role.DIVISION_LEADER, Role.DIVISION_USER ], 'operation': 'create non-validated item' },
-    'item_nonvalidated/update': { 
-        'required': [ Role.PROCUREMENT_MANAGER, Role.DIVISION_LEADER, Role.DIVISION_USER ], 
-        'operation': 'update non-validated item'
+    'item_nonvalidated/create': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'create non-validated item' },
+    'item_nonvalidated/update': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'update non-validated item'
     },
     'item_nonvalidated/delete': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'delete non-validated item' },
     'item_nonvalidated/validate': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'validate non-validated item' },
     # Order Related
     'order/administer': { 
-        'required': [ Role.DIVISION_LEADER, Role.FINANCE_MANAGER, Role.PROCUREMENT_MANAGER ], 
+        'required': [ Role.DIVISION_LEADER, Role.FINANCE_MANAGER, Role.PROCUREMENT_MANAGER ],
         'operation': 'administer orders'
     },
     'order/create': { 'required': [ Role.DIVISION_LEADER, Role.DIVISION_USER ], 'operation': 'create order' },
