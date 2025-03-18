@@ -106,6 +106,18 @@
             </div>
         </nav>
         <div class="container" style="max-width: inherit">
+            {% if announcement.enable %}
+            <div class="alert alert-{{ announcement.type }} alert-dismissible fade show" role="announcement">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <i class="{{ announcement.icon }}"></i>
+                        <b>{{ announcement.title }}</b><br>
+                        {{ announcement.message }}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endif %}
             {% block content %}{% endblock %}
         </div>
 

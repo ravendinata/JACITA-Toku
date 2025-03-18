@@ -1,14 +1,13 @@
+import json
 from flask import session
 from sqlalchemy import desc
 
 from app.models.orders import Orders
 from app.models.user import User
-from helper.navbar import get_navbar_items
 
 def inject_session_data():
     session_data_keys = [ 'user', 'active_order' ]
     data = {}
-    navbar = []
     user = None
 
     if 'user' in session:
@@ -22,4 +21,8 @@ def inject_session_data():
     for key in session_data_keys:
         data[key] = session.get(key, None)
 
-    return { 'data': data, 'user': user }
+    # Read announcement.json file
+    with open('announcement.json') as f:
+        announcement = json.load(f)
+
+    return { 'data': data, 'user': user, 'announcement': announcement }
