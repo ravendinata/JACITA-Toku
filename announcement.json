@@ -1,7 +1,0 @@
-{
-    "enable": true,
-    "type": "warning",
-    "icon": "fa-solid fa-circle-exclamation",
-    "title": "Changes Regarding Items",
-    "message": "Users are no longer allowed to create new items. Please contact the procurement manager or administrator if a regularly ordered item is not listed yet."
-}
