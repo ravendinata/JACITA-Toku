@@ -1,9 +1,10 @@
+import json
 from flask import jsonify, request, session
 
 from app.api import api
 from app.models.misc import Category, QuantityUnit
 from helper.core import generate_item_id, generate_order_id
-from helper.endpoint import HTTPStatus
+from helper.endpoint import HTTPStatus, check_api_permission
 
 # ===============
 # CATEGORY ROUTES
@@ -55,3 +56,47 @@ def api_test_cookies():
 @api.route('helper/test_session', methods = ['GET'])
 def api_test_session():
     return jsonify({ 'session': session }), HTTPStatus.OK
+
+# ===================
+# ANNOUNCEMENT ROUTES
+# ===================
+
+@api.route('/announcement/status', methods = ['GET'])
+def api_announcement_status():
+    try:
+        with open('announcement.json', 'r') as f:
+            announcement = json.load(f)
+    except FileNotFoundError:
+        return jsonify({ 'enable': False }), HTTPStatus.OK
+    
+    return jsonify({ 'enable': announcement['enable'] }), HTTPStatus.OK
+
+@api.route('/announcement/change_state', methods = ['POST'])
+@check_api_permission('announcement/create')
+def api_announcement_change_state():
+    with open('announcement.json', 'r') as f:
+        announcement = json.load(f)
+
+    enable = True if request.form.get('enable') == "true" else False
+    announcement['enable'] = enable
+    new_state = 'enabled' if announcement['enable'] else 'disabled'
+
+    with open('announcement.json', 'w') as f:
+        json.dump(announcement, f, indent = 4)
+
+    return jsonify({ 'message': f"Announcement {new_state}!" }), HTTPStatus.OK
+
+@api.route('/announce', methods = ['POST'])
+@check_api_permission('announcement/create')
+def api_announce():
+    # Get the announcement from the request
+    announcement_type = request.form.get('type')
+    display_icon = request.form.get('icon')
+    title = request.form.get('title')
+    message = request.form.get('message')
+
+    # Save the announcement to announcement.json and beautify it
+    with open('announcement.json', 'w') as f:
+        f.write(f'''{{\n\t"enable": true,\n\t"type": "{announcement_type}",\n\t"icon": "{display_icon}",\n\t"title": "{title}",\n\t"message": "{message}"\n}}''')
+
+    return jsonify({ 'message': 'Announcement sent!' }), HTTPStatus.OK
