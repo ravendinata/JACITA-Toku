@@ -58,13 +58,6 @@
                         </li>
                         {% endif %}
                         {% if 'order_history' in user.navbar_items %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navBypass" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin View</a>
-                            <ul class="dropdown-menu" aria-labelledby="navBypass">
-                                <li><a class="dropdown-item" href="/orders/adminview/finance">Bypass Finance</a></li>
-                                <li><a class="dropdown-item" href="/orders/adminview/procurement">Bypass Procurement</a></li>
-                            </ul>
-                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/orders/history">All Orders History</a>
                         </li>
@@ -72,6 +65,19 @@
                         {% if 'users' in user.navbar_items %}
                         <li class="nav-item dropdown">
                             <a class="nav-link" href="/users">Users</a>
+                        </li>
+                        {% endif %}
+                        {% if 'admin' in user.navbar_items %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</a>
+                            <ul class="dropdown-menu" aria-labelledby="navAdmin">
+                                <li><h6 class="dropdown-header">System</h6></li>
+                                <li><a class="dropdown-item" href="/admin/announcement">Announcement</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Bypass Views</h6></li>
+                                <li><a class="dropdown-item" href="/orders/adminview/finance">Finance</a></li>
+                                <li><a class="dropdown-item" href="/orders/adminview/procurement">Procurement</a></li>
+                            </ul>
                         </li>
                         {% endif %}
                     </ul>
