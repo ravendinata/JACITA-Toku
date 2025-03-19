@@ -1,7 +1,7 @@
 from helper.role import Role
 
 navbar_items = {
-    Role.ADMINISTRATOR: [ 'items', 'my_orders', 'order_administration', 'profile', 'order_history', 'users', 'bulk_add' ],
+    Role.ADMINISTRATOR: [ 'items', 'my_orders', 'order_administration', 'profile', 'order_history', 'users', 'bulk_add', 'admin' ],
     Role.DIVISION_LEADER: [ 'items', 'my_orders', 'order_administration', 'profile' ],
     Role.DIVISION_USER: [ 'items', 'my_orders', 'profile' ],
     Role.FINANCE_MANAGER: [ 'items', 'order_administration', 'profile', 'order_history' ],
