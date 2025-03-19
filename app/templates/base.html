@@ -118,7 +118,7 @@
                     <div>
                         <i class="{{ announcement.icon }}"></i>
                         <b>{{ announcement.title }}</b><br>
-                        {{ announcement.message }}
+                        {{ announcement.message | safe }}
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>

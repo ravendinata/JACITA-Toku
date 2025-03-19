@@ -81,7 +81,7 @@
     document.getElementById('type').value = '{{ announcement.type }}';
     document.getElementById('icon').value = '{{ announcement.icon }}';
     document.getElementById('title').value = '{{ announcement.title }}';
-    document.getElementById('message').value = '{{ announcement.message }}';
+    document.getElementById('message').value = '{{ announcement.message | safe }}';
 
     function updatePreview()
     {
