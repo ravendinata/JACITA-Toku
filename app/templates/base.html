@@ -106,7 +106,7 @@
             </div>
         </nav>
         <div class="container" style="max-width: inherit">
-            {% if announcement.enable %}
+            {% if announcement.enable and not hide_announcement %}
             <div class="alert alert-{{ announcement.type }} alert-dismissible fade show" role="announcement">
                 <div class="d-flex justify-content-between">
                     <div>
