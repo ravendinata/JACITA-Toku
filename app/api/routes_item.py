@@ -70,6 +70,103 @@ def api_create_item():
     trail.log_creation(item, created_by)
     return jsonify({ 'message': 'Item created successfully' }), HTTPStatus.CREATED
 
+@api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
+@check_api_permission('item_validated/update')
+@check_fields('item_validated/update')
+def api_update_item(item_id):    
+    username = request.form.get('modified_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.update", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the modifier in the request." }), HTTPStatus.FORBIDDEN
+    
+    item = Items.query.get(item_id)
+    old_item = copy.deepcopy(item)
+
+    if item is None:
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+    
+    item.brand = request.form.get('brand', item.brand)
+    item.name = request.form.get('name', item.name)
+    item.variant = request.form.get('variant', item.variant)
+    item.base_price = request.form.get('base_price', item.base_price)
+    item.category_id = request.form.get('category_id', item.category_id)
+    item.qty_unit_id = request.form.get('qty_unit_id', item.qty_unit_id)
+
+    if float(old_item.base_price) != float(item.base_price):
+        item_price_update = ItemPriceUpdateLog(id = f"{item.id}-{str(uuid4())[:8]}",
+                                               item_id = item_id,
+                                               price_original = old_item.base_price,
+                                               price_new = item.base_price,
+                                               user = username)
+        
+        if ItemPriceUpdateLog.query.filter_by(item_id = item_id).count() == 0:
+            initial_price = ItemPriceUpdateLog(id = f"{item.id}-init",
+                                               item_id = item_id,
+                                               price_original = old_item.base_price,
+                                               price_new = old_item.base_price,
+                                               date = old_item.created_date,
+                                               user = old_item.created_by)
+            
+            try:
+                db.session.add(initial_price)
+            except Exception as e:
+                print(f"Error while logging initial price update: {e}")
+                return jsonify({ 'error': 'Error while logging initial price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+
+        try:
+            db.session.add(item_price_update)
+        except Exception as e:
+            print(f"Error while logging price update: {e}")
+            return jsonify({ 'error': 'Error while logging price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    if item.description:
+        match = re.search(r'\(Originally Created by (.*?)\)', item.description)
+        if match:
+            original_creator = match.group(1)
+            new_description = request.form.get('description', item.description)
+            if f"(Originally Created by {original_creator})" not in new_description:
+                return jsonify({'error': 'Cannot change description of validated item',
+                                'details': "You should not remove or change the '(Originally Created by ...)' part of the description"}), HTTPStatus.BAD_REQUEST
+        item.description = new_description
+    else:
+        item.description = request.form.get('description', item.description)
+
+    item.modification_by = username
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while updating item: {e}")
+        return jsonify({ 'error': 'Error while updating item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    trail.log_update(item, old_item, username)
+    return jsonify({ 'message': 'Item updated successfully' }), HTTPStatus.OK
+
+@api.route('/items/validated/<string:item_id>', methods = ['DELETE'])
+@check_api_permission('item_validated/delete')
+@check_fields('item_validated/delete')
+def api_delete_item(item_id):
+    username = request.form.get('deleted_by')
+    if session.get('user') != username:
+        trail.log_system_event("api.item.delete", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
+        return jsonify({ 'error': 'User fingerprint mismatch',
+                         'details': f"Are you trying to impersonate someone? Logged in user does not match the deleter in the request." }), HTTPStatus.FORBIDDEN
+
+    item = Items.query.get(item_id)
+    if item is None:
+        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
+
+    try:
+        db.session.delete(item)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while deleting item: {e}")
+        return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    trail.log_deletion(item, username)
+    return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.OK
+
 @api.route('/items/validated/bulk', methods = ['POST'])
 @check_api_permission('item_validated/create_bulk')
 @check_fields('item_validated/create_bulk')
@@ -235,103 +332,6 @@ def api_delete_bulk_items():
             return jsonify({ 'error': 'Error while deleting items in bulk', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
     
     return jsonify({ 'message': 'Bulk items deleted successfully' }), HTTPStatus.OK
-
-@api.route('/items/validated/<string:item_id>', methods = ['PATCH'])
-@check_api_permission('item_validated/update')
-@check_fields('item_validated/update')
-def api_update_item(item_id):    
-    username = request.form.get('modified_by')
-    if session.get('user') != username:
-        trail.log_system_event("api.item.update", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
-        return jsonify({ 'error': 'User fingerprint mismatch',
-                         'details': f"Are you trying to impersonate someone? Logged in user does not match the modifier in the request." }), HTTPStatus.FORBIDDEN
-    
-    item = Items.query.get(item_id)
-    old_item = copy.deepcopy(item)
-
-    if item is None:
-        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
-    
-    item.brand = request.form.get('brand', item.brand)
-    item.name = request.form.get('name', item.name)
-    item.variant = request.form.get('variant', item.variant)
-    item.base_price = request.form.get('base_price', item.base_price)
-    item.category_id = request.form.get('category_id', item.category_id)
-    item.qty_unit_id = request.form.get('qty_unit_id', item.qty_unit_id)
-
-    if float(old_item.base_price) != float(item.base_price):
-        item_price_update = ItemPriceUpdateLog(id = f"{item.id}-{str(uuid4())[:8]}",
-                                               item_id = item_id,
-                                               price_original = old_item.base_price,
-                                               price_new = item.base_price,
-                                               user = username)
-        
-        if ItemPriceUpdateLog.query.filter_by(item_id = item_id).count() == 0:
-            initial_price = ItemPriceUpdateLog(id = f"{item.id}-init",
-                                               item_id = item_id,
-                                               price_original = old_item.base_price,
-                                               price_new = old_item.base_price,
-                                               date = old_item.created_date,
-                                               user = old_item.created_by)
-            
-            try:
-                db.session.add(initial_price)
-            except Exception as e:
-                print(f"Error while logging initial price update: {e}")
-                return jsonify({ 'error': 'Error while logging initial price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
-
-        try:
-            db.session.add(item_price_update)
-        except Exception as e:
-            print(f"Error while logging price update: {e}")
-            return jsonify({ 'error': 'Error while logging price update', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
-    
-    if item.description:
-        match = re.search(r'\(Originally Created by (.*?)\)', item.description)
-        if match:
-            original_creator = match.group(1)
-            new_description = request.form.get('description', item.description)
-            if f"(Originally Created by {original_creator})" not in new_description:
-                return jsonify({'error': 'Cannot change description of validated item',
-                                'details': "You should not remove or change the '(Originally Created by ...)' part of the description"}), HTTPStatus.BAD_REQUEST
-        item.description = new_description
-    else:
-        item.description = request.form.get('description', item.description)
-
-    item.modification_by = username
-
-    try:
-        db.session.commit()
-    except Exception as e:
-        print(f"Error while updating item: {e}")
-        return jsonify({ 'error': 'Error while updating item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
-    
-    trail.log_update(item, old_item, username)
-    return jsonify({ 'message': 'Item updated successfully' }), HTTPStatus.OK
-
-@api.route('/items/validated/<string:item_id>', methods = ['DELETE'])
-@check_api_permission('item_validated/delete')
-@check_fields('item_validated/delete')
-def api_delete_item(item_id):
-    username = request.form.get('deleted_by')
-    if session.get('user') != username:
-        trail.log_system_event("api.item.delete", f"User fingerprint mismatch. User in Form: {username}, Session User: {session.get('user')}. Request denied.")
-        return jsonify({ 'error': 'User fingerprint mismatch',
-                         'details': f"Are you trying to impersonate someone? Logged in user does not match the deleter in the request." }), HTTPStatus.FORBIDDEN
-
-    item = Items.query.get(item_id)
-    if item is None:
-        return jsonify({ 'error': 'Item not found' }), HTTPStatus.NOT_FOUND
-
-    try:
-        db.session.delete(item)
-        db.session.commit()
-    except Exception as e:
-        print(f"Error while deleting item: {e}")
-        return jsonify({ 'error': 'Error while deleting item', 'details': f"{e}" }), HTTPStatus.INTERNAL_SERVER_ERROR
-    
-    trail.log_deletion(item, username)
-    return jsonify({ 'message': 'Item deleted successfully' }), HTTPStatus.OK
 
 # =========================
 # NON-VALIDATED ITEM ROUTES
