@@ -273,7 +273,7 @@ function getRelativeTime(date, source_zone)
     else if (diff.days > 0) { offset = diff.days; relative = 'day'; }
     else if (diff.hours > 0) { offset = diff.hours; relative = 'hour'; }
     else if (diff.minutes > 0)  { offset = diff.minutes; relative = 'minute'; }
-    else if (diff.seconds > 0) { offset = diff.seconds; relative = 'second'; }
+    else if (diff.seconds >= 30) { offset = Math.floor(diff.seconds); relative = 'second'; }
     else return 'Just now';
 
     if (offset > 1) relative += 's';
