@@ -14,6 +14,12 @@ from helper.core import generate_order_id
 from helper.endpoint import HTTPStatus, check_fields, check_api_permission, check_api_permissions
 from helper.status import OrderStatusTransitionError, OrderStatus
 
+# =======
+# GLOBALS
+# =======
+
+RAISED_ORDER_STATES = [ OrderStatus.FINANCE_APPROVED, OrderStatus.FULFILLED, OrderStatus.CANCELLED ]
+
 # =================================
 # STANDARD CRUD OPERATION ENDPOINTS
 # =================================
@@ -46,7 +52,7 @@ def api_create_order():
         return jsonify({ 'error': 'User fingerprint mismatch',
                          'details': f"Are you trying to impersonate someone? Logged in user does not match the creator in the request." }), HTTPStatus.FORBIDDEN
 
-    active_order = Orders.query.filter(~Orders.status.in_([7, 10, 99]), Orders.created_by == created_by).order_by(desc(Orders.created_date)).first()
+    active_order = Orders.query.filter(~Orders.status.in_(RAISED_ORDER_STATES), Orders.created_by == created_by).order_by(desc(Orders.created_date)).first()
     if active_order:
         session['active_order'] = active_order.id
         trail.log_system_event("api.order.create", f"User {created_by} attempted to create new order while active order exists for the user. Active order: {active_order.id}. Request denied.")
