@@ -812,8 +812,8 @@
         const qtyInput = $('#cart_qty');
         let qty = parseInt(qtyInput.val());
 
-        if (qty == 100)
-            displayPopupAlert('Quantity Error', 'Quantity cannot be more than 100.', 'error');
+        if (qty == 1000)
+            displayPopupAlert('Quantity Error', 'Quantity cannot be more than 1000.', 'error');
             
         qtyInput.val(qty + 1).trigger('change');
     });
@@ -835,10 +835,10 @@
         const qtyInput = $('#cart_qty');
         let qty = parseInt(qtyInput.val());
     
-        if (qty >= 100)
-            return displayPopupAlert('Quantity Error', 'Quantity cannot be more than 100.', 'error');
+        if (qty >= 1000)
+            return displayPopupAlert('Quantity Error', 'Quantity cannot be more than 1000.', 'error');
     
-        qty = Math.min(qty + 10, 100);
+        qty = Math.min(qty + 10, 1000);
         qtyInput.val(qty).trigger('change');
     });
 </script>
