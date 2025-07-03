@@ -3,9 +3,9 @@ const normalize = params.has('norm');
 
 // Set the theme
 if (getCookie('theme') == 'dark')
-document.documentElement.setAttribute('data-bs-theme', 'dark')
+    document.documentElement.setAttribute('data-bs-theme', 'dark')
 else
-document.documentElement.setAttribute('data-bs-theme', 'light')
+    document.documentElement.setAttribute('data-bs-theme', 'light')
 
 // On ready
 $(document).ready(function ()
@@ -70,10 +70,7 @@ function getCookie(name)
     return null;
 }
 
-function removeCookie(name)
-{
-    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-}
+function removeCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';}
 
 function wipeCookie(name) { document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; }
 
@@ -88,6 +85,7 @@ function formatCurrency(value, rounding = 2, symbol = 'IDR')
 function flashField(fieldId) 
 {
     const field = document.getElementById(fieldId);
+    
     if (field) 
     {
         field.classList.add('flash-error');
