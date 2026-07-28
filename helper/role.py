@@ -64,15 +64,14 @@ class NonExistentRuleError(Exception):
 permission_rules = {
     # Validated Item Related
     'item_validated/create': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'create validated item' },
-    'item_validated/create_bulk': { 'required': [ Role.ADMINISTRATOR ], 'operation': 'create validated item in bulk' },
+    'item_validated/create_bulk': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'create validated item in bulk' },
     'item_validated/update': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'update validated item' },
-    'item_validated/update_bulk': { 'required': [ Role.ADMINISTRATOR ], 'operation': 'update validated item in bulk' },
+    'item_validated/update_bulk': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'update validated item in bulk' },
     'item_validated/delete': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'delete validated item' },
     'item_validated/delete_bulk': { 'required': [ Role.ADMINISTRATOR ], 'operation': 'delete validated item in bulk' },
     # Non-Validated Item Related
     'item_nonvalidated/create': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'create non-validated item' },
-    'item_nonvalidated/update': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'update non-validated item'
-    },
+    'item_nonvalidated/update': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'update non-validated item'},
     'item_nonvalidated/delete': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'delete non-validated item' },
     'item_nonvalidated/validate': { 'required': [ Role.PROCUREMENT_MANAGER ], 'operation': 'validate non-validated item' },
     # Order Related
