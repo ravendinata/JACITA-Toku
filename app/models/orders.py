@@ -33,13 +33,16 @@ class Orders(db.Model):
     # Delivery Attributes
     fulfillment_date = db.Column(db.DateTime, nullable = True)
 
+    # Relationships
+    division = db.relationship('Division', backref = db.backref('orders', lazy = 'dynamic'))
+
     def __repr__(self):
         return f'<Order: {self.id} @ {self.created_date} by {self.created_by}>'
 
     def to_dict(self):
         data = { c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'status' and c.name != 'division_id' }
         data['status'] = { 'code': self.status, 'text': get_order_status_text(self.status) }
-        data['division'] = { 'id': self.division_id, 'name': Division.query.get(self.division_id).full_name }
+        data['division'] = self.division.to_dict() if self.division else None
         # Dates in ISO 8601 format
         data['created_date'] = self.created_date.isoformat()
         data['last_modification_date'] = self.last_modification_date.isoformat()

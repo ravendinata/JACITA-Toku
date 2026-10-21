@@ -10,7 +10,12 @@ class Division(db.Model):
     id = db.Column(db.Integer, nullable = False, primary_key = True)
     abbreviation = db.Column(db.String(3), nullable = False)
     full_name = db.Column(db.String, nullable = False)
-    
+    parent_division_id = db.Column(db.Integer, db.ForeignKey('toku.division.id', ondelete = 'SET NULL'), nullable = True)
+
+    # Relationships
+    parent_division = db.relationship('Division', remote_side = [id], backref = 'subdivisions', lazy = 'joined')
+    users = db.relationship('User', back_populates = 'division', lazy = 'joined')
+
     def __repr__(self):
         return f'<Division: {self.full_name} [{self.id}]>'
     
@@ -29,12 +34,15 @@ class User(db.Model):
     password = db.Column(db.String, nullable = False)
     email = db.Column(db.String, nullable = False)
 
+    # Relationships
+    division = db.relationship('Division', back_populates = 'users', lazy = 'joined')
+
     def __repr__(self):
         return f'<User: {self.first_name} {self.last_name} @ {self.username}>'
     
     def to_dict(self):
         user_data = {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'password' and c.name != 'role' and c.name != 'division_id'}
-        user_data['division'] = Division.query.get(self.division_id).to_dict()
+        user_data['division'] = self.division.to_dict() if self.division else None
         user_data['role'] = { 'id': self.role, 'text': get_role_text(self.role) }
         return user_data
     
@@ -44,10 +52,6 @@ class User(db.Model):
         if self.last_name:
             string += ' ' + self.last_name
         return string
-    
-    @property
-    def division(self):
-        return Division.query.get(self.division_id)
     
     @property
     def navbar_items(self):
