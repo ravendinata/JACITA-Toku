@@ -5,7 +5,7 @@ import helper.periods as periods
 from app.web import web
 from app.models.logs import OrderRejectLog
 from app.models.orders import Orders
-from app.models.user import User
+from app.models.user import Division, User
 from helper.auth import check_login
 from helper.endpoint import HTTPStatus, check_page_permission
 from helper.role import InsufficientPermissionError, Role
@@ -46,8 +46,11 @@ def page_order_administration():
             can_do[action] = False
 
     if can_do['order/approve_division']:
-        orders = Orders.query.filter(Orders.status != OrderStatus.PENDING, or_(Orders.period == this_month, Orders.period == next_month),
-                                     Orders.division_id == user.division_id).order_by(asc(Orders.period)).all()
+        orders = Orders.query.filter(
+            Orders.status != OrderStatus.PENDING, 
+            or_(Orders.period == this_month, Orders.period == next_month),
+            or_(Orders.division_id == user.division_id, Orders.division.has(Division.parent_division_id == user.division_id))
+        ).order_by(asc(Orders.period)).all()
         
         grouped_orders = {}
         for order in orders:
@@ -137,7 +140,10 @@ def page_order_view(id):
         return render_template('error/standard.html', title = "Not Found", message = "Order not found."), HTTPStatus.NOT_FOUND
     
     user = User.query.get(session['user'])
-    if order.division_id != user.division_id and user.role not in [Role.ADMINISTRATOR, Role.PROCUREMENT_MANAGER, Role.FINANCE_MANAGER]:
+    if (
+        user.division_id not in [order.division_id, order.division.parent_division_id]
+        and user.role not in [Role.ADMINISTRATOR, Role.PROCUREMENT_MANAGER, Role.FINANCE_MANAGER]
+    ):
         return render_template('error/standard.html', title = "Access Denied", message = "You cannot access orders from other divisions."), HTTPStatus.FORBIDDEN
 
     can_do = {}
