@@ -42,6 +42,7 @@ class ItemPriceUpdateLog(db.Model):
         data['diff'] = self.diff
         data['percent_change'] = self.percent_change
         data['current_position'] = self.current_position
+        data['date'] = self.date.isoformat()
         return data
     
     def to_string(self):
