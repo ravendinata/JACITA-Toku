@@ -47,7 +47,7 @@ def page_order_administration():
 
     if can_do['order/approve_division']:
         orders = Orders.query.filter(
-            Orders.status != OrderStatus.PENDING, 
+            Orders.status.notin_([OrderStatus.PENDING, OrderStatus.REJECTED, OrderStatus.CANCELLED, OrderStatus.FULFILLED]),
             or_(Orders.period == this_month, Orders.period == next_month),
             or_(Orders.division_id == user.division_id, Orders.division.has(Division.parent_division_id == user.division_id))
         ).order_by(asc(Orders.period)).all()
@@ -130,6 +130,9 @@ def page_order_bypass(phase):
 @check_login
 @check_page_permission('order/administer')
 def page_order_history():
+    user = User.query.get(session['user'])
+    if user.role != Role.ADMINISTRATOR:
+        return render_template('error/standard.html', title = "Access Denied", message = "You are not authorized to access this page."), HTTPStatus.FORBIDDEN
     return render_template('orders/history.html', use_datatables = True, title = "Order History")
 
 @web.route('/order/<string:id>')
@@ -253,7 +256,7 @@ def page_division_order_view(period, division_id):
 @check_page_permission('order/fulfill')
 def page_procurement_order_view(period):
     period = f"{period[:4]}/{period[4:]}"
-    orders = Orders.query.filter(Orders.period == period, Orders.status > 6)\
+    orders = Orders.query.filter(Orders.period == period, Orders.status == OrderStatus.FINANCE_APPROVED)\
             .order_by(asc(Orders.division_id), desc(Orders.last_modification_date))\
             .all()
     
