@@ -47,7 +47,7 @@ def page_order_administration():
 
     if can_do['order/approve_division']:
         orders = Orders.query.filter(
-            Orders.status.notin_([OrderStatus.PENDING, OrderStatus.REJECTED, OrderStatus.CANCELLED, OrderStatus.FULFILLED]),
+            Orders.status.notin_([OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED, OrderStatus.CANCELLED, OrderStatus.FULFILLED]),
             or_(Orders.period == this_month, Orders.period == next_month),
             or_(Orders.division_id == user.division_id, Orders.division.has(Division.parent_division_id == user.division_id))
         ).order_by(asc(Orders.period)).all()
