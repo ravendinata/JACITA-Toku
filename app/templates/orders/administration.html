@@ -60,7 +60,17 @@
                         <button type="button" class="btn btn-success" id="btnApproveOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Approve Collection</button>
                         <button type="button" class="btn btn-danger" id="btnRejectOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-times"></i> Reject Collection</button>
                     {% elif can_do['order/fulfill'] %}
-                        <button type="button" class="btn btn-success" id="btnFulfillOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}"><i class="fa-solid fa-check"></i> Fulfill Collection</button>
+                        {% set group = namespace(fulfill_button = true) %}
+                        {% for order in orders %}
+                            {% if order.status == 10 %}
+                                {% set group.fulfill_button = false %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if group.fulfill_button %}
+                            <button type="button" class="btn btn-success" id="btnFulfillOrder_{{ period | replace('/', '') }}/{{ orders[0].division_id }}">
+                                <i class="fa-solid fa-check"></i> Fulfill Collection
+                            </button>
+                        {% endif %}
                     {% endif %}
                 </span>
                 <h5 class="card-title">{{ division }}</b></h5>
@@ -83,6 +93,7 @@
                                             <th>Order ID</th>
                                             <th>Submitter</th>
                                             <th>Value</th>
+                                            <th>Status</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -92,6 +103,7 @@
                                             <td>{{ order.id }}</td>
                                             <td>{{ order.created_by }}</td>
                                             <td id="orderTotal_{{ order.id }}"></td>
+                                            <td>{{ order.status_text }}</td>
                                             <td><a href="/order/{{ order.id }}" class="btn btn-sm btn-secondary float-end"><i class="fa-solid fa-eye"></i> View Order</a></td>
                                         </tr>
                                         {% endfor %}
@@ -242,4 +254,3 @@
     });
 </script>
 {% endblock %}
-    
