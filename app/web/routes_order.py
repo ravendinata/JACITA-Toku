@@ -47,7 +47,8 @@ def page_order_administration():
 
     if can_do['order/approve_division']:
         orders = Orders.query.filter(
-            Orders.status.notin_([OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED, OrderStatus.CANCELLED, OrderStatus.FULFILLED]),
+            # Orders.status.notin_([OrderStatus.PENDING, OrderStatus.DIVISION_REJECTED, OrderStatus.FINANCE_REJECTED, OrderStatus.CANCELLED, OrderStatus.FULFILLED]),
+            Orders.status.in_([OrderStatus.SUBMITTED, OrderStatus.FINANCE_APPROVED]),
             or_(Orders.period == this_month, Orders.period == next_month),
             or_(Orders.division_id == user.division_id, Orders.division.has(Division.parent_division_id == user.division_id))
         ).order_by(asc(Orders.period)).all()
@@ -66,7 +67,7 @@ def page_order_administration():
         orders = Orders.query.filter(Orders.status == OrderStatus.DIVISION_APPROVED,
                                      or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
     elif can_do['order/fulfill']:
-        orders = Orders.query.filter(Orders.status == OrderStatus.FINANCE_APPROVED, 
+        orders = Orders.query.filter(Orders.status.in_([OrderStatus.DIVISION_APPROVED, OrderStatus.FINANCE_APPROVED, OrderStatus.FULFILLED]),
                                      or_(Orders.period == this_month, Orders.period == next_month)).order_by(asc(Orders.period)).all()
         
     grouped_orders = {}
