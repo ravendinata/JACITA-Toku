@@ -121,6 +121,10 @@ class Orders(db.Model):
 
     # Extra Properties and Methods
     @property
+    def status_text(self):
+        return get_order_status_text(self.status)
+    
+    @property
     def total_price(self):
         return self._get_total_price()
     
